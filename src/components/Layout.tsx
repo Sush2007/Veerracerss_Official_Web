@@ -12,9 +12,7 @@ const NAV_ITEMS = [
   { label: 'TEAM', path: '/members', matchValue: '/members' },
   { label: 'ACHIEVEMENTS', path: '/achievements', matchValue: '/achievements' },
   { label: 'CARS', path: '/cars', matchValue: '/cars' },
-  { label: 'OUR PARTNERS', path: '/#timeline', matchValue: 'timeline' }, // Assuming Journey is partners or timeline
   { label: 'SUPPORT US', path: '/#connect', matchValue: 'connect' },
-  { label: 'ABOUT US', path: '/#about', matchValue: 'about' },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -79,7 +77,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const headerClasses = isHeroTransparent
     ? "fixed top-0 left-0 w-full px-4 md:px-12 lg:px-24 py-6 z-50 bg-gradient-to-b from-black/90 to-transparent transition-all duration-700 ease-in-out flex justify-between items-center"
-    : "fixed top-4 left-1/2 -translate-x-1/2 w-[98%] max-w-[1400px] md:w-auto md:min-w-[850px] lg:min-w-[1100px] mx-auto glass-pill px-8 md:px-12 py-4 z-50 transition-all duration-700 ease-in-out flex justify-between items-center";
+    : "fixed top-4 left-1/2 -translate-x-1/2 w-[98%] max-w-[1400px] md:w-auto md:min-w-[650px] lg:min-w-[850px] mx-auto glass-pill px-8 md:px-12 py-4 z-50 transition-all duration-700 ease-in-out flex justify-between items-center";
 
   return (
     <div className="font-display text-on-surface selection:bg-racing-red selection:text-white min-h-screen relative dark">
@@ -135,6 +133,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
              );
           })}
+          
+          <div className="h-px w-24 bg-white/10 my-4" />
+          
+          <Link 
+            href="/admin/login"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="text-lg font-bold uppercase tracking-[0.2em] text-racing-red hover:text-white transition-colors"
+          >
+            Login
+          </Link>
         </div>
       )}
 

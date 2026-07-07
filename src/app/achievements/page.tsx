@@ -59,9 +59,14 @@ export default function AchievementsPage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-6xl md:text-8xl lg:text-[140px] font-black uppercase tracking-tighter italic text-transparent bg-clip-text text-gradient font-display"
+              className="text-6xl md:text-8xl lg:text-[140px] font-black uppercase tracking-tighter italic text-transparent bg-clip-text text-gradient font-display relative pr-8 pb-4"
             >
               Hall of <br className="block md:hidden"/> Fame
+              <motion.div 
+                className="absolute inset-0 bg-white/5 blur-[80px] rounded-full mix-blend-screen -z-10 pointer-events-none" 
+                animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.3, 0.1] }} 
+                transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }} 
+              />
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0 }}

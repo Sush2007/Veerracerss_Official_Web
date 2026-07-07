@@ -7,42 +7,16 @@ import { Footer } from "../../components/Footer";
 import { Partners } from "../../components/Partners";
 
 
-const DOMAINS = [
-  {
-    name: "Leadership",
-    description: "Guiding the vision and execution of Team VeerRacerss.",
-    members: [
-      { name: "Alex Mercer", role: "Team Captain", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAl9cwwxKrwpQAzlo95bBhvimUTAqo35f4O40MFvKusyhQe4NqVWbd9vQwz67JiXBY5WY2f6ttTgtCKcAgtSO-yVjVQuQlQ5-GcitAcjWLwO7ScRKuFKxe8sTXcBBsLoh4-VdgBFN7nTCIK9NDTJ86sU4W3pkY6HtJomyu7l0lPxCPebIqWK6pcIovcvCcNCDswqa_kt751xd3JO3znXAAd7T71VZiBQSrlsZGZ9T5okNBWBnNiLNj61Wow3DWff9dT5KJMV0ZHnhc", linkedin: "#", instagram: "#" },
-      { name: "Sarah Chen", role: "Technical Director", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAl9cwwxKrwpQAzlo95bBhvimUTAqo35f4O40MFvKusyhQe4NqVWbd9vQwz67JiXBY5WY2f6ttTgtCKcAgtSO-yVjVQuQlQ5-GcitAcjWLwO7ScRKuFKxe8sTXcBBsLoh4-VdgBFN7nTCIK9NDTJ86sU4W3pkY6HtJomyu7l0lPxCPebIqWK6pcIovcvCcNCDswqa_kt751xd3JO3znXAAd7T71VZiBQSrlsZGZ9T5okNBWBnNiLNj61Wow3DWff9dT5KJMV0ZHnhc", linkedin: "#", instagram: "#" },
-    ]
-  },
-  {
-    name: "Powertrain & Drivetrain",
-    description: "Designing the high-voltage heart and sheer power delivery.",
-    members: [
-      { name: "Rahul Singh", role: "Powertrain Lead", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAl9cwwxKrwpQAzlo95bBhvimUTAqo35f4O40MFvKusyhQe4NqVWbd9vQwz67JiXBY5WY2f6ttTgtCKcAgtSO-yVjVQuQlQ5-GcitAcjWLwO7ScRKuFKxe8sTXcBBsLoh4-VdgBFN7nTCIK9NDTJ86sU4W3pkY6HtJomyu7l0lPxCPebIqWK6pcIovcvCcNCDswqa_kt751xd3JO3znXAAd7T71VZiBQSrlsZGZ9T5okNBWBnNiLNj61Wow3DWff9dT5KJMV0ZHnhc", linkedin: "#", instagram: "#" },
-      { name: "Emma Davis", role: "Battery Engineer", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAl9cwwxKrwpQAzlo95bBhvimUTAqo35f4O40MFvKusyhQe4NqVWbd9vQwz67JiXBY5WY2f6ttTgtCKcAgtSO-yVjVQuQlQ5-GcitAcjWLwO7ScRKuFKxe8sTXcBBsLoh4-VdgBFN7nTCIK9NDTJ86sU4W3pkY6HtJomyu7l0lPxCPebIqWK6pcIovcvCcNCDswqa_kt751xd3JO3znXAAd7T71VZiBQSrlsZGZ9T5okNBWBnNiLNj61Wow3DWff9dT5KJMV0ZHnhc", linkedin: "#", instagram: "#" },
-      { name: "Akash Patel", role: "Thermals Lead", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAl9cwwxKrwpQAzlo95bBhvimUTAqo35f4O40MFvKusyhQe4NqVWbd9vQwz67JiXBY5WY2f6ttTgtCKcAgtSO-yVjVQuQlQ5-GcitAcjWLwO7ScRKuFKxe8sTXcBBsLoh4-VdgBFN7nTCIK9NDTJ86sU4W3pkY6HtJomyu7l0lPxCPebIqWK6pcIovcvCcNCDswqa_kt751xd3JO3znXAAd7T71VZiBQSrlsZGZ9T5okNBWBnNiLNj61Wow3DWff9dT5KJMV0ZHnhc", linkedin: "#", instagram: "#" },
-    ]
-  },
-  {
-    name: "Chassis",
-    description: "Engineering the lightweight structural foundation.",
-    members: [
-      { name: "David Kim", role: "Chassis Lead", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAl9cwwxKrwpQAzlo95bBhvimUTAqo35f4O40MFvKusyhQe4NqVWbd9vQwz67JiXBY5WY2f6ttTgtCKcAgtSO-yVjVQuQlQ5-GcitAcjWLwO7ScRKuFKxe8sTXcBBsLoh4-VdgBFN7nTCIK9NDTJ86sU4W3pkY6HtJomyu7l0lPxCPebIqWK6pcIovcvCcNCDswqa_kt751xd3JO3znXAAd7T71VZiBQSrlsZGZ9T5okNBWBnNiLNj61Wow3DWff9dT5KJMV0ZHnhc", linkedin: "#", instagram: "#" },
-      { name: "Priya Sharma", role: "CAE Analyst", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAl9cwwxKrwpQAzlo95bBhvimUTAqo35f4O40MFvKusyhQe4NqVWbd9vQwz67JiXBY5WY2f6ttTgtCKcAgtSO-yVjVQuQlQ5-GcitAcjWLwO7ScRKuFKxe8sTXcBBsLoh4-VdgBFN7nTCIK9NDTJ86sU4W3pkY6HtJomyu7l0lPxCPebIqWK6pcIovcvCcNCDswqa_kt751xd3JO3znXAAd7T71VZiBQSrlsZGZ9T5okNBWBnNiLNj61Wow3DWff9dT5KJMV0ZHnhc", linkedin: "#", instagram: "#" },
-    ]
-  },
-  {
-    name: "Suspension & Brakes",
-    description: "Maximizing mechanical grip and deceleration control.",
-    members: [
-      { name: "Oliver Smith", role: "Vehicle Dynamics Lead", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAl9cwwxKrwpQAzlo95bBhvimUTAqo35f4O40MFvKusyhQe4NqVWbd9vQwz67JiXBY5WY2f6ttTgtCKcAgtSO-yVjVQuQlQ5-GcitAcjWLwO7ScRKuFKxe8sTXcBBsLoh4-VdgBFN7nTCIK9NDTJ86sU4W3pkY6HtJomyu7l0lPxCPebIqWK6pcIovcvCcNCDswqa_kt751xd3JO3znXAAd7T71VZiBQSrlsZGZ9T5okNBWBnNiLNj61Wow3DWff9dT5KJMV0ZHnhc", linkedin: "#", instagram: "#" },
-      { name: "Nisha Rao", role: "Suspension Engineer", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAl9cwwxKrwpQAzlo95bBhvimUTAqo35f4O40MFvKusyhQe4NqVWbd9vQwz67JiXBY5WY2f6ttTgtCKcAgtSO-yVjVQuQlQ5-GcitAcjWLwO7ScRKuFKxe8sTXcBBsLoh4-VdgBFN7nTCIK9NDTJ86sU4W3pkY6HtJomyu7l0lPxCPebIqWK6pcIovcvCcNCDswqa_kt751xd3JO3znXAAd7T71VZiBQSrlsZGZ9T5okNBWBnNiLNj61Wow3DWff9dT5KJMV0ZHnhc", linkedin: "#", instagram: "#" },
-      { name: "Arjun Nair", role: "Brakes Engineer", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAl9cwwxKrwpQAzlo95bBhvimUTAqo35f4O40MFvKusyhQe4NqVWbd9vQwz67JiXBY5WY2f6ttTgtCKcAgtSO-yVjVQuQlQ5-GcitAcjWLwO7ScRKuFKxe8sTXcBBsLoh4-VdgBFN7nTCIK9NDTJ86sU4W3pkY6HtJomyu7l0lPxCPebIqWK6pcIovcvCcNCDswqa_kt751xd3JO3znXAAd7T71VZiBQSrlsZGZ9T5okNBWBnNiLNj61Wow3DWff9dT5KJMV0ZHnhc", linkedin: "#", instagram: "#" },
-    ]
-  }
-];
+import { useEffect, useState } from "react";
+import { createClient } from "@/src/lib/supabase/client";
+
+const DOMAIN_DESCRIPTIONS: Record<string, string> = {
+  "Leadership": "Guiding the vision and execution of Team VeerRacerss.",
+  "Powertrain & Drivetrain": "Designing the high-voltage heart and sheer power delivery.",
+  "Chassis": "Engineering the lightweight structural foundation.",
+  "Suspension": "Maximizing mechanical grip and vehicle dynamics.",
+  "Brakes": "Engineering precision deceleration and control.",
+};
 
 function MemberCard3D({ member }: { member: any }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -109,6 +83,34 @@ export default function MembersPage() {
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const y = useTransform(scrollYProgress, [0, 0.2], [0, 100]);
+  
+  const [domains, setDomains] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from('members').select('*').order('created_at', { ascending: true });
+      
+      if (data && data.length > 0) {
+        const grouped = data.reduce((acc, member) => {
+          if (!acc[member.department]) acc[member.department] = [];
+          acc[member.department].push(member);
+          return acc;
+        }, {} as Record<string, any[]>);
+
+        const formattedDomains = Object.keys(DOMAIN_DESCRIPTIONS).map(dept => ({
+          name: dept,
+          description: DOMAIN_DESCRIPTIONS[dept],
+          members: grouped[dept] || []
+        })).filter(d => d.members.length > 0);
+
+        setDomains(formattedDomains);
+      }
+      setLoading(false);
+    };
+    fetchMembers();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-racing-red selection:text-white pb-0 pt-24 overflow-x-hidden">
@@ -128,9 +130,14 @@ export default function MembersPage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-6xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter italic text-transparent bg-clip-text bg-gradient-to-b from-white to-white/20"
+              className="text-6xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter italic text-transparent bg-clip-text bg-gradient-to-b from-white to-white/20 pr-8 pb-4 relative"
             >
               The Crew
+              <motion.div 
+                className="absolute inset-0 bg-white/10 blur-[80px] rounded-full mix-blend-screen -z-10 pointer-events-none" 
+                animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.5, 0.2] }} 
+                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} 
+              />
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0 }}
@@ -144,8 +151,18 @@ export default function MembersPage() {
         </section>
 
         {/* Domains Section */}
-        <section className="max-w-7xl mx-auto px-4 md:px-16 py-12 relative z-10 flex flex-col gap-32 mb-24">
-          {DOMAINS.map((domain, index) => (
+        <section className="max-w-7xl mx-auto px-4 md:px-16 py-12 relative z-10 flex flex-col gap-32 mb-24 min-h-[50vh]">
+          {loading ? (
+            <div className="flex justify-center items-center py-32 opacity-50">
+               <div className="animate-pulse flex items-center gap-4 text-racing-red font-mono tracking-widest uppercase">
+                 Fetching Active Roster...
+               </div>
+            </div>
+          ) : domains.length === 0 ? (
+            <div className="text-center text-white/50 py-32 font-mono uppercase tracking-widest">
+               No members currently assigned to the team.
+            </div>
+          ) : domains.map((domain, index) => (
             <div key={domain.name} className="flex flex-col gap-12">
               <motion.div 
                 initial={{ opacity: 0, x: -30 }}

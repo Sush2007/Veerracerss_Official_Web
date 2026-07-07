@@ -18,7 +18,7 @@ export function Hero() {
     <section 
       ref={containerRef}
       id="hero" 
-      className="relative h-screen min-h-[600px] w-full flex flex-col items-center justify-center overflow-hidden bg-black"
+      className="relative h-[100dvh] min-h-[600px] w-full flex flex-col items-center justify-center overflow-hidden bg-black"
     >
       {/* Cinematic Video Background - Fully Visible */}
       <motion.div 
@@ -43,7 +43,7 @@ export function Hero() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2, delay: 0.4, ease: "easeOut" }}
-          className="font-hero text-4xl sm:text-5xl md:text-[80px] lg:text-[110px] xl:text-[140px] leading-[1.1] tracking-wider uppercase text-white drop-shadow-[0_0_20px_rgba(255,30,0,0.8)] w-full overflow-hidden text-ellipsis whitespace-nowrap md:whitespace-normal"
+          className="font-hero text-[11vw] sm:text-5xl md:text-[80px] lg:text-[110px] xl:text-[140px] leading-[1.1] tracking-wider uppercase text-white drop-shadow-[0_0_20px_rgba(255,30,0,0.8)] w-full break-words"
           style={{ WebkitTextStroke: '2px white' }}
         >
           TEAM VEERRACERSS
@@ -65,9 +65,9 @@ export function Hero() {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 1.2 }}
-        className="absolute bottom-4 md:bottom-8 left-4 md:left-12 lg:left-24 right-4 md:right-auto z-20"
+        className="absolute bottom-6 md:bottom-8 left-4 right-4 md:left-12 lg:left-24 md:right-auto z-20 pb-safe"
       >
-        <div className="grid grid-cols-2 md:flex md:flex-wrap gap-4 sm:gap-8 md:gap-16 lg:gap-24 w-full">
+        <div className="grid grid-cols-2 md:flex md:flex-wrap gap-y-4 gap-x-2 sm:gap-8 md:gap-16 lg:gap-24 w-full">
           <div className="flex flex-col items-start group">
             <div className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-mono text-racing-red font-black tracking-tighter mb-1 drop-shadow-[0_0_15px_rgba(255,30,0,0.6)]">
               <Counter value={11} suffix="+" />
