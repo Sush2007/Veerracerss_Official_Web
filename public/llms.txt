@@ -1,0 +1,46 @@
+# VeerRacerss Electric
+
+> Official Formula Student Electric Racing Team of Veer Surendra Sai University of Technology (VSSUT), Burla, Odisha, India.
+
+## Overview
+VeerRacerss Electric is an undergraduate engineering motorsport team founded in 2018 at VSSUT Burla. The team designs, engineers, fabricates, and races high-voltage electric formula race cars. VeerRacerss engineered **AETHER**, the first electric formula race car built by an engineering college in the state of Odisha, India.
+
+## Key Facts
+- **Institution**: Veer Surendra Sai University of Technology (VSSUT), Burla, Sambalpur, Odisha 768018, India
+- **Founded**: 2018
+- **Discipline**: Formula Student / Formula Bharat / Formula SAE Electric
+- **Current Premier Vehicle**: AETHER (72V Li-ion, 10 kW PMSM Motor, 0-100 km/h in 3.8s, Top Speed 115 km/h)
+- **Previous Fleet**: ZEUS 1.0 (Electric), VENTUS 5.0, VENTUS 4.0, VENTUS 16.3, VENTUS 15.2 (Combustion heritage)
+- **Podiums & Honors**:
+  - P3 Overall Podium (Electric Category) at Formula Imperial (Buddh International Circuit)
+  - National Best Business Plan Presentation Award
+  - Lightweight Engineering Design Award
+  - Endurance Masters Completion
+- **Sanctioning Bodies & Competitions**: Formula Bharat, Formula Imperial (ISIE India), SUPRA SAEINDIA, FFS India
+
+## Technical Architecture (AETHER Specification)
+- **Powertrain**: 10 kW Continuous / High-torque peak Permanent Magnet Synchronous Motor (PMSM)
+- **Energy Storage**: Custom 72V Lithium-ion Battery Pack with proprietary Battery Management System (BMS)
+- **Chassis**: High-torsional-rigidity tubular spaceframe structure
+- **Aerodynamics**: High-downforce carbon composite multi-element front wing, rear wing with DRS provision, and ground-effect undertray
+- **Suspension**: Pushrod-actuated double wishbone with adjustable coil-over dampers
+- **Braking**: Dual-circuit hydraulic disc brakes with integrated regenerative braking capture
+- **Safety**: Fully compliant with Formula Student EV safety standards (TSAL, HVIL, IMD, BSPD)
+
+## Team Organization
+- **Academic Patronage**: Faculty advisors from Electrical, Mechanical, and Production Engineering at VSSUT Burla
+- **Active Divisions**:
+  1. Powertrain & High Voltage Electronics
+  2. Battery Management Systems (BMS) & Thermal Management
+  3. Aerodynamics & CFD
+  4. Vehicle Dynamics, Chassis & Suspension
+  5. Telemetry, DAQ & Embedded Firmware
+  6. Corporate Operations, Sponsorship & Media
+
+## Contact & Location
+- **Official Website**: https://veerracerss-official-web.vercel.app
+- **Email**: tech@veerracerss.org
+- **Phone**: +91 9967624731
+- **Address**: Veer Surendra Sai University of Technology, Burla, Sambalpur, Odisha 768018, India
+- **LinkedIn**: https://www.linkedin.com/company/veerracerss
+- **Instagram**: https://instagram.com/veerracerss

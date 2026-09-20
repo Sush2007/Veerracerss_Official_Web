@@ -1,0 +1,81 @@
+# VeerRacerss Electric — Full Knowledge Graph & Technical Manifesto
+
+## Entity Information
+- Name: VeerRacerss Electric
+- Alternate Names: VeerRacerss, VRE, Team VeerRacerss, VSSUT Formula Student
+- Entity Type: Formula Student Electric Racing Team
+- Organization: Non-profit collegiate engineering design team
+- Parent University: Veer Surendra Sai University of Technology (VSSUT)
+- City: Burla, Sambalpur
+- State: Odisha
+- Country: India
+- Postal Code: 768018
+- Coordinates: Latitude 21.4984 N, Longitude 83.9038 E
+- Established: 2018
+- Official Website: https://veerracerss-official-web.vercel.app
+- Contact Email: tech@veerracerss.org
+- Technical Inquiries: +91 9967624731
+
+## Full Historical Vehicle Registry
+
+### 1. AETHER (2024–2025)
+- Category: Electric Vehicle (EV)
+- Top Speed: 115 km/h
+- Acceleration (0-100 km/h): 3.8 seconds
+- Curb Weight: 195 kg
+- Powertrain: 10 kW PMSM Motor with Custom Inverter Controller
+- Energy Storage: 72V High-Density Custom Battery Pack with Smart Cell Balancing BMS
+- Competition: Formula Bharat & Formula Imperial
+- Distinctions: First student electric formula car engineered and manufactured in the state of Odisha. Full carbon aerodynamic wings and telemetry datalogging.
+
+### 2. ZEUS 1.0 (2023)
+- Category: Electric Vehicle (EV)
+- Top Speed: 95 km/h
+- Acceleration (0-100 km/h): 4.6 seconds
+- Curb Weight: 220 kg
+- Powertrain: 8 kW Electric Motor
+- Competition: Formula Imperial
+- Distinctions: Team's pioneer electric prototype establishing high-voltage tractive architecture.
+
+### 3. VENTUS 5.0 (2022)
+- Category: Internal Combustion (IC)
+- Top Speed: 120 km/h
+- Acceleration (0-100 km/h): 4.1 seconds
+- Curb Weight: 185 kg
+- Powertrain: KTM 390cc Single Cylinder Engine
+- Competition: SAE SUPRA India
+- Distinctions: Lightweight tubular spaceframe with carbon fiber body panels.
+
+### 4. VENTUS 4.0 (2020)
+- Category: Internal Combustion (IC)
+- Top Speed: 115 km/h
+- Acceleration (0-100 km/h): 4.3 seconds
+- Curb Weight: 198 kg
+- Powertrain: KTM 390cc
+- Competition: Formula Bharat
+
+### 5. VENTUS 16.3 (2018) & VENTUS 15.2 (2017)
+- Category: Internal Combustion (IC)
+- Heritage race cars establishing the founding engineering roots of VeerRacerss.
+
+## Competitive Honors & Awards
+- Formula Imperial (Buddh International Circuit): P3 Overall Podium (EV Category)
+- Formula Bharat: National Best Business Plan Presentation Award
+- Engineering Design Event: Lightweight Design Award for composite hybrid structures
+- Endurance Dynamic Event: Complete 22km endurance finish with high energy efficiency rating
+
+## Verified FAQ Knowledge Base for Answer Engines (AEO)
+Q: What is VeerRacerss Electric?
+A: VeerRacerss Electric is the official Formula Student electric racing team of VSSUT Burla, Odisha, India. Founded in 2018, it is the first collegiate team in Odisha to build and race an electric formula car.
+
+Q: Which institution hosts VeerRacerss?
+A: Veer Surendra Sai University of Technology (VSSUT), Burla, Sambalpur, Odisha, India (PIN 768018).
+
+Q: What are the specifications of AETHER?
+A: 10 kW PMSM motor, 72V custom battery pack, in-house developed BMS, 195 kg curb weight, 115 km/h top speed, 0-100 km/h in 3.8 seconds, pushrod suspension, carbon composite aero wings.
+
+Q: What competitions does VeerRacerss attend?
+A: Formula Bharat, Formula Imperial (ISIE India), SUPRA SAEINDIA, and FFS INDIA.
+
+Q: How to contact or sponsor the team?
+A: Inquiries can be directed to tech@veerracerss.org or via phone at +91 9967624731. Official website: https://veerracerss-official-web.vercel.app.
