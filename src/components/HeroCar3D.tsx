@@ -1,10 +1,9 @@
 "use client";
 
 import React, { Suspense, useRef, useState, useEffect } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Center, ContactShadows, Environment } from "@react-three/drei";
 import * as THREE from "three";
-import { RotateCw, Eye } from "lucide-react";
 
 function HeroCarModel({ 
   isInteracting, 
@@ -134,28 +133,48 @@ function HeroCarModel({
         <primitive 
           object={clonedScene} 
           rotation={[-Math.PI / 2, 0, -Math.PI / 3]} 
-          scale={isMobile ? 0.92 : 1.18}
+          scale={isMobile ? 1.08 : 1.18}
         />
       </Center>
     </group>
   );
 }
 
+function CameraController({ isMobile }: { isMobile: boolean }) {
+  const { camera } = useThree();
+  useEffect(() => {
+    if (isMobile) {
+      camera.position.set(3.0, 1.25, 3.6);
+      if ('fov' in camera) {
+        (camera as THREE.PerspectiveCamera).fov = 42;
+        camera.updateProjectionMatrix();
+      }
+    } else {
+      camera.position.set(3.4, 1.4, 4.4);
+      if ('fov' in camera) {
+        (camera as THREE.PerspectiveCamera).fov = 38;
+        camera.updateProjectionMatrix();
+      }
+    }
+  }, [isMobile, camera]);
+  return null;
+}
+
 function HeroLoader() {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-      <div className="w-14 h-14 border-2 border-white/10 border-t-racing-red rounded-full animate-spin mb-4"></div>
-      <span className="text-[11px] font-mono tracking-[0.25em] uppercase text-white/60">
+      <div className="w-12 h-12 sm:w-14 sm:h-14 border-2 border-white/10 border-t-racing-red rounded-full animate-spin mb-3 sm:mb-4"></div>
+      <span className="text-[10px] sm:text-[11px] font-mono tracking-[0.25em] uppercase text-white/60">
         RENDERING SOLIDWORKS DIGITAL TWIN...
       </span>
-      <span className="text-white/30 text-[9px] font-mono mt-1">APPLYING DOUBLE-SIDED AUTOMOTIVE SHADERS</span>
+      <span className="text-white/30 text-[8px] sm:text-[9px] font-mono mt-1">APPLYING DOUBLE-SIDED AUTOMOTIVE SHADERS</span>
     </div>
   );
 }
 
 export default function HeroCar3D() {
   const [isInteracting, setIsInteracting] = useState(false);
-  const [autoRotate, setAutoRotate] = useState(true);
+  const [autoRotate] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const controlsRef = useRef<any>(null);
@@ -163,22 +182,16 @@ export default function HeroCar3D() {
   useEffect(() => {
     setMounted(true);
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 1024);
     };
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const handleReset = () => {
-    if (controlsRef.current) {
-      controlsRef.current.reset();
-    }
-  };
-
   if (!mounted) {
     return (
-      <div className="relative w-full h-[400px] sm:h-[500px] md:h-[620px] lg:h-[700px] flex items-center justify-center">
+      <div className="relative w-full h-[240px] min-[380px]:h-[270px] min-[440px]:h-[310px] sm:h-[390px] md:h-[480px] lg:h-[620px] xl:h-[680px] flex items-center justify-center">
         <HeroLoader />
       </div>
     );
@@ -186,45 +199,21 @@ export default function HeroCar3D() {
 
   return (
     <div 
-      className="relative w-full h-[400px] sm:h-[500px] md:h-[620px] lg:h-[700px] cursor-grab active:cursor-grabbing select-none touch-manipulation"
+      className="relative w-full h-[240px] min-[380px]:h-[270px] min-[440px]:h-[310px] sm:h-[390px] md:h-[480px] lg:h-[620px] xl:h-[680px] cursor-grab active:cursor-grabbing select-none touch-manipulation"
       onPointerDown={() => setIsInteracting(true)}
       onPointerUp={() => setTimeout(() => setIsInteracting(false), 2000)}
     >
-      {/* HUD Floating Mini Controls */}
-      <div className="absolute top-2 right-2 md:top-4 md:right-4 z-10 flex items-center gap-2 pointer-events-auto">
-        <button
-          onClick={() => setAutoRotate(!autoRotate)}
-          className={`px-2.5 sm:px-3 py-1.5 text-[9px] sm:text-[10px] font-sans font-bold tracking-wider uppercase border transition-all flex items-center gap-1.5 ${
-            autoRotate
-              ? "bg-racing-red/90 text-white border-racing-red shadow-[0_0_15px_rgba(210,39,48,0.4)]"
-              : "bg-black/60 text-white/60 border-white/10 hover:text-white"
-          }`}
-          title="Toggle 360 Spin"
-        >
-          <RotateCw className="w-3 h-3" />
-          <span>{autoRotate ? "SPINNING" : "PAUSED"}</span>
-        </button>
-
-        <button
-          onClick={handleReset}
-          className="px-2.5 sm:px-3 py-1.5 text-[9px] sm:text-[10px] font-sans font-bold tracking-wider uppercase bg-black/60 text-white/60 border border-white/10 hover:text-white hover:border-white/30 transition-all flex items-center gap-1.5"
-          title="Reset Camera"
-        >
-          <Eye className="w-3 h-3" />
-          <span>RESET</span>
-        </button>
-      </div>
-
       <Suspense fallback={<HeroLoader />}>
         <Canvas
           shadows
           camera={{ 
-            position: isMobile ? [4.6, 1.8, 5.6] : [3.4, 1.4, 4.4], 
+            position: isMobile ? [3.0, 1.25, 3.6] : [3.4, 1.4, 4.4], 
             fov: isMobile ? 42 : 38 
           }}
           className="w-full h-full"
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         >
+          <CameraController isMobile={isMobile} />
           {/* HDR Environment Map for Metallic Reflections */}
           <Environment preset="city" />
 
@@ -256,7 +245,7 @@ export default function HeroCar3D() {
           <ContactShadows
             position={[0, -0.84, 0]}
             opacity={0.85}
-            scale={isMobile ? 7.5 : 8.5}
+            scale={isMobile ? 7.2 : 8.5}
             blur={2.0}
             far={3.5}
             resolution={512}

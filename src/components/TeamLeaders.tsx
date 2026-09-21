@@ -52,7 +52,7 @@ export function TeamLeaders() {
                 <img 
                   src={leader.image} 
                   alt={leader.name} 
-                  className="w-full h-full object-cover grayscale contrast-115 group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ease-out" 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ease-out" 
                 />
                 <div className="absolute top-0 right-0 bg-racing-red px-2.5 sm:px-3 py-1 text-[9px] sm:text-[10px] font-sans font-bold tracking-widest uppercase text-white">
                   {leader.role.split(' ')[0]}
