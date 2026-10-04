@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80" fill="none">
+  <!-- Racing Wheel / Burnout Emblem -->
+  <g transform="translate(15, 14)">
+    <!-- Outer Tyre Circle -->
+    <circle cx="26" cy="26" r="24" stroke="#D22730" stroke-width="4" fill="#111111" />
+    <circle cx="26" cy="26" r="16" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="4 3" fill="none" opacity="0.6" />
+    <!-- Hub Center -->
+    <circle cx="26" cy="26" r="7" fill="#D22730" />
+    <!-- Burnout Flame / Smoke Streaks -->
+    <path d="M4 14 C-4 10, -10 18, -14 16 C-8 24, -2 24, 6 20" stroke="#FF6B00" stroke-width="3" stroke-linecap="round" fill="none" />
+    <path d="M2 36 C-6 38, -12 44, -16 42 C-10 48, -4 46, 4 40" stroke="#D22730" stroke-width="2.5" stroke-linecap="round" fill="none" />
+    <!-- Speed Lines -->
+    <line x1="-12" y1="26" x2="-2" y2="26" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.5" />
+  </g>
+
+  <!-- Typography: BURNOUT BY 3 BROTHERS -->
+  <g transform="translate(78, 18)">
+    <text x="0" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-weight="900" font-style="italic" font-size="31" fill="#FFFFFF" letter-spacing="1">BURNOUT</text>
+    <text x="2" y="47" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="10.5" fill="#FF6B00" letter-spacing="3.5">BY 3 BROTHERS</text>
+  </g>
+</svg>

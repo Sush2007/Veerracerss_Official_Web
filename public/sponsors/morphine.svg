@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" fill="none">
+  <!-- Dynamic Racing "M" Crest -->
+  <g transform="translate(14, 15)">
+    <!-- Racing Slanted M -->
+    <path d="M4 48 L14 4 L26 4 L34 30 L42 4 L54 4 L64 48 L50 48 L44 20 L37 44 L31 44 L24 20 L18 48 Z" fill="#D22730" />
+    <!-- Dynamic Aerodynamic Wing Slits -->
+    <path d="M0 48 L10 12 L15 12 L7 48 Z" fill="#FF444C" opacity="0.8" />
+    <path d="M48 48 L56 22 L60 22 L54 48 Z" fill="#881014" />
+    <line x1="2" y1="52" x2="66" y2="52" stroke="#D22730" stroke-width="2" />
+  </g>
+
+  <!-- Typography: MORPHINE MOTORSPORTS -->
+  <g transform="translate(90, 20)">
+    <text x="0" y="29" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-weight="900" font-style="italic" font-size="29" fill="#FFFFFF" letter-spacing="2">MORPHINE</text>
+    <text x="2" y="47" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="11" fill="#D22730" letter-spacing="4.5">MOTORSPORTS</text>
+  </g>
+</svg>

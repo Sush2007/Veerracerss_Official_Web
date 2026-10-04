@@ -1,17 +1,16 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://veerracerss-official-web.vercel.app';
-
   return {
     rules: [
       {
         userAgent: '*',
+        // Allow bots to crawl and read the 'noindex' meta tag and X-Robots-Tag header so they drop the site from search indexes
         allow: '/',
         disallow: ['/admin/', '/admin/dashboard', '/admin/login'],
       },
       {
-        // Generative & Answer Engine Optimization (GEO/AEO) Bots
+        // Disallow all AI & training crawlers from scraping the temporary data
         userAgent: [
           'GPTBot',
           'ChatGPT-User',
@@ -23,10 +22,8 @@ export default function robots(): MetadataRoute.Robots {
           'CCBot',
           'cohere-ai'
         ],
-        allow: ['/', '/about', '/cars', '/members', '/achievements', '/llms.txt', '/llms-full.txt'],
-        disallow: ['/admin/'],
+        disallow: ['/'],
       }
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
   };
 }

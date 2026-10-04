@@ -3,9 +3,44 @@
 import { motion } from "motion/react";
 import Link from "next/link";
 
-const SPONSORS = [
-  "BOSCH", "DANA", "DENSO", "EDAG", 
-  "Bibus", "motorsport.com", "SKF", "vector"
+interface Sponsor {
+  name: string;
+  category: string;
+  logo: string;
+  url: string;
+}
+
+const SPONSORS: Sponsor[] = [
+  {
+    name: "SolidWorks",
+    category: "3D CAD & Digital Twin",
+    logo: "/sponsors/solidworks.svg",
+    url: "https://www.solidworks.com"
+  },
+  {
+    name: "Ansys",
+    category: "Simulation & FEA/CFD",
+    logo: "/sponsors/ansys.svg",
+    url: "https://www.ansys.com"
+  },
+  {
+    name: "Bender",
+    category: "Electrical Safety & IMD",
+    logo: "/sponsors/bender.svg",
+    url: "https://www.bender.de"
+  },
+  {
+    name: "Morphine Motorsports",
+    category: "Motorsport & Racing",
+    logo: "/sponsors/morphine.svg",
+    url: "https://www.gomorphine.com"
+  },
+  {
+    name: "Burnout by 3 Brothers",
+    category: "Precision Engineering & Drivetrain",
+    logo: "/sponsors/burnout3brothers.svg",
+    url: "https://www.facebook.com/3BrothersAhmedabad/"
+  }
 ];
 
 export function Partners() {
@@ -33,27 +68,33 @@ export function Partners() {
           </motion.div>
         </div>
 
-        <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8 mb-10 sm:mb-16 relative">
-          {/* Subtle grid lines for the logos */}
-          <div className="absolute inset-0 border border-white/5 pointer-events-none hidden md:block"></div>
-          <div className="absolute top-1/2 left-0 w-full h-[1px] bg-white/5 pointer-events-none hidden md:block"></div>
-          <div className="absolute top-0 left-1/4 w-[1px] h-full bg-white/5 pointer-events-none hidden md:block"></div>
-          <div className="absolute top-0 left-2/4 w-[1px] h-full bg-white/5 pointer-events-none hidden md:block"></div>
-          <div className="absolute top-0 left-3/4 w-[1px] h-full bg-white/5 pointer-events-none hidden md:block"></div>
-          
+        {/* Partners Grid */}
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-12 sm:mb-16">
           {SPONSORS.map((sponsor, idx) => (
-            <motion.div
-              key={sponsor}
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+            <motion.a
+              key={sponsor.name}
+              href={sponsor.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: idx * 0.05 }}
-              className="h-20 sm:h-24 flex items-center justify-center group cursor-pointer grayscale hover:grayscale-0 opacity-50 hover:opacity-100 transition-all duration-500 relative z-10 hover:bg-white/[0.02] border border-white/5 md:border-none"
+              transition={{ duration: 0.5, delay: idx * 0.08 }}
+              className={`group flex flex-col items-center justify-center p-6 rounded-sm bg-[#111111]/80 backdrop-blur-sm border border-white/10 hover:border-racing-red/50 transition-all duration-300 hover:shadow-[0_0_25px_rgba(210,39,48,0.2)] hover:-translate-y-1 ${
+                idx === 4 ? "sm:col-span-2 lg:col-span-1" : ""
+              }`}
             >
-              <span className="font-display font-bold text-xl sm:text-2xl md:text-3xl text-white tracking-wider group-hover:scale-110 transition-transform duration-500">
-                {sponsor}
+              <div className="h-16 sm:h-20 w-full flex items-center justify-center mb-3">
+                <img
+                  src={sponsor.logo}
+                  alt={`${sponsor.name} logo`}
+                  className="max-h-full max-w-[85%] object-contain filter brightness-95 contrast-105 group-hover:brightness-110 group-hover:scale-105 transition-all duration-300"
+                />
+              </div>
+              <span className="text-[10px] font-mono tracking-widest text-neutral-400 uppercase text-center group-hover:text-racing-red transition-colors duration-300">
+                {sponsor.category}
               </span>
-            </motion.div>
+            </motion.a>
           ))}
         </div>
 

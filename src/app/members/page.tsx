@@ -13,6 +13,11 @@ export const metadata: Metadata = {
     'VSSUT automotive club members',
     'Formula Bharat team roster'
   ],
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
   alternates: {
     canonical: 'https://veerracerss-official-web.vercel.app/members',
   },

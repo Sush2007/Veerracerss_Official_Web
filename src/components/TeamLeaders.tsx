@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { ArrowRight, Linkedin } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { CORE_LEADERSHIP } from "@/src/data/team_database";
 
 export function TeamLeaders() {
@@ -68,23 +68,9 @@ export function TeamLeaders() {
               <p className="text-white/40 font-sans text-[11px] sm:text-xs uppercase tracking-wider mb-3 sm:mb-4 font-mono">
                 {leader.subgroup}
               </p>
-              <p className="text-white/60 font-sans text-xs font-light leading-relaxed mb-5 sm:mb-6 flex-grow">
+              <p className="text-white/60 font-sans text-xs font-light leading-relaxed">
                 {leader.description}
               </p>
-
-              <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-                {leader.linkedin && (
-                  <a 
-                    href={leader.linkedin} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-white/50 hover:text-white inline-flex items-center gap-2 text-xs font-sans font-bold uppercase tracking-wider transition-colors"
-                  >
-                    <Linkedin className="w-4 h-4 text-racing-red" />
-                    <span>LINKEDIN</span>
-                  </a>
-                )}
-              </div>
             </motion.div>
           ))}
         </div>

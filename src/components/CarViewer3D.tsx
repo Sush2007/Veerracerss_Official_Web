@@ -17,17 +17,10 @@ function CarModel({ autoRotate }: { autoRotate: boolean }) {
     clone.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-
-        if (mesh.geometry) {
-          mesh.geometry.computeVertexNormals();
-        }
         
         if (mesh.material) {
           const mat = mesh.material as THREE.MeshStandardMaterial;
           mat.side = THREE.DoubleSide;
-          mat.shadowSide = THREE.DoubleSide;
           mat.roughness = Math.max(0.2, mat.roughness ?? 0.4);
           mat.metalness = Math.min(0.85, mat.metalness ?? 0.5);
           mat.envMapIntensity = 1.4;
@@ -149,7 +142,7 @@ export default function CarViewer3D() {
       {/* Canvas 3D Viewport */}
       <Suspense fallback={<Loader />}>
         <Canvas
-          shadows
+          dpr={[1, 1.5]}
           camera={{ position: [3.5, 2.0, 4.5], fov: 42 }}
           className="w-full h-full cursor-grab active:cursor-grabbing"
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
@@ -159,12 +152,6 @@ export default function CarViewer3D() {
           <directionalLight
             position={[10, 15, 10]}
             intensity={1.8}
-            castShadow
-            shadow-mapSize={[2048, 2048]}
-            shadow-camera-left={-5}
-            shadow-camera-right={5}
-            shadow-camera-top={5}
-            shadow-camera-bottom={-5}
           />
           {/* Subtle Red Rim Light */}
           <directionalLight position={[-10, 8, -10]} intensity={1.2} color="#D22730" />
@@ -178,9 +165,9 @@ export default function CarViewer3D() {
             position={[0, 0, 0]}
             opacity={0.85}
             scale={10}
-            blur={1.8}
+            blur={2.0}
             far={4}
-            resolution={512}
+            resolution={256}
             color="#000000"
           />
 

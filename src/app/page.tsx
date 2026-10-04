@@ -1,7 +1,6 @@
 import { Hero } from '../components/Hero';
 import { StatsStrip } from '../components/StatsStrip';
 import { About } from '../components/About';
-import { News } from '../components/News';
 import { Faculty } from '../components/Faculty';
 import { TeamLeaders } from '../components/TeamLeaders';
 import { Partners } from '../components/Partners';
@@ -14,7 +13,6 @@ export default function Home() {
       <Hero />
       <StatsStrip />
       <About />
-      <News />
       <Faculty />
       <TeamLeaders />
       <Partners />

@@ -1,5 +1,5 @@
 "use client";
-import { Share2, Mail, ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 
 export function Members() {
@@ -36,12 +36,6 @@ export function Members() {
           <div className="absolute bottom-0 left-0 p-6 w-full">
             <p className="text-[10px] uppercase tracking-widest text-[#FF3E00] font-bold mb-2">TEAM CAPTAIN</p>
             <h4 className="text-xl font-bold uppercase tracking-wider">Arjun Mehta</h4>
-            <div className="h-0 group-hover:h-8 transition-all duration-300 overflow-hidden mt-2">
-              <div className="flex gap-4 text-white/50">
-                <Share2 className="w-4 h-4 cursor-pointer hover:text-white transition-colors" />
-                <Mail className="w-4 h-4 cursor-pointer hover:text-white transition-colors" />
-              </div>
-            </div>
           </div>
         </div>
         {/* Member 2 */}
@@ -51,12 +45,6 @@ export function Members() {
           <div className="absolute bottom-0 left-0 p-6 w-full">
             <p className="text-[10px] uppercase tracking-widest text-inverse-primary font-bold mb-2">AERO LEAD</p>
             <h4 className="text-xl font-bold uppercase tracking-wider">Sanya Verma</h4>
-            <div className="h-0 group-hover:h-8 transition-all duration-300 overflow-hidden mt-2">
-              <div className="flex gap-4 text-white/50">
-                <Share2 className="w-4 h-4 cursor-pointer hover:text-white transition-colors" />
-                <Mail className="w-4 h-4 cursor-pointer hover:text-white transition-colors" />
-              </div>
-            </div>
           </div>
         </div>
         {/* Member 3 */}
@@ -66,12 +54,6 @@ export function Members() {
           <div className="absolute bottom-0 left-0 p-6 w-full">
             <p className="text-[10px] uppercase tracking-widest text-[#FF3E00] font-bold mb-2">POWERTRAIN LEAD</p>
             <h4 className="text-xl font-bold uppercase tracking-wider">Rohan Gupta</h4>
-            <div className="h-0 group-hover:h-8 transition-all duration-300 overflow-hidden mt-2">
-              <div className="flex gap-4 text-white/50">
-                <Share2 className="w-4 h-4 cursor-pointer hover:text-white transition-colors" />
-                <Mail className="w-4 h-4 cursor-pointer hover:text-white transition-colors" />
-              </div>
-            </div>
           </div>
         </div>
         {/* Member 4 */}
@@ -81,12 +63,6 @@ export function Members() {
           <div className="absolute bottom-0 left-0 p-6 w-full">
             <p className="text-[10px] uppercase tracking-widest text-[#FF3E00] font-bold mb-2">CHASSIS LEAD</p>
             <h4 className="text-xl font-bold uppercase tracking-wider">Anjali Rao</h4>
-            <div className="h-0 group-hover:h-8 transition-all duration-300 overflow-hidden mt-2">
-              <div className="flex gap-4 text-white/50">
-                <Share2 className="w-4 h-4 cursor-pointer hover:text-white transition-colors" />
-                <Mail className="w-4 h-4 cursor-pointer hover:text-white transition-colors" />
-              </div>
-            </div>
           </div>
         </div>
       </div>

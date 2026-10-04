@@ -12,6 +12,11 @@ export const metadata: Metadata = {
     'Best Business Plan Formula Bharat',
     'Lightweight design award formula student'
   ],
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
   alternates: {
     canonical: 'https://veerracerss-official-web.vercel.app/achievements',
   },

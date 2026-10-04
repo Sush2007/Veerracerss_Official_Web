@@ -1,6 +1,5 @@
 "use client";
 import { motion } from "motion/react";
-import { Shield, ExternalLink } from "lucide-react";
 import { FACULTY_ADVISORS } from "@/src/data/team_database";
 
 export function Faculty() {
@@ -57,21 +56,10 @@ export function Faculty() {
                 {faculty.department}
               </p>
               
-              <div className="mt-auto pt-4 border-t border-white/5 w-full flex items-center justify-between">
+              <div className="mt-auto pt-4 border-t border-white/5 w-full flex items-center justify-center">
                 <span className="text-white/30 font-sans text-[10px] tracking-widest uppercase">
                   {faculty.tenure}
                 </span>
-                {faculty.profileUrl && faculty.profileUrl !== "#" && (
-                  <a 
-                    href={faculty.profileUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-white/40 hover:text-white inline-flex items-center gap-1 text-[10px] font-sans font-bold tracking-wider uppercase transition-colors"
-                  >
-                    <span>PROFILE</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
               </div>
             </motion.div>
           ))}

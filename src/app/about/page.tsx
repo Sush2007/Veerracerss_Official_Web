@@ -12,6 +12,11 @@ export const metadata: Metadata = {
     'Pinnacle moments VeerRacerss',
     'VSSUT motorsports club'
   ],
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
   alternates: {
     canonical: 'https://veerracerss-official-web.vercel.app/about',
   },

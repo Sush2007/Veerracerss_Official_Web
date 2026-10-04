@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" fill="none">
+  <!-- SolidWorks Iconic 3D Isometric Cube -->
+  <g transform="translate(15, 12)">
+    <!-- Top Face -->
+    <path d="M28 2 L52 16 L28 30 L4 16 Z" fill="#E6222A" />
+    <!-- Left Face -->
+    <path d="M4 16 L28 30 L28 58 L4 44 Z" fill="#B3171D" />
+    <!-- Right Face -->
+    <path d="M28 30 L52 16 L52 44 L28 58 Z" fill="#881014" />
+    <!-- SW Cutout Accent Highlight -->
+    <path d="M28 10 L44 19 L28 28 L12 19 Z" fill="#FF444C" opacity="0.4" />
+    <path d="M12 25 L24 32 L24 48 L12 41 Z" fill="#FFFFFF" opacity="0.15" />
+    <path d="M32 32 L44 25 L44 41 L32 48 Z" fill="#000000" opacity="0.25" />
+  </g>
+
+  <!-- Typography: DS SOLIDWORKS -->
+  <g transform="translate(85, 26)">
+    <!-- Dassault Systèmes Compass Logo -->
+    <circle cx="10" cy="18" r="9" stroke="#94A3B8" stroke-width="1.8" fill="none" />
+    <path d="M6 22 L14 14 M6 14 L10 14 L10 18" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+    
+    <!-- SOLIDWORKS Text -->
+    <text x="30" y="27" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-weight="900" font-size="27" fill="#FFFFFF" letter-spacing="1">SOLIDWORKS</text>
+    
+    <!-- Subtitle / Tagline -->
+    <text x="31" y="41" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="9.5" fill="#94A3B8" letter-spacing="3.5">DASSAULT SYSTÈMES</text>
+  </g>
+</svg>

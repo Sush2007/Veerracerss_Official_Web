@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useMemo } from "react";
-import { Search, Linkedin, Mail, Users, Shield } from "lucide-react";
+import { Search, Users, Shield } from "lucide-react";
 import { Partners } from "../../components/Partners";
 import { 
   FACULTY_ADVISORS, 
@@ -121,18 +121,9 @@ export function MembersView() {
                 <p className="text-racing-red font-sans text-xs uppercase tracking-wider mb-2 font-bold">
                   {advisor.role}
                 </p>
-                <p className="text-white/40 font-sans text-xs uppercase tracking-wider mb-4 font-mono">
+                <p className="text-white/40 font-sans text-xs uppercase tracking-wider font-mono mt-auto">
                   {advisor.department}
                 </p>
-
-                <a 
-                  href={advisor.profileUrl} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 text-white/50 hover:text-white text-xs font-sans font-bold uppercase tracking-wider transition-colors pt-3 border-t border-white/5 mt-auto"
-                >
-                  <span>OFFICIAL VSSUT PROFILE</span>
-                </a>
               </motion.div>
             ))}
           </div>
@@ -179,21 +170,9 @@ export function MembersView() {
                 <span className="text-white/40 font-sans text-xs uppercase tracking-wider mb-2 font-mono">
                   {leader.subgroup}
                 </span>
-                <p className="text-white/60 font-sans text-xs font-light leading-relaxed mb-4 flex-grow">
+                <p className="text-white/60 font-sans text-xs font-light leading-relaxed">
                   {leader.description}
                 </p>
-
-                {leader.linkedin && (
-                  <a 
-                    href={leader.linkedin} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 text-white/50 hover:text-white text-xs font-sans font-bold uppercase tracking-wider transition-colors pt-3 border-t border-white/5"
-                  >
-                    <Linkedin className="w-3.5 h-3.5 text-racing-red" />
-                    <span>CONNECT ON LINKEDIN</span>
-                  </a>
-                )}
               </motion.div>
             ))}
           </div>
@@ -339,32 +318,6 @@ export function MembersView() {
                         </p>
                       )}
                     </div>
-
-                    {/* Socials */}
-                    {member.socials && Object.keys(member.socials).length > 0 && (
-                      <div className="flex items-center gap-2 mt-3 pt-2 border-t border-white/5">
-                        {member.socials.linkedin && (
-                          <a 
-                            href={member.socials.linkedin} 
-                            target="_blank" 
-                            rel="noreferrer" 
-                            className="text-white/40 hover:text-racing-red transition-colors"
-                            title="LinkedIn"
-                          >
-                            <Linkedin className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                        {member.socials.email && (
-                          <a 
-                            href={`mailto:${member.socials.email}`} 
-                            className="text-white/40 hover:text-racing-red transition-colors"
-                            title="Email"
-                          >
-                            <Mail className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}

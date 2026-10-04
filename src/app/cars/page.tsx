@@ -16,6 +16,11 @@ export const metadata: Metadata = {
     '72V battery pack EV racing',
     'Student formula car engineering Odisha'
   ],
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
   alternates: {
     canonical: 'https://veerracerss-official-web.vercel.app/cars',
   },

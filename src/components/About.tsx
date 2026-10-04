@@ -9,19 +9,39 @@ export function About() {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-16">
         <div className="grid lg:grid-cols-2 gap-10 sm:gap-16 lg:gap-24 items-center">
           
-          {/* Left: Image Placeholder */}
+          {/* Left: Team Photo with Dedicated Title Bar */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, rotate: -2 }}
-            whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ type: "spring", damping: 20, stiffness: 60 }}
-            className="relative aspect-video lg:aspect-[4/3] w-full bg-[#111111] overflow-hidden rounded-none group"
+            className="relative w-full max-w-[520px] mx-auto lg:max-w-none bg-[#111111] overflow-hidden rounded-none group border border-white/10 hover:border-racing-red/40 transition-colors shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col"
           >
-            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1964&auto=format&fit=crop')] bg-cover bg-center opacity-80 group-hover:scale-110 transition-transform duration-1000 ease-out"></div>
-            
-            {/* Minimalist Accents matching video */}
-            <div className="absolute top-0 left-0 w-24 h-24 bg-gradient-to-br from-black/80 to-transparent"></div>
-            <div className="absolute bottom-4 right-4 w-12 h-12 border-b-2 border-r-2 border-racing-red pointer-events-none transition-all duration-500 group-hover:w-16 group-hover:h-16 group-hover:border-white"></div>
+            {/* Dedicated Top Title Bar */}
+            <div className="w-full bg-[#141416] px-3.5 sm:px-4 py-2.5 sm:py-3 border-b border-white/10 flex items-center justify-between z-20">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-racing-red animate-pulse"></span>
+                <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-wider text-white uppercase">
+                  THE OFFICIAL STUDENT FORMULA RACING CLUB
+                </span>
+              </div>
+              <span className="text-[9px] font-mono text-racing-red tracking-widest uppercase font-semibold hidden sm:inline">
+                VSSUT BURLA
+              </span>
+            </div>
+
+            {/* Photo Viewport with object-bottom so the car & team are 100% visible */}
+            <div className="relative aspect-[3/4] sm:aspect-[4/5] lg:aspect-[3/4] w-full overflow-hidden bg-[#0A0A0A]">
+              <img 
+                src="/team/who-we-are.jpg"
+                alt="VeerRacerss Electric - The Official Student Formula Racing Club at VSSUT Burla"
+                className="w-full h-full object-cover object-bottom group-hover:scale-105 transition-transform duration-700 ease-out"
+              />
+              
+              {/* Ambient Bottom Corner Accent */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+              <div className="absolute bottom-4 right-4 w-12 h-12 border-b-2 border-r-2 border-racing-red pointer-events-none transition-all duration-500 group-hover:w-16 group-hover:h-16 group-hover:border-white"></div>
+            </div>
           </motion.div>
 
           {/* Right: Text & Grid */}
@@ -34,7 +54,9 @@ export function About() {
               transition={{ type: "spring", damping: 25, stiffness: 80, delay: 0.2 }}
             >
               <div className="flex items-center gap-3 mb-3 sm:mb-4">
-                <span className="text-racing-red font-sans font-bold tracking-[0.2em] uppercase text-[11px]">ABOUT US</span>
+                <span className="text-racing-red font-sans font-bold tracking-[0.2em] uppercase text-[11px] sm:text-xs">
+                  THE OFFICIAL STUDENT FORMULA RACING CLUB
+                </span>
               </div>
               <h2 className="font-display font-black text-3xl sm:text-4xl md:text-5xl lg:text-6xl uppercase text-white leading-[1.1] mb-4 sm:mb-6 tracking-tight">
                 WHO WE ARE

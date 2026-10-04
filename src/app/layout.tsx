@@ -6,7 +6,7 @@ import { SEO_KEYWORDS, FAQ_AEO_ITEMS, GEO_COORDINATES } from '@/src/data/seo_dat
 export const metadata: Metadata = {
   metadataBase: new URL('https://veerracerss-official-web.vercel.app'),
   title: {
-    default: 'VeerRacerss Electric | Formula Student Team VSSUT Burla | EV Racing India',
+    default: 'VeerRacerss Electric | The Official Student Formula Racing Club | VSSUT Burla',
     template: '%s | VeerRacerss Electric'
   },
   description: 'Official Formula Student electric racing team of VSSUT Burla, Odisha. Designers and fabricators of AETHER, Odisha\'s first collegiate electric formula race car competing in Formula Bharat and Formula Imperial.',
@@ -58,13 +58,15 @@ export const metadata: Metadata = {
     creator: '@veerracerss',
   },
   robots: {
-    index: true,
-    follow: true,
+    index: false,
+    follow: false,
+    nocache: true,
     googleBot: {
-      index: true,
-      follow: true,
+      index: false,
+      follow: false,
+      noimageindex: true,
       'max-video-preview': -1,
-      'max-image-preview': 'large',
+      'max-image-preview': 'none',
       'max-snippet': -1,
     },
   },
@@ -72,11 +74,12 @@ export const metadata: Metadata = {
     google: '4utN8IareDBUNPzl05SNbzh5iO6zjeeo1AOwMth2vhs',
   },
   other: {
+    'robots': 'noindex, nofollow, noarchive, nosnippet',
+    'googlebot': 'noindex, nofollow, noarchive, nosnippet',
     'geo.region': GEO_COORDINATES.region,
     'geo.placename': GEO_COORDINATES.placename,
     'geo.position': `${GEO_COORDINATES.latitude};${GEO_COORDINATES.longitude}`,
     'ICBM': `${GEO_COORDINATES.latitude}, ${GEO_COORDINATES.longitude}`,
-    'revisit-after': '3 days',
     'rating': 'General',
     'distribution': 'Global',
     'classification': 'Formula Student, Electric Vehicle, Motorsport Engineering, Collegiate Racing'
