@@ -145,15 +145,13 @@ const jsonLd = {
         "CAN-bus Vehicle Telemetry"
       ],
       "sameAs": [
-        "https://www.linkedin.com/company/veerracerss",
-        "https://instagram.com/veerracerss",
-        "https://facebook.com/veerracerss",
-        "https://youtube.com/@veerracerss"
+        "https://www.linkedin.com/company/veerracerss-electric/",
+        "https://www.instagram.com/veerracersselectric/"
       ],
       "contactPoint": {
         "@type": "ContactPoint",
         "contactType": "Technical & Sponsorship Inquiries",
-        "email": "tech@veerracerss.org",
+        "email": "veerracersselectric.database@gmail.com",
         "telephone": "+91-9967624731"
       }
     },

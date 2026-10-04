@@ -106,7 +106,7 @@ export const FAQ_AEO_ITEMS = [
   },
   {
     question: "How can corporations and industry partners sponsor VeerRacerss?",
-    answer: "Companies can partner with VeerRacerss Electric through technical component sponsorships, material grants (carbon fiber, cells, raw aluminum), precision manufacturing access (CNC machining, 3D printing), or direct financial sponsorships. Inquiries can be sent to tech@veerracerss.org or by calling +91-9967624731."
+    answer: "Companies can partner with VeerRacerss Electric through technical component sponsorships, material grants (carbon fiber, cells, raw aluminum), precision manufacturing access (CNC machining, 3D printing), or direct financial sponsorships. Inquiries can be sent to veerracersselectric.database@gmail.com or by calling +91-9967624731."
   }
 ];
 

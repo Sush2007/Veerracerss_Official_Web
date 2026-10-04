@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Mail, Phone, MapPin, Instagram, Linkedin, Facebook, Youtube } from "lucide-react";
+import { Mail, Phone, MapPin, Instagram, Linkedin } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -22,17 +22,11 @@ export function Footer() {
               Pushing the frontiers of electric motorsport. Official Formula Student team of VSSUT Burla.
             </p>
             <div className="flex gap-3 sm:gap-4 pt-1 sm:pt-2">
-              <a href="https://www.linkedin.com/company/veerracerss" target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:border-racing-red transition-all" aria-label="LinkedIn">
+              <a href="https://www.linkedin.com/company/veerracerss-electric/" target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:border-racing-red transition-all" aria-label="LinkedIn">
                 <Linkedin className="w-4 h-4" />
               </a>
-              <a href="https://instagram.com/veerracerss" target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:border-racing-red transition-all" aria-label="Instagram">
+              <a href="https://www.instagram.com/veerracersselectric/" target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:border-racing-red transition-all" aria-label="Instagram">
                 <Instagram className="w-4 h-4" />
-              </a>
-              <a href="https://facebook.com/veerracerss" target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:border-racing-red transition-all" aria-label="Facebook">
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a href="https://youtube.com/@veerracerss" target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:border-racing-red transition-all" aria-label="YouTube">
-                <Youtube className="w-4 h-4" />
               </a>
             </div>
           </div>
@@ -55,7 +49,7 @@ export function Footer() {
             <ul className="space-y-4">
               <li className="flex items-start gap-4 text-white/50 text-sm group">
                 <Mail className="w-5 h-5 text-racing-red mt-0.5 shrink-0 group-hover:scale-110 transition-transform" />
-                <a href="mailto:tech@veerracerss.org" className="hover:text-white transition-colors">tech@veerracerss.org</a>
+                <a href="mailto:veerracersselectric.database@gmail.com" className="hover:text-white transition-colors">veerracersselectric.database@gmail.com</a>
               </li>
               <li className="flex items-start gap-4 text-white/50 text-sm group">
                 <Phone className="w-5 h-5 text-racing-red mt-0.5 shrink-0 group-hover:scale-110 transition-transform" />

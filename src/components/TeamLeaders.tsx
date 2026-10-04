@@ -2,9 +2,12 @@
 import { motion } from "motion/react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { CORE_LEADERSHIP } from "@/src/data/team_database";
+import { FINAL_YEAR_LEADERS } from "@/src/data/team_database";
 
 export function TeamLeaders() {
+  // Show only the first row of 4 core executive leaders on the homepage
+  const executiveRow = FINAL_YEAR_LEADERS.slice(0, 4);
+
   return (
     <section className="py-16 sm:py-24 bg-[#111111] relative z-10 border-t border-white/5 overflow-hidden" id="leadership">
       {/* Background Elements */}
@@ -14,7 +17,7 @@ export function TeamLeaders() {
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-white/5 rounded-full blur-[150px] pointer-events-none"></div>
 
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-16 relative z-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6 mb-10 sm:mb-16">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6 mb-10 sm:mb-14">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -33,13 +36,14 @@ export function TeamLeaders() {
             href="/members" 
             className="inline-flex items-center gap-2.5 sm:gap-3 text-racing-red hover:text-white font-sans font-bold text-[11px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase transition-colors group"
           >
-            <span>EXPLORE FULL ROSTER (200+ PROFILES)</span>
+            <span>VIEW FULL TEAM & COUNCIL</span>
             <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 transform group-hover:translate-x-2 transition-transform duration-300" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 sm:mb-16">
-          {CORE_LEADERSHIP.map((leader, index) => (
+        {/* First Row of 4 Core Leaders */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 sm:mb-14">
+          {executiveRow.map((leader, index) => (
             <motion.div 
               key={leader.name}
               initial={{ opacity: 0, y: 20 }}
@@ -75,12 +79,14 @@ export function TeamLeaders() {
           ))}
         </div>
 
+        {/* Centered Button to Redirect to Full Member Page */}
         <div className="text-center">
           <Link 
             href="/members" 
-            className="w-full sm:w-auto bg-transparent border border-white/30 text-white px-6 sm:px-10 py-3.5 sm:py-4 font-sans font-bold text-xs uppercase tracking-[0.18em] sm:tracking-[0.2em] hover:bg-white hover:text-black hover:border-white transition-all duration-300 rounded-none shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] inline-block text-center"
+            className="w-full sm:w-auto bg-transparent border border-white/30 text-white px-8 sm:px-12 py-3.5 sm:py-4 font-sans font-bold text-xs uppercase tracking-[0.18em] sm:tracking-[0.2em] hover:bg-white hover:text-black hover:border-white transition-all duration-300 rounded-none shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] inline-flex items-center justify-center gap-3 group"
           >
-            VIEW ALL SQUAD MEMBERS & ARCHIVES
+            <span>VIEW FULL TEAM & COUNCIL</span>
+            <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1.5 transition-transform duration-300" />
           </Link>
         </div>
       </div>

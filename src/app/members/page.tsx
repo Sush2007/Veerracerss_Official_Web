@@ -2,16 +2,15 @@ import type { Metadata } from 'next';
 import { MembersView } from './MembersView';
 
 export const metadata: Metadata = {
-  title: 'The Racing Squad & Engineering Team Roster | VeerRacerss Electric',
-  description: 'Explore the 200+ student engineers, department heads, and faculty advisors powering VeerRacerss Electric at VSSUT Burla. Discover our councils across 2024, 2025, and 2026.',
+  title: 'The Racing Squad & Council Leadership | VeerRacerss Electric',
+  description: 'Explore the official student council, department heads, and faculty advisors powering VeerRacerss Electric at VSSUT Burla.',
   keywords: [
     'VeerRacerss Team Members',
-    'VSSUT Formula Student roster',
+    'VSSUT Formula Student council',
     'Formula Student team captain VSSUT',
     'VeerRacerss engineering leads',
     'EV racing team members Odisha',
-    'VSSUT automotive club members',
-    'Formula Bharat team roster'
+    'VSSUT automotive club members'
   ],
   robots: {
     index: false,
@@ -22,8 +21,8 @@ export const metadata: Metadata = {
     canonical: 'https://veerracerss-official-web.vercel.app/members',
   },
   openGraph: {
-    title: 'The Racing Squad & Team Roster | VeerRacerss Electric VSSUT',
-    description: 'Meet the 200+ engineers, drivers, and faculty advisors powering Odisha\'s premier Formula Student EV.',
+    title: 'The Racing Squad & Council Leadership | VeerRacerss Electric VSSUT',
+    description: 'Meet the official student council, executive heads, and faculty advisors powering Odisha\'s premier Formula Student EV.',
     url: 'https://veerracerss-official-web.vercel.app/members',
     images: [{ url: 'https://images.unsplash.com/photo-1614026480209-cd9934144671?q=80&w=2070&auto=format&fit=crop', width: 1200, height: 630, alt: 'VeerRacerss Team' }]
   }
@@ -45,7 +44,7 @@ export default function MembersPage() {
           {
             "@type": "ListItem",
             "position": 2,
-            "name": "Team Roster",
+            "name": "Team Leadership",
             "item": "https://veerracerss-official-web.vercel.app/members"
           }
         ]
