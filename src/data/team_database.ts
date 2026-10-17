@@ -39,7 +39,7 @@ export const FACULTY_ADVISORS: FacultyAdvisor[] = [
     role: "Senior Faculty Advisor",
     department: "Mechanical Engineering",
     tenure: "Present",
-    image: "https://veerracersselectric.netlify.app/team/pnanda.png",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/faculty/pnanda.webp",
     profileUrl: "https://www.vssut.ac.in/"
   },
   {
@@ -47,7 +47,7 @@ export const FACULTY_ADVISORS: FacultyAdvisor[] = [
     role: "Faculty Advisor",
     department: "Mechanical Engineering",
     tenure: "Present",
-    image: "https://veerracersselectric.netlify.app/team/debasish%20tripathy.jpg",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/faculty/debasish-tripathy.webp",
     profileUrl: "https://www.vssut.ac.in/faculty-profile.php?furl=debasish-tripathy"
   },
   {
@@ -55,7 +55,7 @@ export const FACULTY_ADVISORS: FacultyAdvisor[] = [
     role: "Faculty Advisor",
     department: "Electrical Engineering",
     tenure: "Present",
-    image: "/team/amit-mallick.jpg",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/faculty/amit-mallick-v2.webp",
     profileUrl: "https://www.vssut.ac.in/faculty-profile.php?furl=amit-mallick"
   },
   {
@@ -63,7 +63,7 @@ export const FACULTY_ADVISORS: FacultyAdvisor[] = [
     role: "Former Faculty Advisor",
     department: "Mechanical Engineering",
     tenure: "2020 - 2023",
-    image: "https://veerracersselectric.netlify.app/team/prabir%20kumar%20jena.jpg",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/faculty/prabir-kumar-jena.webp",
     profileUrl: "https://www.vssut.ac.in/faculty-profile.php?furl=prabir-kumar-jena"
   }
 ];
@@ -73,7 +73,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "Amritanshu Tripathy",
     role: "Team Captain",
     subgroup: "Executive Council",
-    image: "/team/council/amritanshu-tripathy.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/amritanshu-tripathy.webp",
     description: "Leading overall vehicle engineering, dynamic track operations, and team coordination.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "Final Year (4th Year)"
@@ -82,7 +82,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "Rohit Sharma",
     role: "Vice-Captain",
     subgroup: "Executive Council",
-    image: "/team/council/rohit-sharma.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/rohit-sharma.webp",
     description: "Directing executive club operations, vehicle testing pipelines, and team strategy.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "Final Year (4th Year)"
@@ -91,7 +91,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "Atmabhu Padhi",
     role: "Technical Head",
     subgroup: "Technical Council",
-    image: "/team/council/atmabhu-padhi.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/atmabhu-padhi.webp",
     description: "Overseeing multi-subsystem engineering integration, telemetry, and electric powertrain validation.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "Final Year (4th Year)"
@@ -100,7 +100,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "Adyasha Deb",
     role: "Marketing & Sponsorship Head",
     subgroup: "Executive Council",
-    image: "/team/council/adyasha-deb.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/adyasha-deb.webp",
     description: "Spearheading corporate sponsorships, institutional relations, and team marketing strategy.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "Final Year (4th Year)"
@@ -109,7 +109,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "Aryean Prasad Panigrahi",
     role: "Manufacturing Head",
     subgroup: "Technical Council",
-    image: "/team/council/aryean-prasad-panigrahi.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/aryean-prasad-panigrahi.webp",
     description: "Directing workshop tooling, precision machining, chassis fabrication, and manufacturing standards.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "Final Year (4th Year)"
@@ -118,7 +118,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "Debesh Kumar Nayak",
     role: "Procurement Head",
     subgroup: "Executive Council",
-    image: "/team/council/debesh-kumar-nayak.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/debesh-kumar-nayak.webp",
     description: "Managing component sourcing, supply-chain logistics, vendor negotiations, and procurement.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "Final Year (4th Year)"
@@ -127,7 +127,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "K. Asish Subudhi",
     role: "Brakes & Tyres Head",
     subgroup: "Technical Council",
-    image: "/team/council/k-asish-subudhi.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/k-asish-subudhi.webp",
     description: "Engineering hydraulic braking circuits, thermal dissipation, brake bias, and tyre dynamics.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "Final Year (4th Year)"
@@ -136,7 +136,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "Darshana Puhan",
     role: "Chassis & Design Head",
     subgroup: "Technical Council",
-    image: "/team/council/darshana-puhan.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/darshana-puhan.webp",
     description: "Directing spaceframe structural integrity, aerodynamic envelope design, and torsional rigidity optimization.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "Final Year (4th Year)"
@@ -145,7 +145,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "Radhashyam Jena",
     role: "Powertrain & Drivetrain Head",
     subgroup: "Technical Council",
-    image: "/team/council/radhashyam-jena.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/radhashyam-jena.webp",
     description: "Leading high-voltage accumulator systems, tractive system safety, and motor controller integration.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "Final Year (4th Year)"
@@ -154,7 +154,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "Harsh Mittal",
     role: "Suspension & Steering Head",
     subgroup: "Technical Council",
-    image: "/team/council/harsh-mittal.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/harsh-mittal.webp",
     description: "Leading double-wishbone suspension kinematics, steering geometry, and track handling dynamics.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "Final Year (4th Year)"
@@ -163,7 +163,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "Abhisek Sethi",
     role: "Event Manager",
     subgroup: "Operations Council",
-    image: "/team/council/abhisek-sethi.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/abhisek-sethi-v2.webp",
     description: "Orchestrating competition logistics, national event operations, and team showcase presentations.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "Final Year (4th Year)"
@@ -172,7 +172,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "Nrusingha Dalai",
     role: "Team Manager",
     subgroup: "Operations Council",
-    image: "/team/council/nrusingha-dalai.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/nrusingha-dalai.webp",
     description: "Managing daily workshop workflows, team schedules, milestone tracking, and intra-club operations.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "3rd Year (Pre-Final)"
@@ -181,7 +181,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "Sourav Muduly",
     role: "PR Officer ( P.R.O )",
     subgroup: "Communications Council",
-    image: "/team/council/sourav-muduly.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/sourav-muduly.webp",
     description: "Leading media communications, press releases, digital presence, and external public relations.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "3rd Year (Pre-Final)"
@@ -190,7 +190,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "Bineeta Sinha",
     role: "PR Officer ( P.R.O )",
     subgroup: "Communications Council",
-    image: "/team/council/bineeta-sinha.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/bineeta-sinha.webp",
     description: "Spearheading outreach campaigns, community engagement, brand identity, and student relations.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "3rd Year (Pre-Final)"
@@ -199,7 +199,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "P. Devi Prasad Achary",
     role: "Treasurer",
     subgroup: "Operations Council",
-    image: "/team/council/p-devi-prasad-achary.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/p-devi-prasad-achary.webp",
     description: "Controlling team financial accounting, budget distributions, audit compliance, and resource allocation.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "3rd Year (Pre-Final)"
@@ -208,7 +208,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "Tikeshwar Pradhan",
     role: "Inventory Head",
     subgroup: "Operations Council",
-    image: "/team/council/tikeshwar-pradhan.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/tikeshwar-pradhan.webp",
     description: "Overseeing workshop inventory management, tool calibrations, raw stock cataloging, and equipment control.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "3rd Year (Pre-Final)"
@@ -217,6 +217,235 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
 
 export const FINAL_YEAR_LEADERS = CORE_LEADERSHIP.filter(l => l.year === "Final Year (4th Year)");
 export const PREFINAL_YEAR_LEADERS = CORE_LEADERSHIP.filter(l => l.year === "3rd Year (Pre-Final)");
+
+export interface DomainMember {
+  name: string;
+  role: string;
+  department: string;
+  subgroup: string;
+  year: string;
+  image: string;
+}
+
+export const DOMAIN_MEMBERS: DomainMember[] = [
+  {
+    "name": "Aryapriya Panigrahi",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes and Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/aryapriya-panigrahi-v2.webp"
+  },
+  {
+    "name": "Badri Prasad Baral",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain and Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/badri-prasad-baral.webp"
+  },
+  {
+    "name": "Ankit Chandra",
+    "role": "Suspension and Steering Engineer",
+    "department": "Suspension and Steering",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/ankit-chandra.webp"
+  },
+  {
+    "name": "Soham Mishra",
+    "role": "Suspension and Steering Engineer",
+    "department": "Suspension and Steering",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/soham-mishra.webp"
+  },
+  {
+    "name": "Biswabhanu Panda",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain and Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "3rd Year (Pre-Final)",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/biswabhanu-panda.webp"
+  },
+  {
+    "name": "Debashish Mahato",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes and Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/debashish-mahato.webp"
+  },
+  {
+    "name": "Shoaib Khan",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes and Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "3rd Year (Pre-Final)",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/shoaib-khan.webp"
+  },
+  {
+    "name": "Manoranjan Panda",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain and Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/manoranjan-panda.webp"
+  },
+  {
+    "name": "Swagat Ranjan Swain",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis and Design",
+    "subgroup": "Engineering Domain",
+    "year": "3rd Year (Pre-Final)",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/swagat-ranjan-swain.webp"
+  },
+  {
+    "name": "Kiran Kumar Hota",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes and Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "3rd Year (Pre-Final)",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/kiran-kumar-hota.webp"
+  },
+  {
+    "name": "Sujata Sahu",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain and Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/sujata-sahu.webp"
+  },
+  {
+    "name": "Anshuman Mishra",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain and Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "3rd Year (Pre-Final)",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/anshuman-mishra.webp"
+  },
+  {
+    "name": "Bhumika Mirdha",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis and Design",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/bhumika-mirdha.webp"
+  },
+  {
+    "name": "Sidharth Swain",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes and Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/sidharth-swain.webp"
+  },
+  {
+    "name": "Baibhav Dhal",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis and Design",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/baibhav-dhal-v2.webp"
+  },
+  {
+    "name": "Soumya Ranjan Panda",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain and Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/soumya-ranjan-panda.webp"
+  },
+  {
+    "name": "Payosmi Pritismita",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain and Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/payosmi-pritismita.webp"
+  },
+  {
+    "name": "Omkar Tripathy",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain and Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/omkar-tripathy.webp"
+  },
+  {
+    "name": "Alonya Dung Dung",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis and Design",
+    "subgroup": "Engineering Domain",
+    "year": "3rd Year (Pre-Final)",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/alonya-dung-dung.webp"
+  },
+  {
+    "name": "Arpita Biswal",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes and Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/arpita-biswal.webp"
+  },
+  {
+    "name": "Mukta Hota",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis and Design",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/mukta-hota-v2.webp"
+  },
+  {
+    "name": "Anshuman Satpathy",
+    "role": "Suspension and Steering Engineer",
+    "department": "Suspension and Steering",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/anshuman-satpathy.webp"
+  },
+  {
+    "name": "Abhishek Pattanayak",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes and Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/abhishek-pattanayak-v2.webp"
+  },
+  {
+    "name": "Diptansu Sahoo",
+    "role": "Suspension and Steering Engineer",
+    "department": "Suspension and Steering",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/diptansu-sahoo.webp"
+  },
+  {
+    "name": "Arpan Mishra",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain and Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "3rd Year (Pre-Final)",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/arpan-mishra.webp"
+  },
+  {
+    "name": "Arsalan Ali",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain and Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/arsalan-ali-v2.webp"
+  },
+  {
+    "name": "Pratyush Tripathy",
+    "role": "Suspension and Steering Engineer",
+    "department": "Suspension and Steering",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/pratyush-tripathy.webp"
+  }
+];
+
 
 
 export const TEAM_DEPARTMENTS = [
@@ -236,7 +465,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Team Captain",
     department: "Team Lead",
     year: "Final Year (4th Year)",
-    image: "/team/council/amritanshu-tripathy.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/amritanshu-tripathy.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -245,7 +474,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Vice-Captain",
     department: "Team Lead",
     year: "Final Year (4th Year)",
-    image: "/team/council/rohit-sharma.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/rohit-sharma.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -254,7 +483,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Technical Head",
     department: "Team Lead",
     year: "Final Year (4th Year)",
-    image: "/team/council/atmabhu-padhi.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/atmabhu-padhi.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -263,7 +492,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Marketing & Sponsorship Head",
     department: "Team Lead",
     year: "Final Year (4th Year)",
-    image: "/team/council/adyasha-deb.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/adyasha-deb.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -272,7 +501,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Manufacturing Head",
     department: "Team Lead",
     year: "Final Year (4th Year)",
-    image: "/team/council/aryean-prasad-panigrahi.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/aryean-prasad-panigrahi.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -281,7 +510,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Procurement Head",
     department: "Team Lead",
     year: "Final Year (4th Year)",
-    image: "/team/council/debesh-kumar-nayak.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/debesh-kumar-nayak.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -290,7 +519,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Brakes & Tyres Head",
     department: "Team Lead",
     year: "Final Year (4th Year)",
-    image: "/team/council/k-asish-subudhi.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/k-asish-subudhi.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -299,7 +528,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Chassis & Design Head",
     department: "Team Lead",
     year: "Final Year (4th Year)",
-    image: "/team/council/darshana-puhan.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/darshana-puhan.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -308,7 +537,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Powertrain & Drivetrain Head",
     department: "Team Lead",
     year: "Final Year (4th Year)",
-    image: "/team/council/radhashyam-jena.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/radhashyam-jena.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -317,7 +546,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Suspension & Steering Head",
     department: "Team Lead",
     year: "Final Year (4th Year)",
-    image: "/team/council/harsh-mittal.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/harsh-mittal.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -326,7 +555,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Event Manager",
     department: "Team Lead",
     year: "Final Year (4th Year)",
-    image: "/team/council/abhisek-sethi.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/abhisek-sethi.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -335,7 +564,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Team Manager",
     department: "Team Lead",
     year: "3rd Year (Pre-Final)",
-    image: "/team/council/nrusingha-dalai.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/nrusingha-dalai.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -344,7 +573,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "PR Officer ( P.R.O )",
     department: "Team Lead",
     year: "3rd Year (Pre-Final)",
-    image: "/team/council/sourav-muduly.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/sourav-muduly.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -353,7 +582,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "PR Officer ( P.R.O )",
     department: "Team Lead",
     year: "3rd Year (Pre-Final)",
-    image: "/team/council/bineeta-sinha.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/bineeta-sinha.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -362,7 +591,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Treasurer",
     department: "Team Lead",
     year: "3rd Year (Pre-Final)",
-    image: "/team/council/p-devi-prasad-achary.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/p-devi-prasad-achary.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -371,7 +600,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Inventory Head",
     department: "Team Lead",
     year: "3rd Year (Pre-Final)",
-    image: "/team/council/tikeshwar-pradhan.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/tikeshwar-pradhan.webp",
     subgroup: "Team Lead",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -393,7 +622,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Chassis & Design Head",
     department: "Chassis & Design",
     year: "Final Year (4th Year)",
-    image: "/team/council/darshana-puhan.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/darshana-puhan.webp",
     subgroup: "Chassis & Design",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -411,7 +640,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Chassis Manufacturing Head",
     department: "Chassis & Design",
     year: "Final Year (4th Year)",
-    image: "/team/council/debesh-kumar-nayak.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/debesh-kumar-nayak.webp",
     subgroup: "Chassis & Design",
     socials: {}
   },
@@ -514,7 +743,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Suspension & Steering Head",
     department: "Suspension & Steering",
     year: "Final Year (4th Year)",
-    image: "/team/council/harsh-mittal.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/harsh-mittal.webp",
     subgroup: "Suspension & Steering",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -523,7 +752,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Vice-Captain & Vehicle Dynamics Lead",
     department: "Suspension & Steering",
     year: "Final Year (4th Year)",
-    image: "/team/council/rohit-sharma.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/rohit-sharma.webp",
     subgroup: "Suspension & Steering",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -601,7 +830,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Powertrain & Drivetrain Head",
     department: "Powertrain & Drivetrain",
     year: "Final Year (4th Year)",
-    image: "/team/council/radhashyam-jena.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/radhashyam-jena.webp",
     subgroup: "Powertrain & Drivetrain",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -610,7 +839,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Technical Head & HV Integration",
     department: "Powertrain & Drivetrain",
     year: "Final Year (4th Year)",
-    image: "/team/council/atmabhu-padhi.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/atmabhu-padhi.webp",
     subgroup: "Powertrain & Drivetrain",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -730,7 +959,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Brakes & Tyres Head",
     department: "Brakes",
     year: "Final Year (4th Year)",
-    image: "/team/council/k-asish-subudhi.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/k-asish-subudhi.webp",
     subgroup: "Brakes",
     socials: { linkedin: "https://www.linkedin.com/company/veerracerss-electric/" }
   },
@@ -748,7 +977,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Manufacturing Head & Calipers",
     department: "Brakes",
     year: "Final Year (4th Year)",
-    image: "/team/council/aryean-prasad-panigrahi.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/aryean-prasad-panigrahi.webp",
     subgroup: "Brakes",
     socials: {}
   },
@@ -757,7 +986,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
     role: "Event Manager & Brake Discs",
     department: "Brakes",
     year: "Final Year (4th Year)",
-    image: "/team/council/abhisek-sethi.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/abhisek-sethi.webp",
     subgroup: "Brakes",
     socials: {}
   },

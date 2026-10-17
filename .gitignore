@@ -7,3 +7,5 @@ coverage/
 .env*
 !.env.example
 .next/
+raw_member_photos/
+scripts/
