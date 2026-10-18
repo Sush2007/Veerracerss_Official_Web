@@ -163,7 +163,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
     name: "Abhisek Sethi",
     role: "Event Manager",
     subgroup: "Operations Council",
-    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/abhisek-sethi-v2.webp",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/abhisek-sethi.webp",
     description: "Orchestrating competition logistics, national event operations, and team showcase presentations.",
     linkedin: "https://www.linkedin.com/company/veerracerss-electric/",
     year: "Final Year (4th Year)"

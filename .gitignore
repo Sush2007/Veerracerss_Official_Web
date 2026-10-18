@@ -8,4 +8,6 @@ coverage/
 !.env.example
 .next/
 raw_member_photos/
+members/
+homepage_redesign_mockups/
 scripts/
