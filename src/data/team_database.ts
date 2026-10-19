@@ -554,7 +554,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/sushmit-kumar.png"
   },
   {
-    "name": "Soumya Ranjan Panda",
+    "name": "Somya Ranjan Panda",
     "role": "Powertrain and Drivetrain Engineer",
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
@@ -634,7 +634,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/payosmi-pritismita.png"
   },
   {
-    "name": "Somya Ranjan Panda",
+    "name": "Soumya Ranjan Panda",
     "role": "Powertrain and Drivetrain Engineer",
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
