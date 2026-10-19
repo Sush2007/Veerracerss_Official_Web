@@ -58,9 +58,6 @@ export function TeamLeaders() {
                   alt={leader.name} 
                   className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ease-out" 
                 />
-                <div className="absolute top-0 right-0 bg-racing-red px-2.5 sm:px-3 py-1 text-[9px] sm:text-[10px] font-sans font-bold tracking-widest uppercase text-white">
-                  {leader.role.split(' ')[0]}
-                </div>
               </div>
               
               <h3 className="text-lg sm:text-xl font-bold uppercase tracking-wide mb-1 font-display text-white group-hover:text-racing-red transition-colors">

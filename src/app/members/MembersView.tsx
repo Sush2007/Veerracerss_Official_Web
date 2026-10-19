@@ -42,7 +42,31 @@ function isSecondYear(yearStr?: string): boolean {
   return lower.includes("2nd") || lower.includes("second");
 }
 
+const PREFINAL_COUNCIL_NAMES = [
+  "nrusingha dalai",
+  "p. devi prasad achary",
+  "devi prasad achary",
+  "sourav muduly",
+  "bineeta sinha",
+  "tikeshwar pradhan"
+];
+
+function isPrefinalCouncil(name: string): boolean {
+  const lower = (name || "").toLowerCase();
+  return PREFINAL_COUNCIL_NAMES.some(n => lower.includes(n) || n.includes(lower));
+}
+
 function getMemberDepartment(m: { name?: string; department?: string; subgroup?: string; role?: string }): string {
+  const name = (m.name || "").toLowerCase();
+  if (name.includes("nrusingha")) return "Suspension & Steering";
+  if (name.includes("devi prasad")) return "Chassis & Design";
+  if (name.includes("sourav muduly") || name.includes("bineeta") || name.includes("tikeshwar")) return "Powertrain & Drivetrain";
+
+  const d = m.department || "";
+  if (d && d !== "Team Lead" && d !== "Final Years" && d !== "Engineering Domain") {
+    return d;
+  }
+
   const role = (m.role || "").toLowerCase();
   const dept = (m.department || "").toLowerCase();
 
@@ -73,7 +97,7 @@ export function MembersView() {
       list.push({
         name: c.name,
         role: c.role,
-        department: isFourthYear(c.year) ? "Final Years" : getMemberDepartment(c),
+        department: isFourthYear(c.year) ? "Final Years" : (c.department || getMemberDepartment(c)),
         year: c.year,
         image: c.image,
         description: c.description,
@@ -282,7 +306,7 @@ export function MembersView() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl">
             {FACULTY_ADVISORS.map((advisor, idx) => (
               <motion.div
                 key={advisor.name}
@@ -462,13 +486,24 @@ export function MembersView() {
                   {member.name}
                 </h3>
 
-                <p className="text-racing-red font-sans text-xs uppercase tracking-wider font-bold mb-1">
-                  {member.role}
-                </p>
+                <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                  <p className="text-racing-red font-sans text-xs uppercase tracking-wider font-bold">
+                    {member.role}
+                  </p>
+                  {isPrefinalCouncil(member.name) && (
+                    <span className="bg-racing-red/15 border border-racing-red/40 px-1.5 py-0.5 text-[9px] font-mono text-racing-red font-bold uppercase tracking-wider">
+                      Council
+                    </span>
+                  )}
+                </div>
 
-                <p className="text-white/40 font-sans text-xs uppercase tracking-wider font-mono mt-auto pt-2 border-t border-white/5">
-                  {member.department}
-                </p>
+                {/* Only render department at bottom for council members */}
+                {isPrefinalCouncil(member.name) && (
+                  <div className="text-white/50 font-sans text-xs uppercase tracking-wider font-mono mt-auto pt-2 border-t border-white/5 flex items-center justify-between">
+                    <span className="text-white/30 text-[10px] font-semibold">DEPT:</span>
+                    <span className="text-white/80 font-bold">{member.department}</span>
+                  </div>
+                )}
               </motion.div>
             ))}
           </div>
@@ -545,13 +580,18 @@ export function MembersView() {
                   {member.name}
                 </h3>
 
-                <p className="text-racing-red font-sans text-xs uppercase tracking-wider font-bold mb-1">
-                  {member.role}
-                </p>
+                <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                  <p className="text-racing-red font-sans text-xs uppercase tracking-wider font-bold">
+                    {member.role}
+                  </p>
+                  {member.is_council && (
+                    <span className="bg-racing-red/15 border border-racing-red/40 px-1.5 py-0.5 text-[9px] font-mono text-racing-red font-bold uppercase tracking-wider">
+                      Council
+                    </span>
+                  )}
+                </div>
 
-                <p className="text-white/40 font-sans text-xs uppercase tracking-wider font-mono mt-auto pt-2 border-t border-white/5">
-                  {member.department}
-                </p>
+
               </motion.div>
             ))}
           </div>

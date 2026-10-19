@@ -10,9 +10,8 @@ import { SplashScreen } from './SplashScreen';
 import { ReactLenis } from 'lenis/react';
 
 const NAV_ITEMS = [
-  { label: 'HOME', path: '/', matchValue: 'home' },
-  { label: 'ABOUT', path: '/#about', matchValue: 'about' },
-  { label: 'THE CAR', path: '/cars', matchValue: '/cars' },
+  { label: 'THE CAR', path: '/#car-spotlight', matchValue: 'car-spotlight' },
+  { label: 'ALUMNI', path: '/#alumni', matchValue: 'alumni' },
   { label: 'TEAM', path: '/members', matchValue: '/members' },
   { label: 'ACHIEVEMENTS', path: '/achievements', matchValue: '/achievements' },
   { label: 'SPONSORS', path: '/#partners', matchValue: 'partners' },

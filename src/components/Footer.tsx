@@ -37,6 +37,7 @@ export function Footer() {
             <ul className="space-y-2.5 sm:space-y-3.5 text-xs sm:text-sm">
               <li><Link href="/about" className="text-white/50 hover:text-racing-red transition-colors">About Us</Link></li>
               <li><Link href="/cars" className="text-white/50 hover:text-racing-red transition-colors">The Fleet & Cars</Link></li>
+              <li><Link href="/#alumni" className="text-white/50 hover:text-racing-red transition-colors">Alumni Network</Link></li>
               <li><Link href="/members" className="text-white/50 hover:text-racing-red transition-colors">Team & Squad Roster</Link></li>
               <li><Link href="/achievements" className="text-white/50 hover:text-racing-red transition-colors">Hall of Fame</Link></li>
               <li><Link href="/#partners" className="text-white/50 hover:text-racing-red transition-colors">Sponsors & Partners</Link></li>

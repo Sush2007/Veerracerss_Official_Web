@@ -11,6 +11,7 @@ export interface CoreLeader {
   name: string;
   role: string;
   subgroup: string;
+  department?: string;
   image: string;
   description: string;
   linkedin: string;
@@ -35,14 +36,6 @@ export interface TeamMemberProfile {
 
 export const FACULTY_ADVISORS: FacultyAdvisor[] = [
   {
-    name: "Prof. (Dr.) P. Nanda",
-    role: "Senior Faculty Advisor",
-    department: "Mechanical Engineering",
-    tenure: "Present",
-    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/faculty/pnanda.webp",
-    profileUrl: "https://www.vssut.ac.in/"
-  },
-  {
     name: "Dr. Debasish Tripathy",
     role: "Faculty Advisor",
     department: "Mechanical Engineering",
@@ -57,14 +50,6 @@ export const FACULTY_ADVISORS: FacultyAdvisor[] = [
     tenure: "Present",
     image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/faculty/amit-mallick-v2.webp",
     profileUrl: "https://www.vssut.ac.in/faculty-profile.php?furl=amit-mallick"
-  },
-  {
-    name: "Dr. Prabir Kumar Jena",
-    role: "Former Faculty Advisor",
-    department: "Mechanical Engineering",
-    tenure: "2020 - 2023",
-    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/faculty/prabir-kumar-jena.webp",
-    profileUrl: "https://www.vssut.ac.in/faculty-profile.php?furl=prabir-kumar-jena"
   }
 ];
 
@@ -171,6 +156,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
   {
     name: "Nrusingha Dalai",
     role: "Team Manager",
+    department: "Suspension & Steering",
     subgroup: "Operations Council",
     image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/nrusingha-dalai.webp",
     description: "Managing daily workshop workflows, team schedules, milestone tracking, and intra-club operations.",
@@ -180,6 +166,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
   {
     name: "Sourav Muduly",
     role: "PR Officer ( P.R.O )",
+    department: "Powertrain & Drivetrain",
     subgroup: "Communications Council",
     image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/sourav-muduly.webp",
     description: "Leading media communications, press releases, digital presence, and external public relations.",
@@ -189,6 +176,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
   {
     name: "Bineeta Sinha",
     role: "PR Officer ( P.R.O )",
+    department: "Powertrain & Drivetrain",
     subgroup: "Communications Council",
     image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/bineeta-sinha.webp",
     description: "Spearheading outreach campaigns, community engagement, brand identity, and student relations.",
@@ -198,6 +186,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
   {
     name: "P. Devi Prasad Achary",
     role: "Treasurer",
+    department: "Chassis & Design",
     subgroup: "Operations Council",
     image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/p-devi-prasad-achary.webp",
     description: "Controlling team financial accounting, budget distributions, audit compliance, and resource allocation.",
@@ -207,6 +196,7 @@ export const CORE_LEADERSHIP: CoreLeader[] = [
   {
     name: "Tikeshwar Pradhan",
     role: "Inventory Head",
+    department: "Powertrain & Drivetrain",
     subgroup: "Operations Council",
     image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/tikeshwar-pradhan.webp",
     description: "Overseeing workshop inventory management, tool calibrations, raw stock cataloging, and equipment control.",
@@ -562,7 +552,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
   {
     name: "Nrusingha Dalai",
     role: "Team Manager",
-    department: "Team Lead",
+    department: "Suspension & Steering",
     year: "3rd Year (Pre-Final)",
     image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/nrusingha-dalai.webp",
     subgroup: "Team Lead",
@@ -571,7 +561,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
   {
     name: "Sourav Muduly",
     role: "PR Officer ( P.R.O )",
-    department: "Team Lead",
+    department: "Powertrain & Drivetrain",
     year: "3rd Year (Pre-Final)",
     image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/sourav-muduly.webp",
     subgroup: "Team Lead",
@@ -580,7 +570,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
   {
     name: "Bineeta Sinha",
     role: "PR Officer ( P.R.O )",
-    department: "Team Lead",
+    department: "Powertrain & Drivetrain",
     year: "3rd Year (Pre-Final)",
     image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/bineeta-sinha.webp",
     subgroup: "Team Lead",
@@ -589,7 +579,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
   {
     name: "P. Devi Prasad Achary",
     role: "Treasurer",
-    department: "Team Lead",
+    department: "Chassis & Design",
     year: "3rd Year (Pre-Final)",
     image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/p-devi-prasad-achary.webp",
     subgroup: "Team Lead",
@@ -598,7 +588,7 @@ export const ACTIVE_MEMBERS: TeamMemberProfile[] = [
   {
     name: "Tikeshwar Pradhan",
     role: "Inventory Head",
-    department: "Team Lead",
+    department: "Powertrain & Drivetrain",
     year: "3rd Year (Pre-Final)",
     image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/council/tikeshwar-pradhan.webp",
     subgroup: "Team Lead",
