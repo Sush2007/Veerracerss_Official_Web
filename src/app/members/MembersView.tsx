@@ -64,6 +64,11 @@ function getMemberDepartment(m: { name?: string; department?: string; subgroup?:
 
   const d = m.department || "";
   if (d && d !== "Team Lead" && d !== "Final Years" && d !== "Engineering Domain") {
+    const dl = d.toLowerCase();
+    if (dl.includes("chassis")) return "Chassis & Design";
+    if (dl.includes("suspension") || dl.includes("steering")) return "Suspension & Steering";
+    if (dl.includes("brake") || dl.includes("tyre")) return "Brakes & Tyres";
+    if (dl.includes("powertrain") || dl.includes("drivetrain")) return "Powertrain & Drivetrain";
     return d;
   }
 
@@ -88,6 +93,37 @@ function getMemberDepartment(m: { name?: string; department?: string; subgroup?:
 
   return "Engineering Domain";
 }
+
+export const SECOND_YEAR_DOMAINS = [
+  { 
+    id: "chassis",
+    name: "Chassis & Design", 
+    tagline: "Aerodynamics, structural chassis spaceframe, ergonomics & crash safety" 
+  },
+  { 
+    id: "suspension",
+    name: "Suspension & Steering", 
+    tagline: "Double-wishbone kinematics, dampers, steering geometry & track dynamics" 
+  },
+  { 
+    id: "brakes",
+    name: "Brakes & Tyres", 
+    tagline: "Hydraulic circuit, rotor thermal dissipation, brake bias & tyre compound telemetry" 
+  },
+  { 
+    id: "powertrain",
+    name: "Powertrain & Drivetrain", 
+    tagline: "High-voltage accumulator, motor controller integration, cooling & driveline" 
+  }
+];
+
+export const SECOND_YEAR_FILTER_OPTIONS = [
+  "All",
+  "Chassis & Design",
+  "Suspension & Steering",
+  "Brakes & Tyres",
+  "Powertrain & Drivetrain"
+];
 
 export function MembersView() {
   const initialMembers = useMemo<UnifiedMember[]>(() => {
@@ -147,14 +183,21 @@ export function MembersView() {
             description: m.description,
             is_council: m.is_council
           }));
-          setMembers(formatted);
+          
+          const combined = [...formatted];
+          initialMembers.forEach(im => {
+            if (!combined.some(c => c.name.toLowerCase() === im.name.toLowerCase())) {
+              combined.push(im);
+            }
+          });
+          setMembers(combined);
         }
       } catch (err) {
         console.warn("Supabase fetch fallback to static data:", err);
       }
     }
     loadMembersFromSupabase();
-  }, []);
+  }, [initialMembers]);
 
   // 1. Final Years (4th Year)
   const finalYearMembers = useMemo(() => {
@@ -199,6 +242,13 @@ export function MembersView() {
     if (secondYearFilter === "All") return list;
     return list.filter(m => m.department.toLowerCase() === secondYearFilter.toLowerCase());
   }, [members, secondYearFilter]);
+
+  const activeSecondYearDomains = useMemo(() => {
+    if (secondYearFilter === "All") return SECOND_YEAR_DOMAINS;
+    return SECOND_YEAR_DOMAINS.filter(
+      d => d.name.toLowerCase() === secondYearFilter.toLowerCase()
+    );
+  }, [secondYearFilter]);
 
   const departmentFilterOptions = [
     "All",
@@ -534,7 +584,7 @@ export function MembersView() {
             {/* Department Filter Pills */}
             <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto mt-6 pb-2 scrollbar-none">
               <span className="text-[10px] font-mono uppercase text-white/40 mr-1 shrink-0">DEPARTMENT:</span>
-              {departmentFilterOptions.filter(d => d !== "Operations & Management").map(dept => (
+              {SECOND_YEAR_FILTER_OPTIONS.map(dept => (
                 <button
                   key={dept}
                   onClick={() => setSecondYearFilter(dept)}
@@ -550,50 +600,83 @@ export function MembersView() {
             </div>
           </div>
 
-          {/* Second Years Profiles Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {secondYearMembers.map((member, idx) => (
-              <motion.div
-                key={`2nd-${member.name}-${idx}`}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: (idx % 8) * 0.05 }}
-                className="bg-[#0A0A0A] border border-white/5 hover:border-racing-red/50 p-5 sm:p-6 flex flex-col group transition-all duration-500 rounded-none relative overflow-hidden"
-              >
-                <div className="relative aspect-square overflow-hidden bg-[#111111] mb-4 sm:mb-5 border border-white/5 group-hover:border-racing-red/30 transition-colors">
-                  <img 
-                    src={member.image} 
-                    alt={member.name} 
-                    loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ease-out"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop";
-                    }}
-                  />
-                  <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-sm px-2 py-0.5 border border-white/10 text-[9px] font-mono uppercase text-white/70 tracking-wider">
-                    2nd Year
+          {/* Second Years Profiles Grouped Domain-wise */}
+          <div className="space-y-14">
+            {activeSecondYearDomains.map((domain, domainIdx) => {
+              const domainGroupMembers = secondYearMembers.filter(
+                m => m.department.toLowerCase() === domain.name.toLowerCase()
+              );
+              if (domainGroupMembers.length === 0) return null;
+
+              return (
+                <div key={domain.id} className="space-y-6">
+                  {/* Domain Subgroup Header Bar */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/10 pb-3 gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-1.5 h-6 bg-racing-red"></div>
+                      <div>
+                        <h3 className="font-display font-black text-xl sm:text-2xl uppercase tracking-wide text-white flex items-center gap-2">
+                          <span className="text-racing-red text-sm font-mono font-bold mr-1">0{domainIdx + 1}.</span>
+                          {domain.name}
+                        </h3>
+                        <p className="text-white/40 font-sans text-xs font-light">
+                          {domain.tagline}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="shrink-0">
+                      <span className="bg-racing-red/10 border border-racing-red/30 px-2.5 py-1 text-racing-red font-mono text-[11px] font-bold uppercase tracking-wider">
+                        {domainGroupMembers.length} ENGINEERS
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Domain Profiles Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {domainGroupMembers.map((member, idx) => (
+                      <motion.div
+                        key={`2nd-${member.name}-${idx}`}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: (idx % 8) * 0.04 }}
+                        className="bg-[#0A0A0A] border border-white/5 hover:border-racing-red/50 p-5 sm:p-6 flex flex-col group transition-all duration-500 rounded-none relative overflow-hidden"
+                      >
+                        <div className="relative aspect-square overflow-hidden bg-[#111111] mb-4 sm:mb-5 border border-white/5 group-hover:border-racing-red/30 transition-colors">
+                          <img 
+                            src={member.image} 
+                            alt={member.name} 
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ease-out"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop";
+                            }}
+                          />
+                          <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-sm px-2 py-0.5 border border-white/10 text-[9px] font-mono uppercase text-white/70 tracking-wider">
+                            2nd Year
+                          </div>
+                        </div>
+
+                        <h3 className="font-display font-bold text-lg text-white uppercase tracking-wide group-hover:text-racing-red transition-colors mb-1">
+                          {member.name}
+                        </h3>
+
+                        <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                          <p className="text-racing-red font-sans text-xs uppercase tracking-wider font-bold">
+                            {member.role}
+                          </p>
+                          {member.is_council && (
+                            <span className="bg-racing-red/15 border border-racing-red/40 px-1.5 py-0.5 text-[9px] font-mono text-racing-red font-bold uppercase tracking-wider">
+                              Council
+                            </span>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
                 </div>
-
-                <h3 className="font-display font-bold text-lg text-white uppercase tracking-wide group-hover:text-racing-red transition-colors mb-1">
-                  {member.name}
-                </h3>
-
-                <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                  <p className="text-racing-red font-sans text-xs uppercase tracking-wider font-bold">
-                    {member.role}
-                  </p>
-                  {member.is_council && (
-                    <span className="bg-racing-red/15 border border-racing-red/40 px-1.5 py-0.5 text-[9px] font-mono text-racing-red font-bold uppercase tracking-wider">
-                      Council
-                    </span>
-                  )}
-                </div>
-
-
-              </motion.div>
-            ))}
+              );
+            })}
           </div>
         </section>
 

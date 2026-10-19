@@ -218,74 +218,29 @@ export interface DomainMember {
 }
 
 export const DOMAIN_MEMBERS: DomainMember[] = [
-  {
-    "name": "Aryapriya Panigrahi",
-    "role": "Brakes and Tyres Engineer",
-    "department": "Brakes and Tyres",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/aryapriya-panigrahi-v2.webp"
-  },
-  {
-    "name": "Badri Prasad Baral",
-    "role": "Powertrain and Drivetrain Engineer",
-    "department": "Powertrain and Drivetrain",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/badri-prasad-baral.webp"
-  },
-  {
-    "name": "Ankit Chandra",
-    "role": "Suspension and Steering Engineer",
-    "department": "Suspension and Steering",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/ankit-chandra.webp"
-  },
-  {
-    "name": "Soham Mishra",
-    "role": "Suspension and Steering Engineer",
-    "department": "Suspension and Steering",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/soham-mishra.webp"
-  },
+  // ==========================================
+  // 1. PRE-FINAL YEAR (3RD YEAR) DOMAIN MEMBERS
+  // ==========================================
   {
     "name": "Biswabhanu Panda",
     "role": "Powertrain and Drivetrain Engineer",
-    "department": "Powertrain and Drivetrain",
+    "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "3rd Year (Pre-Final)",
     "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/biswabhanu-panda.webp"
   },
   {
-    "name": "Debashish Mahato",
-    "role": "Brakes and Tyres Engineer",
-    "department": "Brakes and Tyres",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/debashish-mahato.webp"
-  },
-  {
     "name": "Shoaib Khan",
     "role": "Brakes and Tyres Engineer",
-    "department": "Brakes and Tyres",
+    "department": "Brakes & Tyres",
     "subgroup": "Engineering Domain",
     "year": "3rd Year (Pre-Final)",
     "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/shoaib-khan.webp"
   },
   {
-    "name": "Manoranjan Panda",
-    "role": "Powertrain and Drivetrain Engineer",
-    "department": "Powertrain and Drivetrain",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/manoranjan-panda.webp"
-  },
-  {
     "name": "Swagat Ranjan Swain",
     "role": "Chassis and Design Engineer",
-    "department": "Chassis and Design",
+    "department": "Chassis & Design",
     "subgroup": "Engineering Domain",
     "year": "3rd Year (Pre-Final)",
     "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/swagat-ranjan-swain.webp"
@@ -293,146 +248,406 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
   {
     "name": "Kiran Kumar Hota",
     "role": "Brakes and Tyres Engineer",
-    "department": "Brakes and Tyres",
+    "department": "Brakes & Tyres",
     "subgroup": "Engineering Domain",
     "year": "3rd Year (Pre-Final)",
     "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/kiran-kumar-hota.webp"
   },
   {
-    "name": "Sujata Sahu",
-    "role": "Powertrain and Drivetrain Engineer",
-    "department": "Powertrain and Drivetrain",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/sujata-sahu.webp"
-  },
-  {
     "name": "Anshuman Mishra",
     "role": "Powertrain and Drivetrain Engineer",
-    "department": "Powertrain and Drivetrain",
+    "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "3rd Year (Pre-Final)",
     "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/anshuman-mishra.webp"
   },
   {
-    "name": "Bhumika Mirdha",
-    "role": "Chassis and Design Engineer",
-    "department": "Chassis and Design",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/bhumika-mirdha.webp"
-  },
-  {
-    "name": "Sidharth Swain",
-    "role": "Brakes and Tyres Engineer",
-    "department": "Brakes and Tyres",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/sidharth-swain.webp"
-  },
-  {
-    "name": "Baibhav Dhal",
-    "role": "Chassis and Design Engineer",
-    "department": "Chassis and Design",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/baibhav-dhal-v2.webp"
-  },
-  {
-    "name": "Soumya Ranjan Panda",
-    "role": "Powertrain and Drivetrain Engineer",
-    "department": "Powertrain and Drivetrain",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/soumya-ranjan-panda.webp"
-  },
-  {
-    "name": "Payosmi Pritismita",
-    "role": "Powertrain and Drivetrain Engineer",
-    "department": "Powertrain and Drivetrain",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/payosmi-pritismita.webp"
-  },
-  {
-    "name": "Omkar Tripathy",
-    "role": "Powertrain and Drivetrain Engineer",
-    "department": "Powertrain and Drivetrain",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/omkar-tripathy.webp"
-  },
-  {
     "name": "Alonya Dung Dung",
     "role": "Chassis and Design Engineer",
-    "department": "Chassis and Design",
+    "department": "Chassis & Design",
     "subgroup": "Engineering Domain",
     "year": "3rd Year (Pre-Final)",
     "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/alonya-dung-dung.webp"
   },
   {
-    "name": "Arpita Biswal",
-    "role": "Brakes and Tyres Engineer",
-    "department": "Brakes and Tyres",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/arpita-biswal.webp"
-  },
-  {
-    "name": "Mukta Hota",
-    "role": "Chassis and Design Engineer",
-    "department": "Chassis and Design",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/mukta-hota-v2.webp"
-  },
-  {
-    "name": "Anshuman Satpathy",
-    "role": "Suspension and Steering Engineer",
-    "department": "Suspension and Steering",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/anshuman-satpathy.webp"
-  },
-  {
-    "name": "Abhishek Pattanayak",
-    "role": "Brakes and Tyres Engineer",
-    "department": "Brakes and Tyres",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/abhishek-pattanayak-v2.webp"
-  },
-  {
-    "name": "Diptansu Sahoo",
-    "role": "Suspension and Steering Engineer",
-    "department": "Suspension and Steering",
-    "subgroup": "Engineering Domain",
-    "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/diptansu-sahoo.webp"
-  },
-  {
     "name": "Arpan Mishra",
     "role": "Powertrain and Drivetrain Engineer",
-    "department": "Powertrain and Drivetrain",
+    "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "3rd Year (Pre-Final)",
     "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/arpan-mishra.webp"
   },
+
+  // ==========================================
+  // 2. SECOND YEAR (2ND YEAR) MEMBERS BY DOMAIN
+  // ==========================================
+
+  // --- Group 1: Chassis & Design (11 Members) ---
   {
-    "name": "Arsalan Ali",
-    "role": "Powertrain and Drivetrain Engineer",
-    "department": "Powertrain and Drivetrain",
+    "name": "Deepishree Meher",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis & Design",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/arsalan-ali-v2.webp"
+    "image": "/members/deepishree-meher.png"
+  },
+  {
+    "name": "Sanjeet Behera",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis & Design",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/sanjeet-behera.png"
+  },
+  {
+    "name": "Pragyan Bhanja",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis & Design",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/pragyan-bhanja.png"
+  },
+  {
+    "name": "Rohan Saha",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis & Design",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/rohan-saha.png"
+  },
+  {
+    "name": "Baibhab Dhal",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis & Design",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/baibhab-dhal.png"
+  },
+  {
+    "name": "Jenisha Sahoo",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis & Design",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/jenisha-sahoo.png"
+  },
+  {
+    "name": "Smruti",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis & Design",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/smruti.png"
+  },
+  {
+    "name": "Bhumika Mirdha",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis & Design",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/bhumika-mirdha.png"
+  },
+  {
+    "name": "Madhusmita Biswal",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis & Design",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/madhusmita-biswal.png"
+  },
+  {
+    "name": "Biswashree Behura",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis & Design",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/biswashree-behura.png"
+  },
+  {
+    "name": "Mukta Hota",
+    "role": "Chassis and Design Engineer",
+    "department": "Chassis & Design",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/mukta-hota.png"
+  },
+
+  // --- Group 2: Suspension & Steering (11 Members) ---
+  {
+    "name": "Tejaswini Behera",
+    "role": "Suspension and Steering Engineer",
+    "department": "Suspension & Steering",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/tejaswini-behera.png"
   },
   {
     "name": "Pratyush Tripathy",
     "role": "Suspension and Steering Engineer",
-    "department": "Suspension and Steering",
+    "department": "Suspension & Steering",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/pratyush-tripathy.webp"
+    "image": "/members/pratyush-tripathy.png"
+  },
+  {
+    "name": "Somnath Sahu",
+    "role": "Suspension and Steering Engineer",
+    "department": "Suspension & Steering",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/somnath-sahu.png"
+  },
+  {
+    "name": "Diptansu Sahoo",
+    "role": "Suspension and Steering Engineer",
+    "department": "Suspension & Steering",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/diptansu-sahoo.png"
+  },
+  {
+    "name": "Ankit Chandra",
+    "role": "Suspension and Steering Engineer",
+    "department": "Suspension & Steering",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/ankit-chandra.png"
+  },
+  {
+    "name": "Bibhu Jena",
+    "role": "Suspension and Steering Engineer",
+    "department": "Suspension & Steering",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/bibhu-jena.png"
+  },
+  {
+    "name": "Anshuman Satpathy",
+    "role": "Suspension and Steering Engineer",
+    "department": "Suspension & Steering",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/anshuman-satpathy.png"
+  },
+  {
+    "name": "Soham Mishra",
+    "role": "Suspension and Steering Engineer",
+    "department": "Suspension & Steering",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/soham-mishra.png"
+  },
+  {
+    "name": "K Ankita Patra",
+    "role": "Suspension and Steering Engineer",
+    "department": "Suspension & Steering",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/k-ankita-patra.png"
+  },
+  {
+    "name": "Rajiv Debnath",
+    "role": "Suspension and Steering Engineer",
+    "department": "Suspension & Steering",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/rajiv-debnath.png"
+  },
+  {
+    "name": "Angel Mahananda",
+    "role": "Suspension and Steering Engineer",
+    "department": "Suspension & Steering",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/angel-mahananda.png"
+  },
+
+  // --- Group 3: Brakes & Tyres (9 Members) ---
+  {
+    "name": "Aryapriya Panigrahi",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes & Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/aryapriya-panigrahi.png"
+  },
+  {
+    "name": "Siddharth Swain",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes & Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/siddharth-swain.png"
+  },
+  {
+    "name": "Debashish Mahato",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes & Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/debashish-mahato.png"
+  },
+  {
+    "name": "Suchit Sourav Barik",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes & Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/suchit-sourav-barik.png"
+  },
+  {
+    "name": "Abhishek Pradhan",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes & Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/abhishek-pradhan.png"
+  },
+  {
+    "name": "Farhan Khan",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes & Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/farhan-khan.png"
+  },
+  {
+    "name": "Abhishek Pattnaik",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes & Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/abhishek-pattnaik.png"
+  },
+  {
+    "name": "Arpita Biswal",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes & Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/arpita-biswal.png"
+  },
+  {
+    "name": "Silki Priya Seth",
+    "role": "Brakes and Tyres Engineer",
+    "department": "Brakes & Tyres",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/silki-priya-seth.png"
+  },
+
+  // --- Group 4: Powertrain & Drivetrain (14 Members) ---
+  {
+    "name": "Pratyush Sahoo",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain & Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/pratyush-sahoo.png"
+  },
+  {
+    "name": "Sushmit Kumar Satapathy",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain & Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/sushmit-kumar.png"
+  },
+  {
+    "name": "Soumya Ranjan Panda",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain & Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/soumya-ranjan-panda.png"
+  },
+  {
+    "name": "Loknath Swain",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain & Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/loknath-swain.png"
+  },
+  {
+    "name": "Anshuman Swain",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain & Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/anshuman-swain.png"
+  },
+  {
+    "name": "Aditya Samal",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain & Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/aditya-samal.png"
+  },
+  {
+    "name": "Manoranjan Panda",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain & Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/manoranjan-panda.png"
+  },
+  {
+    "name": "Omkar Tripathy",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain & Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/omkar-tripathy.png"
+  },
+  {
+    "name": "Arsalan Ali",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain & Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/arsalan-ali.png"
+  },
+  {
+    "name": "Badri Prasad Baral",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain & Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/badri-prasad-baral.png"
+  },
+  {
+    "name": "Sujata Sahu",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain & Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/sujata-sahu.png"
+  },
+  {
+    "name": "Payosmi Pritismita",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain & Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/payosmi-pritismita.png"
+  },
+  {
+    "name": "Somya Ranjan Panda",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain & Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/somya-ranjan-panda.png"
+  },
+  {
+    "name": "Prabhu Pritam Sabat",
+    "role": "Powertrain and Drivetrain Engineer",
+    "department": "Powertrain & Drivetrain",
+    "subgroup": "Engineering Domain",
+    "year": "2nd Year",
+    "image": "/members/prabhu-pritam-sabat.png"
   }
 ];
 
