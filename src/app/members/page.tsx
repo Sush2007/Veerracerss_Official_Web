@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     title: 'The Racing Squad & Council Leadership | VeerRacerss Electric VSSUT',
     description: 'Meet the official student council, executive heads, and faculty advisors powering Odisha\'s premier Formula Student EV.',
     url: 'https://veerracerss-official-web.vercel.app/members',
-    images: [{ url: 'https://images.unsplash.com/photo-1614026480209-cd9934144671?q=80&w=2070&auto=format&fit=crop', width: 1200, height: 630, alt: 'VeerRacerss Team' }]
+    images: [{ url: 'https://veerracerss-official-web.vercel.app/og-image.png', width: 1200, height: 630, alt: 'VeerRacerss Team' }]
   }
 };
 

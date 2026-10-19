@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     title: 'Inside Team VeerRacerss | Mission & Heritage',
     description: 'Learn about VeerRacerss Electric, our student-led engineering philosophy, and our journey at VSSUT Burla.',
     url: 'https://veerracerss-official-web.vercel.app/about',
-    images: [{ url: 'https://images.unsplash.com/photo-1614026480209-cd9934144671?q=80&w=2070&auto=format&fit=crop', width: 1200, height: 630, alt: 'About VeerRacerss' }]
+    images: [{ url: 'https://veerracerss-official-web.vercel.app/og-image.png', width: 1200, height: 630, alt: 'About VeerRacerss' }]
   }
 };
 

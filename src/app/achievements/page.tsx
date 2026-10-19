@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     title: 'Competitive Achievements & Hall of Fame | VeerRacerss Electric',
     description: 'National podiums and awards won by VeerRacerss Electric across Formula Bharat, Formula Imperial, and SAE India.',
     url: 'https://veerracerss-official-web.vercel.app/achievements',
-    images: [{ url: 'https://images.unsplash.com/photo-1614026480209-cd9934144671?q=80&w=2070&auto=format&fit=crop', width: 1200, height: 630, alt: 'VeerRacerss Hall of Fame' }]
+    images: [{ url: 'https://veerracerss-official-web.vercel.app/og-image.png', width: 1200, height: 630, alt: 'VeerRacerss Hall of Fame' }]
   }
 };
 

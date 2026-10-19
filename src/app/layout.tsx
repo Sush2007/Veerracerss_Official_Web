@@ -42,10 +42,10 @@ export const metadata: Metadata = {
     siteName: 'VeerRacerss Electric',
     images: [
       {
-        url: 'https://images.unsplash.com/photo-1614026480209-cd9934144671?q=80&w=2070&auto=format&fit=crop',
+        url: 'https://veerracerss-official-web.vercel.app/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'VeerRacerss Electric Formula Student Car AETHER',
+        alt: 'VeerRacerss Electric Official Logo | Formula Student VSSUT Burla',
       },
     ],
   },
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'VeerRacerss Electric | Formula Student Team VSSUT Burla',
     description: 'Official Formula Student team of VSSUT Burla. Builders of AETHER - Odisha\'s first collegiate electric formula race car.',
-    images: ['https://images.unsplash.com/photo-1614026480209-cd9934144671?q=80&w=2070&auto=format&fit=crop'],
+    images: ['https://veerracerss-official-web.vercel.app/og-image.png'],
     site: '@veerracerss',
     creator: '@veerracerss',
   },
