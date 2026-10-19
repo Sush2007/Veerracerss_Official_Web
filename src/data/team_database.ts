@@ -289,7 +289,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Chassis & Design",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/deepishree-meher.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/deepishree-meher.png"
   },
   {
     "name": "Sanjeet Behera",
@@ -297,7 +297,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Chassis & Design",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/sanjeet-behera.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/sanjeet-behera.png"
   },
   {
     "name": "Pragyan Bhanja",
@@ -305,7 +305,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Chassis & Design",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/pragyan-bhanja.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/pragyan-bhanja.png"
   },
   {
     "name": "Rohan Saha",
@@ -313,7 +313,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Chassis & Design",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/rohan-saha.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/rohan-saha.png"
   },
   {
     "name": "Baibhab Dhal",
@@ -321,7 +321,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Chassis & Design",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/baibhab-dhal.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/baibhab-dhal.png"
   },
   {
     "name": "Jenisha Sahoo",
@@ -329,7 +329,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Chassis & Design",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/jenisha-sahoo.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/jenisha-sahoo.png"
   },
   {
     "name": "Smruti",
@@ -337,7 +337,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Chassis & Design",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/smruti.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/smruti.png"
   },
   {
     "name": "Bhumika Mirdha",
@@ -345,7 +345,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Chassis & Design",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/bhumika-mirdha.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/bhumika-mirdha.png"
   },
   {
     "name": "Madhusmita Biswal",
@@ -353,7 +353,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Chassis & Design",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/madhusmita-biswal.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/madhusmita-biswal.png"
   },
   {
     "name": "Biswashree Behura",
@@ -361,7 +361,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Chassis & Design",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/biswashree-behura.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/biswashree-behura.png"
   },
   {
     "name": "Mukta Hota",
@@ -369,7 +369,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Chassis & Design",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/mukta-hota.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/mukta-hota.png"
   },
 
   // --- Group 2: Suspension & Steering (11 Members) ---
@@ -379,7 +379,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Suspension & Steering",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/tejaswini-behera.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/tejaswini-behera.png"
   },
   {
     "name": "Pratyush Tripathy",
@@ -387,7 +387,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Suspension & Steering",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/pratyush-tripathy.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/pratyush-tripathy.png"
   },
   {
     "name": "Somnath Sahu",
@@ -395,7 +395,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Suspension & Steering",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/somnath-sahu.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/somnath-sahu.png"
   },
   {
     "name": "Diptansu Sahoo",
@@ -403,7 +403,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Suspension & Steering",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/diptansu-sahoo.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/diptansu-sahoo.png"
   },
   {
     "name": "Ankit Chandra",
@@ -411,7 +411,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Suspension & Steering",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/ankit-chandra.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/ankit-chandra.png"
   },
   {
     "name": "Bibhu Jena",
@@ -419,7 +419,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Suspension & Steering",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/bibhu-jena.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/bibhu-jena.png"
   },
   {
     "name": "Anshuman Satpathy",
@@ -427,7 +427,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Suspension & Steering",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/anshuman-satpathy.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/anshuman-satpathy.png"
   },
   {
     "name": "Soham Mishra",
@@ -435,7 +435,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Suspension & Steering",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/soham-mishra.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/soham-mishra.png"
   },
   {
     "name": "K Ankita Patra",
@@ -443,7 +443,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Suspension & Steering",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/k-ankita-patra.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/k-ankita-patra.png"
   },
   {
     "name": "Rajiv Debnath",
@@ -451,7 +451,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Suspension & Steering",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/rajiv-debnath.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/rajiv-debnath.png"
   },
   {
     "name": "Angel Mahananda",
@@ -459,7 +459,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Suspension & Steering",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/angel-mahananda.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/angel-mahananda.png"
   },
 
   // --- Group 3: Brakes & Tyres (9 Members) ---
@@ -469,7 +469,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Brakes & Tyres",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/aryapriya-panigrahi.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/aryapriya-panigrahi.png"
   },
   {
     "name": "Siddharth Swain",
@@ -477,7 +477,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Brakes & Tyres",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/siddharth-swain.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/siddharth-swain.png"
   },
   {
     "name": "Debashish Mahato",
@@ -485,7 +485,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Brakes & Tyres",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/debashish-mahato.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/debashish-mahato.png"
   },
   {
     "name": "Suchit Sourav Barik",
@@ -493,7 +493,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Brakes & Tyres",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/suchit-sourav-barik.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/suchit-sourav-barik.png"
   },
   {
     "name": "Abhishek Pradhan",
@@ -501,7 +501,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Brakes & Tyres",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/abhishek-pradhan.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/abhishek-pradhan.png"
   },
   {
     "name": "Farhan Khan",
@@ -509,7 +509,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Brakes & Tyres",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/farhan-khan.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/farhan-khan.png"
   },
   {
     "name": "Abhishek Pattnaik",
@@ -517,7 +517,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Brakes & Tyres",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/abhishek-pattnaik.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/abhishek-pattnaik.png"
   },
   {
     "name": "Arpita Biswal",
@@ -525,7 +525,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Brakes & Tyres",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/arpita-biswal.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/arpita-biswal.png"
   },
   {
     "name": "Silki Priya Seth",
@@ -533,7 +533,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Brakes & Tyres",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/silki-priya-seth.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/silki-priya-seth.png"
   },
 
   // --- Group 4: Powertrain & Drivetrain (14 Members) ---
@@ -543,7 +543,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/pratyush-sahoo.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/pratyush-sahoo.png"
   },
   {
     "name": "Sushmit Kumar Satapathy",
@@ -551,7 +551,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/sushmit-kumar.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/sushmit-kumar.png"
   },
   {
     "name": "Soumya Ranjan Panda",
@@ -559,7 +559,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/soumya-ranjan-panda.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/soumya-ranjan-panda.png"
   },
   {
     "name": "Loknath Swain",
@@ -567,7 +567,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/loknath-swain.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/loknath-swain.png"
   },
   {
     "name": "Anshuman Swain",
@@ -575,7 +575,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/anshuman-swain.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/anshuman-swain.png"
   },
   {
     "name": "Aditya Samal",
@@ -583,7 +583,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/aditya-samal.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/aditya-samal.png"
   },
   {
     "name": "Manoranjan Panda",
@@ -591,7 +591,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/manoranjan-panda.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/manoranjan-panda.png"
   },
   {
     "name": "Omkar Tripathy",
@@ -599,7 +599,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/omkar-tripathy.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/omkar-tripathy.png"
   },
   {
     "name": "Arsalan Ali",
@@ -607,7 +607,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/arsalan-ali.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/arsalan-ali.png"
   },
   {
     "name": "Badri Prasad Baral",
@@ -615,7 +615,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/badri-prasad-baral.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/badri-prasad-baral.png"
   },
   {
     "name": "Sujata Sahu",
@@ -623,7 +623,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/sujata-sahu.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/sujata-sahu.png"
   },
   {
     "name": "Payosmi Pritismita",
@@ -631,7 +631,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/payosmi-pritismita.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/payosmi-pritismita.png"
   },
   {
     "name": "Somya Ranjan Panda",
@@ -639,7 +639,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/somya-ranjan-panda.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/somya-ranjan-panda.png"
   },
   {
     "name": "Prabhu Pritam Sabat",
@@ -647,7 +647,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
     "year": "2nd Year",
-    "image": "/members/prabhu-pritam-sabat.png"
+    "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/prabhu-pritam-sabat.png"
   }
 ];
 
