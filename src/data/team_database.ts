@@ -414,7 +414,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/ankit-chandra.png"
   },
   {
-    "name": "Bibhu Jena",
+    "name": "Bibhutananda Jena",
     "role": "Suspension and Steering Engineer",
     "department": "Suspension & Steering",
     "subgroup": "Engineering Domain",
@@ -446,7 +446,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/k-ankita-patra.png"
   },
   {
-    "name": "Rajiv Debnath",
+    "name": "Rajib Debnath",
     "role": "Suspension and Steering Engineer",
     "department": "Suspension & Steering",
     "subgroup": "Engineering Domain",
@@ -562,7 +562,7 @@ export const DOMAIN_MEMBERS: DomainMember[] = [
     "image": "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/domain-members/soumya-ranjan-panda.png"
   },
   {
-    "name": "Loknath Swain",
+    "name": "Lokanath Swain",
     "role": "Powertrain and Drivetrain Engineer",
     "department": "Powertrain & Drivetrain",
     "subgroup": "Engineering Domain",
