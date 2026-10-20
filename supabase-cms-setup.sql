@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS public.alumni (
   batch TEXT NOT NULL,
   former_role TEXT NOT NULL,
   current_company TEXT NOT NULL,
-  current_role TEXT NOT NULL,
+  role_name TEXT NOT NULL,
   image_url TEXT NOT NULL,
   linkedin_url TEXT DEFAULT 'https://www.linkedin.com/company/veerracerss-electric/',
   mentorship_domain TEXT NOT NULL,
@@ -124,19 +124,19 @@ CREATE POLICY "Enable update for authenticated on alumni" ON public.alumni FOR U
 CREATE POLICY "Enable delete for authenticated on alumni" ON public.alumni FOR DELETE USING (auth.role() = 'authenticated');
 
 -- Seed initial alumni records
-INSERT INTO public.alumni (name, batch, former_role, current_company, current_role, image_url, linkedin_url, mentorship_domain, bio, order_index)
+INSERT INTO public.alumni (name, batch, former_role, current_company, role_name, image_url, linkedin_url, mentorship_domain, bio, order_index)
 SELECT 'Siddhartha Senapati', 'Batch 2021', 'Former Team Captain & Powertrain Lead', 'Ather Energy', 'Battery Systems Engineer', '/alumni/siddhartha-senapati.jpg', 'https://www.linkedin.com/company/veerracerss-electric/', 'Li-Ion Thermal Architecture & BMS', 'Pioneered VeerRacerss initial transition into high-voltage electric powertrains; now driving battery pack thermal safety and pack engineering at Ather Energy.', 1
 WHERE NOT EXISTS (SELECT 1 FROM public.alumni WHERE name = 'Siddhartha Senapati');
 
-INSERT INTO public.alumni (name, batch, former_role, current_company, current_role, image_url, linkedin_url, mentorship_domain, bio, order_index)
+INSERT INTO public.alumni (name, batch, former_role, current_company, role_name, image_url, linkedin_url, mentorship_domain, bio, order_index)
 SELECT 'Priyanka Das', 'Batch 2022', 'Former Powertrain Lead', 'Tata Motors EV', 'Powertrain Calibration Lead', '/alumni/priyanka-das.jpg', 'https://www.linkedin.com/company/veerracerss-electric/', 'Motor Inverter Tuning & Drive Cycles', 'Engineered vehicle dynamometer testing pipelines for Aether; currently calibrating permanent magnet electric motor drives across production Tata EVs.', 2
 WHERE NOT EXISTS (SELECT 1 FROM public.alumni WHERE name = 'Priyanka Das');
 
-INSERT INTO public.alumni (name, batch, former_role, current_company, current_role, image_url, linkedin_url, mentorship_domain, bio, order_index)
+INSERT INTO public.alumni (name, batch, former_role, current_company, role_name, image_url, linkedin_url, mentorship_domain, bio, order_index)
 SELECT 'Aman Patnaik', 'Batch 2023', 'Former Chassis & Vehicle Dynamics Lead', 'Mahindra Racing', 'Vehicle Dynamics Engineer', '/alumni/aman-patnaik.jpg', 'https://www.linkedin.com/company/veerracerss-electric/', 'Suspension Kinematics & CFD Aero', 'Designed our multi-link double-wishbone suspension setup; currently developing dynamic lap simulations and track vehicle dynamics with Mahindra Racing.', 3
 WHERE NOT EXISTS (SELECT 1 FROM public.alumni WHERE name = 'Aman Patnaik');
 
-INSERT INTO public.alumni (name, batch, former_role, current_company, current_role, image_url, linkedin_url, mentorship_domain, bio, order_index)
+INSERT INTO public.alumni (name, batch, former_role, current_company, role_name, image_url, linkedin_url, mentorship_domain, bio, order_index)
 SELECT 'Rohan Mohanty', 'Batch 2023', 'Former Electronics & Telemetry Lead', 'Ola Electric', 'Motor Controller Firmware', '/alumni/rohan-mohanty.jpg', 'https://www.linkedin.com/company/veerracerss-electric/', 'CAN-Bus Telemetry & Embedded Firmware', 'Architected custom telemetry logging units streaming real-time tire temperatures; now building field-oriented control firmware for high-performance EV controllers.', 4
 WHERE NOT EXISTS (SELECT 1 FROM public.alumni WHERE name = 'Rohan Mohanty');
 

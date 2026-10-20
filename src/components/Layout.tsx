@@ -11,7 +11,6 @@ import { ReactLenis } from 'lenis/react';
 
 const NAV_ITEMS = [
   { label: 'THE CAR', path: '/#car-spotlight', matchValue: 'car-spotlight' },
-  { label: 'GALLERY', path: '/gallery', matchValue: '/gallery' },
   { label: 'ALUMNI', path: '/alumni', matchValue: '/alumni' },
   { label: 'TEAM', path: '/members', matchValue: '/members' },
   { label: 'ACHIEVEMENTS', path: '/achievements', matchValue: '/achievements' },

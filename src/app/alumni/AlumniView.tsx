@@ -21,7 +21,13 @@ export function AlumniView() {
           .order("order_index", { ascending: true });
 
         if (data && data.length > 0 && !error) {
-          setAlumni(data);
+          setAlumni(
+            data.map((item: any) => ({
+              ...item,
+              role_name: item.role_name || item.current_role || "",
+              current_role: item.role_name || item.current_role || "",
+            }))
+          );
         }
       } catch {
         // Fallback remains active
@@ -35,11 +41,12 @@ export function AlumniView() {
   const filteredAlumni = alumni.filter((a) => {
     const matchesBatch = selectedBatch === "ALL" || a.batch === selectedBatch;
     const query = searchQuery.toLowerCase().trim();
+    const roleText = (a.role_name || a.current_role || "").toLowerCase();
     const matchesSearch =
       !query ||
       a.name.toLowerCase().includes(query) ||
       a.current_company.toLowerCase().includes(query) ||
-      a.current_role.toLowerCase().includes(query) ||
+      roleText.includes(query) ||
       a.former_role.toLowerCase().includes(query) ||
       a.mentorship_domain.toLowerCase().includes(query);
 
@@ -143,7 +150,7 @@ export function AlumniView() {
                   
                   <div className="flex items-center gap-1.5 text-racing-red text-[11px] font-mono font-semibold tracking-wider uppercase mt-1 mb-2">
                     <Briefcase className="w-3 h-3" />
-                    <span>{alumnus.current_role}</span>
+                    <span>{alumnus.role_name || alumnus.current_role}</span>
                   </div>
 
                   {/* Company Tag */}

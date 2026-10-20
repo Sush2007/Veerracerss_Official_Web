@@ -21,7 +21,13 @@ export function AlumniNetwork() {
           .limit(4);
 
         if (data && data.length > 0 && !error) {
-          setAlumniList(data);
+          setAlumniList(
+            data.map((item: any) => ({
+              ...item,
+              role_name: item.role_name || item.current_role || "",
+              current_role: item.role_name || item.current_role || "",
+            }))
+          );
         }
       } catch {
         // Safe fallback active
@@ -101,7 +107,7 @@ export function AlumniNetwork() {
                 
                 <div className="flex items-center gap-1.5 text-racing-red text-[11px] font-mono font-semibold tracking-wider uppercase mt-1 mb-2">
                   <Briefcase className="w-3 h-3" />
-                  <span>{alumnus.current_role}</span>
+                  <span>{alumnus.role_name || alumnus.current_role}</span>
                 </div>
 
                 {/* Company Tag */}

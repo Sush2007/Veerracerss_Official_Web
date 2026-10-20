@@ -139,7 +139,15 @@ export default function AdminDashboard() {
     // 4. Alumni
     try {
       const { data: aData } = await supabase.from("alumni").select("*").order("order_index", { ascending: true });
-      if (aData && aData.length > 0) setAlumniList(aData);
+      if (aData && aData.length > 0) {
+        setAlumniList(
+          aData.map((item: any) => ({
+            ...item,
+            role_name: item.role_name || item.current_role || "",
+            current_role: item.role_name || item.current_role || "",
+          }))
+        );
+      }
     } catch {}
 
     // 5. Members
@@ -320,12 +328,12 @@ export default function AdminDashboard() {
     setUploading(true);
     try {
       const imgUrl = await uploadToStorage(alumniFile, "alumni-images");
-      const newAlumnus = {
+      const newAlumnusPayload: any = {
         name: alumniName,
         batch: alumniBatch,
         former_role: alumniFormerRole,
         current_company: alumniCompany,
-        current_role: alumniCurrentRole,
+        role_name: alumniCurrentRole,
         image_url: imgUrl,
         linkedin_url: alumniLinkedin,
         mentorship_domain: alumniMentorshipDomain,
@@ -333,10 +341,24 @@ export default function AdminDashboard() {
         order_index: alumniList.length + 1
       };
 
-      const { data, error } = await supabase.from("alumni").insert([newAlumnus]).select().single();
+      let { data, error } = await supabase.from("alumni").insert([newAlumnusPayload]).select().single();
+      if (error && error.message?.includes("column \"role_name\" does not exist")) {
+        const fallback = { ...newAlumnusPayload };
+        delete fallback.role_name;
+        fallback.current_role = alumniCurrentRole;
+        const res = await supabase.from("alumni").insert([fallback]).select().single();
+        data = res.data;
+        error = res.error;
+      }
       if (error) throw error;
 
-      setAlumniList([...alumniList, data]);
+      const savedItem: AlumniRecord = {
+        ...data,
+        role_name: data.role_name || data.current_role || alumniCurrentRole,
+        current_role: data.role_name || data.current_role || alumniCurrentRole,
+      };
+
+      setAlumniList([...alumniList, savedItem]);
       setAlumniName("");
       setAlumniFormerRole("");
       setAlumniCompany("");
@@ -358,22 +380,41 @@ export default function AdminDashboard() {
     if (!editingAlumni) return;
     setUploading(true);
     try {
-      const { error } = await supabase
+      const roleVal = editingAlumni.role_name || editingAlumni.current_role || "";
+      const updatePayload: any = {
+        name: editingAlumni.name,
+        batch: editingAlumni.batch,
+        former_role: editingAlumni.former_role,
+        current_company: editingAlumni.current_company,
+        role_name: roleVal,
+        linkedin_url: editingAlumni.linkedin_url,
+        mentorship_domain: editingAlumni.mentorship_domain,
+        bio: editingAlumni.bio
+      };
+
+      let { error } = await supabase
         .from("alumni")
-        .update({
-          name: editingAlumni.name,
-          batch: editingAlumni.batch,
-          former_role: editingAlumni.former_role,
-          current_company: editingAlumni.current_company,
-          current_role: editingAlumni.current_role,
-          linkedin_url: editingAlumni.linkedin_url,
-          mentorship_domain: editingAlumni.mentorship_domain,
-          bio: editingAlumni.bio
-        })
+        .update(updatePayload)
         .eq("id", editingAlumni.id);
 
+      if (error && error.message?.includes("column \"role_name\" does not exist")) {
+        delete updatePayload.role_name;
+        updatePayload.current_role = roleVal;
+        const res = await supabase
+          .from("alumni")
+          .update(updatePayload)
+          .eq("id", editingAlumni.id);
+        error = res.error;
+      }
+
       if (error) throw error;
-      setAlumniList(alumniList.map((a) => (a.id === editingAlumni.id ? editingAlumni : a)));
+      setAlumniList(
+        alumniList.map((a) =>
+          a.id === editingAlumni.id
+            ? { ...editingAlumni, role_name: roleVal, current_role: roleVal }
+            : a
+        )
+      );
       setEditingAlumni(null);
       showToast("Alumni profile updated successfully!");
     } catch (err: any) {
@@ -1140,10 +1181,14 @@ export default function AdminDashboard() {
                     <input
                       type="text"
                       required
-                      value={editingAlumni ? editingAlumni.current_role : alumniCurrentRole}
+                      value={editingAlumni ? (editingAlumni.role_name || editingAlumni.current_role || "") : alumniCurrentRole}
                       onChange={(e) =>
                         editingAlumni
-                          ? setEditingAlumni({ ...editingAlumni, current_role: e.target.value })
+                          ? setEditingAlumni({
+                              ...editingAlumni,
+                              role_name: e.target.value,
+                              current_role: e.target.value,
+                            })
                           : setAlumniCurrentRole(e.target.value)
                       }
                       placeholder="e.g. Battery Systems Engineer"
@@ -1279,7 +1324,7 @@ export default function AdminDashboard() {
                         <div>
                           <h4 className="font-bold text-sm text-white">{alumnus.name}</h4>
                           <p className="text-[11px] text-racing-red font-mono font-bold">@ {alumnus.current_company}</p>
-                          <p className="text-[10px] text-white/50 font-mono">{alumnus.current_role}</p>
+                          <p className="text-[10px] text-white/50 font-mono">{alumnus.role_name || alumnus.current_role}</p>
                           <span className="text-[9px] bg-white/10 px-1.5 py-0.5 mt-1 inline-block text-white/70 font-mono">
                             {alumnus.batch}
                           </span>

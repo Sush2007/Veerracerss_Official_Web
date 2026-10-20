@@ -44,7 +44,8 @@ export interface AlumniRecord {
   batch: string;
   former_role: string;
   current_company: string;
-  current_role: string;
+  role_name?: string;
+  current_role?: string;
   image_url: string;
   linkedin_url: string;
   mentorship_domain: string;
@@ -154,6 +155,7 @@ export const DEFAULT_ALUMNI_RECORDS: AlumniRecord[] = [
     batch: "Batch 2021",
     former_role: "Former Team Captain & Powertrain Lead",
     current_company: "Ather Energy",
+    role_name: "Battery Systems Engineer",
     current_role: "Battery Systems Engineer",
     image_url: "/alumni/siddhartha-senapati.jpg",
     linkedin_url: "https://www.linkedin.com/company/veerracerss-electric/",
@@ -167,6 +169,7 @@ export const DEFAULT_ALUMNI_RECORDS: AlumniRecord[] = [
     batch: "Batch 2022",
     former_role: "Former Powertrain Lead",
     current_company: "Tata Motors EV",
+    role_name: "Powertrain Calibration Lead",
     current_role: "Powertrain Calibration Lead",
     image_url: "/alumni/priyanka-das.jpg",
     linkedin_url: "https://www.linkedin.com/company/veerracerss-electric/",
@@ -180,6 +183,7 @@ export const DEFAULT_ALUMNI_RECORDS: AlumniRecord[] = [
     batch: "Batch 2023",
     former_role: "Former Chassis & Vehicle Dynamics Lead",
     current_company: "Mahindra Racing",
+    role_name: "Vehicle Dynamics Engineer",
     current_role: "Vehicle Dynamics Engineer",
     image_url: "/alumni/aman-patnaik.jpg",
     linkedin_url: "https://www.linkedin.com/company/veerracerss-electric/",
@@ -193,6 +197,7 @@ export const DEFAULT_ALUMNI_RECORDS: AlumniRecord[] = [
     batch: "Batch 2023",
     former_role: "Former Electronics & Telemetry Lead",
     current_company: "Ola Electric",
+    role_name: "Motor Controller Firmware",
     current_role: "Motor Controller Firmware",
     image_url: "/alumni/rohan-mohanty.jpg",
     linkedin_url: "https://www.linkedin.com/company/veerracerss-electric/",
