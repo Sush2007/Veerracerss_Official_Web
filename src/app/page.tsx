@@ -8,7 +8,6 @@ import { Faculty } from '../components/Faculty';
 import { TeamLeaders } from '../components/TeamLeaders';
 import { Partners } from '../components/Partners';
 import { FAQ } from '../components/FAQ';
-import { CallToAction } from '../components/CallToAction';
 
 export default function Home() {
   return (
@@ -42,9 +41,6 @@ export default function Home() {
 
       {/* 10. Formula Student FAQs */}
       <FAQ />
-
-      {/* 11. Recruitment & Paddock Call to Action */}
-      <CallToAction />
     </>
   );
 }

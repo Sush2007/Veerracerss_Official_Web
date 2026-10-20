@@ -21,24 +21,45 @@ import {
   Users,
   Save,
   Plus,
-  X
+  X,
+  FileSpreadsheet,
+  DollarSign,
+  Layers,
+  Sparkles,
+  BookOpen,
+  Filter,
 } from "lucide-react";
 import {
   DEFAULT_SITE_SETTINGS,
   DEFAULT_FEATURED_MACHINE,
   DEFAULT_MEDIA_ITEMS,
   DEFAULT_ALUMNI_RECORDS,
+  DEFAULT_EXPENSES,
+  DEFAULT_RECRUITS,
+  DEFAULT_CUSTOM_DATABASES,
   SiteSettings,
   FeaturedMachine,
   MediaItem,
-  AlumniRecord
+  AlumniRecord,
+  MemberRecord,
+  ClubExpense,
+  RecruitmentApplication,
+  CustomDatabaseRecord,
 } from "@/src/data/cms_defaults";
+import { exportTableToExcel, exportMultiSheetExcel } from "@/src/lib/exportToExcel";
+import { MemberDatasheetModal } from "./components/MemberDatasheetModal";
+import { BatchProgressionModal } from "./components/BatchProgressionModal";
+import { ExpensesTab } from "./components/ExpensesTab";
+import { RecruitmentTab } from "./components/RecruitmentTab";
+import { CustomDbsTab } from "./components/CustomDbsTab";
 
 export default function AdminDashboard() {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"hero" | "machine" | "media" | "alumni" | "members">("hero");
+  const [activeTab, setActiveTab] = useState<
+    "hero" | "machine" | "media" | "alumni" | "members" | "expenses" | "recruitment" | "custom_dbs"
+  >("hero");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -76,13 +97,30 @@ export default function AdminDashboard() {
   const [editingAlumni, setEditingAlumni] = useState<AlumniRecord | null>(null);
 
   // 5. Active Squad Members State
-  const [members, setMembers] = useState<any[]>([]);
+  const [members, setMembers] = useState<MemberRecord[]>([]);
   const [memberName, setMemberName] = useState("");
   const [memberRole, setMemberRole] = useState("");
   const [memberDepartment, setMemberDepartment] = useState("Leadership");
+  const [memberYearOfStudy, setMemberYearOfStudy] = useState("3rd Year");
+  const [memberRollNo, setMemberRollNo] = useState("");
+  const [memberBranch, setMemberBranch] = useState("Mechanical Engineering");
+  const [memberBloodGroup, setMemberBloodGroup] = useState("O+");
+  const [memberPhone, setMemberPhone] = useState("");
   const [memberFile, setMemberFile] = useState<File | null>(null);
   const [memberLinkedin, setMemberLinkedin] = useState("");
   const [memberInstagram, setMemberInstagram] = useState("");
+  const [memberYearFilter, setMemberYearFilter] = useState("ALL");
+  const [selectedMemberForDatasheet, setSelectedMemberForDatasheet] = useState<MemberRecord | null>(null);
+  const [showProgressionModal, setShowProgressionModal] = useState(false);
+
+  // 6. Club Expenses State
+  const [expenses, setExpenses] = useState<ClubExpense[]>(DEFAULT_EXPENSES);
+
+  // 7. Recruitment Applications State
+  const [recruits, setRecruits] = useState<RecruitmentApplication[]>(DEFAULT_RECRUITS);
+
+  // 8. Custom Databases State
+  const [customDbs, setCustomDbs] = useState<CustomDatabaseRecord[]>(DEFAULT_CUSTOM_DATABASES);
 
   const departments = [
     "Leadership",
@@ -155,6 +193,24 @@ export default function AdminDashboard() {
       const { data: memData } = await supabase.from("members").select("*").order("created_at", { ascending: false });
       if (memData) setMembers(memData);
     } catch {}
+
+    // 6. Club Expenses
+    try {
+      const { data: expData } = await supabase.from("club_expenses").select("*").order("expense_date", { ascending: false });
+      if (expData && expData.length > 0) setExpenses(expData);
+    } catch {}
+
+    // 7. Recruitment Applications
+    try {
+      const { data: recData } = await supabase.from("recruitment_applications").select("*").order("created_at", { ascending: false });
+      if (recData && recData.length > 0) setRecruits(recData);
+    } catch {}
+
+    // 8. Custom Databases
+    try {
+      const { data: cdbData } = await supabase.from("custom_databases").select("*").order("created_at", { ascending: true });
+      if (cdbData && cdbData.length > 0) setCustomDbs(cdbData);
+    } catch {}
   };
 
   const handleLogout = async () => {
@@ -187,19 +243,35 @@ export default function AdminDashboard() {
     setSavingSettings(true);
     try {
       const { data: existing } = await supabase.from("site_settings").select("id").limit(1).maybeSingle();
+      const settingsPayload: any = {
+        recruitment_cta_label: siteSettings.recruitment_cta_label,
+        recruitment_cta_url: siteSettings.recruitment_cta_url,
+        recruitment_cta_enabled: siteSettings.recruitment_cta_enabled,
+        announcement_badge_text: siteSettings.announcement_badge_text,
+        announcement_badge_enabled: siteSettings.announcement_badge_enabled,
+        contact_email: siteSettings.contact_email,
+        recruitment_form_enabled: siteSettings.recruitment_form_enabled !== false,
+        recruitment_form_title: siteSettings.recruitment_form_title || "Formula Student Electric 2026 - Official Recruitment",
+        recruitment_form_deadline: siteSettings.recruitment_form_deadline || "Season 2026 Phase 1 Induction",
+        whatsapp_recruit_link: siteSettings.whatsapp_recruit_link || "https://chat.whatsapp.com/veerracerss-recruits-2026",
+        onboarding_email_template: siteSettings.onboarding_email_template,
+        updated_at: new Date().toISOString()
+      };
+
       let res;
       if (existing) {
-        res = await supabase.from("site_settings").update({
-          recruitment_cta_label: siteSettings.recruitment_cta_label,
-          recruitment_cta_url: siteSettings.recruitment_cta_url,
-          recruitment_cta_enabled: siteSettings.recruitment_cta_enabled,
-          announcement_badge_text: siteSettings.announcement_badge_text,
-          announcement_badge_enabled: siteSettings.announcement_badge_enabled,
-          contact_email: siteSettings.contact_email,
-          updated_at: new Date().toISOString()
-        }).eq("id", existing.id);
+        res = await supabase.from("site_settings").update(settingsPayload).eq("id", existing.id);
+        if (res.error && res.error.message?.includes("column")) {
+          // Fallback if extended columns not yet run in supabase
+          delete settingsPayload.recruitment_form_enabled;
+          delete settingsPayload.recruitment_form_title;
+          delete settingsPayload.recruitment_form_deadline;
+          delete settingsPayload.whatsapp_recruit_link;
+          delete settingsPayload.onboarding_email_template;
+          res = await supabase.from("site_settings").update(settingsPayload).eq("id", existing.id);
+        }
       } else {
-        res = await supabase.from("site_settings").insert([siteSettings]);
+        res = await supabase.from("site_settings").insert([settingsPayload]);
       }
       if (res.error) throw res.error;
       showToast("Hero and Site Settings updated successfully!");
@@ -444,18 +516,41 @@ export default function AdminDashboard() {
     setUploading(true);
     try {
       const imgUrl = await uploadToStorage(memberFile, "member-images", "domain-members");
-      const { error } = await supabase.from("members").insert([{
+      const newMemberPayload = {
         name: memberName,
         role: memberRole,
         department: memberDepartment,
         image_url: imgUrl,
         linkedin: memberLinkedin || "#",
-        instagram: memberInstagram || "#"
-      }]);
+        instagram: memberInstagram || "#",
+        year_of_study: memberYearOfStudy,
+        roll_no: memberRollNo,
+        academic_branch: memberBranch,
+        blood_group: memberBloodGroup,
+        phone: memberPhone,
+        joining_year: new Date().getFullYear().toString(),
+      };
+
+      let { error } = await supabase.from("members").insert([newMemberPayload]);
+      if (error && error.message?.includes("column")) {
+        // Fallback without extended fields if table not altered yet
+        const simplePayload = {
+          name: memberName,
+          role: memberRole,
+          department: memberDepartment,
+          image_url: imgUrl,
+          linkedin: memberLinkedin || "#",
+          instagram: memberInstagram || "#",
+        };
+        const res = await supabase.from("members").insert([simplePayload]);
+        error = res.error;
+      }
       if (error) throw error;
 
       setMemberName("");
       setMemberRole("");
+      setMemberRollNo("");
+      setMemberPhone("");
       setMemberFile(null);
       setMemberLinkedin("");
       setMemberInstagram("");
@@ -478,6 +573,340 @@ export default function AdminDashboard() {
       showToast("Member removed.");
     } catch (err: any) {
       showError(err.message || "Failed to delete member.");
+    }
+  };
+
+  // 5. Member: Save Datasheet
+  const handleSaveMemberDatasheet = async (updated: MemberRecord) => {
+    try {
+      let { error } = await supabase
+        .from("members")
+        .update({
+          name: updated.name,
+          role: updated.role,
+          department: updated.department,
+          year_of_study: updated.year_of_study,
+          roll_no: updated.roll_no,
+          academic_branch: updated.academic_branch,
+          blood_group: updated.blood_group,
+          phone: updated.phone,
+          emergency_contact: updated.emergency_contact,
+          joining_year: updated.joining_year,
+          linkedin: updated.linkedin,
+        })
+        .eq("id", updated.id);
+
+      if (error && error.message?.includes("column")) {
+        const { error: basicErr } = await supabase
+          .from("members")
+          .update({
+            name: updated.name,
+            role: updated.role,
+            department: updated.department,
+            linkedin: updated.linkedin,
+          })
+          .eq("id", updated.id);
+        if (basicErr) throw basicErr;
+      } else if (error) {
+        throw error;
+      }
+
+      setMembers(members.map((m) => (m.id === updated.id ? updated : m)));
+      showToast(`Datasheet for ${updated.name} updated successfully!`);
+    } catch (err: any) {
+      showError(err.message || "Failed to update member datasheet.");
+    }
+  };
+
+  // 5. Member: 1-Click Annual Batch Progression
+  const handleExecuteProgression = async () => {
+    try {
+      const gradYear = new Date().getFullYear();
+      const fourthYears = members.filter((m) => (m.year_of_study || "").includes("4th"));
+
+      // 1. Migrate each 4th year member into alumni table
+      for (const m of fourthYears) {
+        const alumniPayload = {
+          name: m.name,
+          batch: `Batch ${gradYear}`,
+          former_role: m.role || "Club Engineer",
+          current_company: "VSSUT Burla / Graduate Placement",
+          role_name: "Graduate Engineer",
+          image_url: m.image_url,
+          linkedin_url: m.linkedin || "https://www.linkedin.com/company/veerracerss-electric/",
+          mentorship_domain: m.department || "Vehicle Engineering",
+          bio: `Graduated former ${m.role} of VeerRacerss Electric (${m.department}). Mentoring new recruits for Formula Student competitions.`,
+          order_index: alumniList.length + 1,
+        };
+
+        let { error: alErr } = await supabase.from("alumni").insert([alumniPayload]);
+        if (alErr && alErr.message?.includes("role_name")) {
+          const fallback = { ...alumniPayload };
+          delete (fallback as any).role_name;
+          (fallback as any).current_role = "Graduate Engineer";
+          await supabase.from("alumni").insert([fallback]);
+        }
+        await supabase.from("members").delete().eq("id", m.id);
+      }
+
+      // 2. Increment active student years
+      for (const m of members) {
+        let newYear = m.year_of_study;
+        if ((m.year_of_study || "").includes("3rd")) newYear = "4th Year";
+        else if ((m.year_of_study || "").includes("2nd")) newYear = "3rd Year";
+        else if ((m.year_of_study || "").includes("1st")) newYear = "2nd Year";
+
+        if (newYear && newYear !== m.year_of_study) {
+          try {
+            await supabase.from("members").update({ year_of_study: newYear }).eq("id", m.id);
+          } catch {}
+        }
+      }
+
+      await fetchAllData();
+      showToast(`Annual progression complete! ${fourthYears.length} members graduated to Alumni, active squads promoted.`);
+    } catch (err: any) {
+      showError(err.message || "Failed to execute batch progression.");
+    }
+  };
+
+  // 5. Member: Export Squad to Excel
+  const handleExportMembersExcel = () => {
+    if (members.length === 0) return showError("No members in roster to export.");
+    exportTableToExcel(
+      members.map((m) => ({
+        "Full Name": m.name,
+        "Club Role": m.role,
+        "Domain / Department": m.department,
+        "Year of Study": m.year_of_study || "3rd Year",
+        "Roll Number": m.roll_no || "N/A",
+        "Academic Branch": m.academic_branch || "Mechanical Engineering",
+        "Blood Group": m.blood_group || "O+",
+        "Phone (WhatsApp)": m.phone || "N/A",
+        "Emergency Contact": m.emergency_contact || "N/A",
+        "Joining Year": m.joining_year || "2023",
+        "LinkedIn": m.linkedin || "N/A",
+      })),
+      "veerracerss-active-squad-datasheet",
+      "Active Members"
+    );
+  };
+
+  // Master: Export All Databases to One Multi-Sheet Excel Workbook
+  const handleExportMasterBackup = () => {
+    exportMultiSheetExcel(
+      [
+        {
+          sheetName: "Active Squad",
+          data: members.map((m) => ({
+            Name: m.name,
+            Role: m.role,
+            Department: m.department,
+            "Year of Study": m.year_of_study || "3rd Year",
+            "Roll No": m.roll_no || "",
+            Branch: m.academic_branch || "",
+            "Blood Group": m.blood_group || "",
+            Phone: m.phone || "",
+            "Emergency Contact": m.emergency_contact || "",
+          })),
+        },
+        {
+          sheetName: "Alumni Directory",
+          data: alumniList.map((a) => ({
+            Name: a.name,
+            Batch: a.batch,
+            "Former Role": a.former_role,
+            "Current Company": a.current_company,
+            "Role Name": a.role_name || a.current_role,
+            "Mentorship Domain": a.mentorship_domain,
+            LinkedIn: a.linkedin_url,
+          })),
+        },
+        {
+          sheetName: "Expenses & Bills",
+          data: expenses.map((e) => ({
+            Item: e.title,
+            Category: e.category,
+            "Amount (INR)": e.amount,
+            Vendor: e.vendor || "",
+            Date: e.expense_date,
+            "Paid By": e.paid_by || "",
+            Status: e.status,
+            Notes: e.notes || "",
+          })),
+        },
+        {
+          sheetName: "Recruitment Applications",
+          data: recruits.map((r) => ({
+            Name: r.full_name,
+            Email: r.email,
+            Phone: r.phone,
+            "Roll No": r.roll_no,
+            Branch: r.branch,
+            "Year of Study": r.year_of_study,
+            "Primary Domain": r.primary_domain,
+            "Secondary Domain": r.secondary_domain || "",
+            Status: r.status,
+            Score: r.interview_score || "",
+          })),
+        },
+      ],
+      "veerracerss-master-club-backup"
+    );
+  };
+
+  // 6. Expenses Handlers
+  const handleAddExpense = async (newExp: Omit<ClubExpense, "id" | "created_at">, receiptFile: File | null) => {
+    setUploading(true);
+    try {
+      let receiptUrl = "";
+      if (receiptFile) {
+        try {
+          receiptUrl = await uploadToStorage(receiptFile, "member-images", "bills-receipts");
+        } catch {
+          // If storage bucket isn't created yet, continue with empty receipt
+        }
+      }
+
+      const payload = { ...newExp, receipt_url: receiptUrl };
+      const { data, error } = await supabase.from("club_expenses").insert([payload]).select().single();
+      if (error) throw error;
+
+      setExpenses([data, ...expenses]);
+      showToast("Expense voucher recorded successfully!");
+    } catch (err: any) {
+      showError(err.message || "Failed to log expense voucher. Ensure supabase-operations-setup.sql is executed.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeleteExpense = async (id: string, title: string) => {
+    if (!confirm(`Delete expense record "${title}"?`)) return;
+    try {
+      const { error } = await supabase.from("club_expenses").delete().eq("id", id);
+      if (error) throw error;
+      setExpenses(expenses.filter((e) => e.id !== id));
+      showToast("Expense voucher deleted.");
+    } catch (err: any) {
+      showError(err.message || "Failed to delete expense.");
+    }
+  };
+
+  const handleUpdateExpenseStatus = async (id: string, newStatus: string) => {
+    try {
+      const { error } = await supabase.from("club_expenses").update({ status: newStatus }).eq("id", id);
+      if (error) throw error;
+      setExpenses(expenses.map((e) => (e.id === id ? { ...e, status: newStatus } : e)));
+      showToast("Status updated.");
+    } catch (err: any) {
+      showError(err.message || "Failed to update status.");
+    }
+  };
+
+  // 7. Recruitment Handlers
+  const handleUpdateSettings = async (newSettings: Partial<SiteSettings>) => {
+    try {
+      const { data: existing } = await supabase.from("site_settings").select("id").limit(1).maybeSingle();
+      if (existing) {
+        await supabase.from("site_settings").update(newSettings).eq("id", existing.id);
+      }
+      setSiteSettings({ ...siteSettings, ...newSettings });
+      showToast("Settings updated!");
+    } catch (err: any) {
+      showError(err.message || "Failed to update settings.");
+    }
+  };
+
+  const handleUpdateRecruitStatus = async (id: string, newStatus: "Pending" | "Shortlisted" | "Accepted" | "Declined") => {
+    try {
+      const { error } = await supabase.from("recruitment_applications").update({ status: newStatus }).eq("id", id);
+      if (error) throw error;
+      setRecruits(recruits.map((r) => (r.id === id ? { ...r, status: newStatus } : r)));
+      showToast(`Applicant marked as ${newStatus}.`);
+    } catch (err: any) {
+      showError(err.message || "Failed to update candidate status.");
+    }
+  };
+
+  const handleUpdateRecruitScore = async (id: string, score: string) => {
+    try {
+      await supabase.from("recruitment_applications").update({ interview_score: score }).eq("id", id);
+      setRecruits(recruits.map((r) => (r.id === id ? { ...r, interview_score: score } : r)));
+    } catch {}
+  };
+
+  const handleDeleteApplication = async (id: string, name: string) => {
+    if (!confirm(`Delete application for "${name}"?`)) return;
+    try {
+      await supabase.from("recruitment_applications").delete().eq("id", id);
+      setRecruits(recruits.filter((r) => r.id !== id));
+      showToast("Application deleted.");
+    } catch (err: any) {
+      showError(err.message || "Failed to delete application.");
+    }
+  };
+
+  // 8. Custom Databases Handlers
+  const handleCreateDatabase = async (newDb: Omit<CustomDatabaseRecord, "id" | "created_at" | "updated_at">) => {
+    try {
+      const { data, error } = await supabase.from("custom_databases").insert([newDb]).select().single();
+      if (error) throw error;
+      setCustomDbs([...customDbs, data]);
+      showToast(`Database "${newDb.db_name}" created!`);
+    } catch (err: any) {
+      showError(err.message || "Failed to create database. Ensure supabase-operations-setup.sql is executed.");
+    }
+  };
+
+  const handleDeleteDatabase = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete entire database "${name}" and all its records?`)) return;
+    try {
+      await supabase.from("custom_databases").delete().eq("id", id);
+      setCustomDbs(customDbs.filter((db) => db.id !== id));
+      showToast(`Database "${name}" deleted.`);
+    } catch (err: any) {
+      showError(err.message || "Failed to delete database.");
+    }
+  };
+
+  const handleAddCustomDbRecord = async (dbId: string, record: Record<string, any>) => {
+    try {
+      const targetDb = customDbs.find((db) => db.id === dbId);
+      if (!targetDb) return;
+      const updatedRecords = [...(targetDb.records || []), record];
+      const { error } = await supabase
+        .from("custom_databases")
+        .update({ records: updatedRecords, updated_at: new Date().toISOString() })
+        .eq("id", dbId);
+      if (error) throw error;
+
+      setCustomDbs(
+        customDbs.map((db) => (db.id === dbId ? { ...db, records: updatedRecords } : db))
+      );
+      showToast("Record added to database.");
+    } catch (err: any) {
+      showError(err.message || "Failed to add record.");
+    }
+  };
+
+  const handleDeleteCustomDbRecord = async (dbId: string, recordId: string) => {
+    try {
+      const targetDb = customDbs.find((db) => db.id === dbId);
+      if (!targetDb) return;
+      const updatedRecords = (targetDb.records || []).filter((r) => r.id !== recordId);
+      const { error } = await supabase
+        .from("custom_databases")
+        .update({ records: updatedRecords, updated_at: new Date().toISOString() })
+        .eq("id", dbId);
+      if (error) throw error;
+
+      setCustomDbs(
+        customDbs.map((db) => (db.id === dbId ? { ...db, records: updatedRecords } : db))
+      );
+      showToast("Record deleted.");
+    } catch (err: any) {
+      showError(err.message || "Failed to delete record.");
     }
   };
 
@@ -505,7 +934,16 @@ export default function AdminDashboard() {
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={handleExportMasterBackup}
+              className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-400 hover:text-white bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-3.5 py-2 transition-colors uppercase tracking-wider"
+              title="Download entire club database (Members, Alumni, Expenses, Recruits) into a single multi-sheet Excel file"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Master Backup (.xlsx)</span>
+            </button>
+
             <Link
               href="/"
               target="_blank"
@@ -541,20 +979,20 @@ export default function AdminDashboard() {
         )}
 
         {/* Section Tabs */}
-        <div className="flex flex-wrap gap-2 sm:gap-3 mb-8 border-b border-white/10 pb-4">
+        <div className="flex flex-wrap gap-2 sm:gap-2.5 mb-8 border-b border-white/10 pb-4">
           <button
             onClick={() => setActiveTab("hero")}
-            className={`px-4 py-2.5 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
               activeTab === "hero" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
             <Flag className="w-3.5 h-3.5" />
-            <span>Hero & Recruitment</span>
+            <span>Hero & Announcement</span>
           </button>
 
           <button
             onClick={() => setActiveTab("machine")}
-            className={`px-4 py-2.5 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
               activeTab === "machine" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
@@ -564,7 +1002,7 @@ export default function AdminDashboard() {
 
           <button
             onClick={() => setActiveTab("media")}
-            className={`px-4 py-2.5 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
               activeTab === "media" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
@@ -574,22 +1012,52 @@ export default function AdminDashboard() {
 
           <button
             onClick={() => setActiveTab("alumni")}
-            className={`px-4 py-2.5 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
               activeTab === "alumni" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
             <GraduationCap className="w-3.5 h-3.5" />
-            <span>Alumni Network ({alumniList.length})</span>
+            <span>Alumni ({alumniList.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab("members")}
-            className={`px-4 py-2.5 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
               activeTab === "members" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            <span>Active Squad ({members.length})</span>
+            <span>Squad & Datasheets ({members.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("expenses")}
+            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+              activeTab === "expenses" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
+            }`}
+          >
+            <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Costs & Bills ({expenses.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("recruitment")}
+            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+              activeTab === "recruitment" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>Recruitment ({recruits.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("custom_dbs")}
+            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+              activeTab === "custom_dbs" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5 text-blue-400" />
+            <span>Custom DBs ({customDbs.length})</span>
           </button>
         </div>
 
@@ -1356,130 +1824,315 @@ export default function AdminDashboard() {
         )}
 
         {/* =========================================================================
-            TAB 5: ACTIVE TEAM SQUAD (ORIGINAL ROSTER)
+            TAB 5: ACTIVE TEAM SQUAD (ROSTER & DATASHEETS)
         ========================================================================= */}
         {activeTab === "members" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1">
-              <div className="bg-[#0b0c10] border border-white/10 p-6">
-                <h2 className="text-base font-bold uppercase mb-4 flex items-center gap-2 font-display text-white">
-                  <UserPlus className="w-4 h-4 text-racing-red" />
-                  <span>Add Team Member</span>
+          <div className="space-y-6">
+            
+            {/* Top Squad Actions Banner */}
+            <div className="bg-[#0b0c10] border border-white/10 p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 mb-1 text-[10px] font-mono uppercase text-racing-red font-bold">
+                  <GraduationCap className="w-3.5 h-3.5" />
+                  <span>ANNUAL BATCH ROLL-FORWARD & ROSTER MANAGEMENT</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-display font-black uppercase text-white">
+                  Active Team Squad & Datasheets
                 </h2>
+                <p className="text-xs font-mono text-white/50">
+                  {members.length} Active Members • Track academic branch, roll number, blood group & contact
+                </p>
+              </div>
 
-                <form onSubmit={handleMemberSubmit} className="space-y-4">
-                  <div>
-                    <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Full Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={memberName}
-                      onChange={(e) => setMemberName(e.target.value)}
-                      className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Role / Title</label>
-                    <input
-                      type="text"
-                      required
-                      value={memberRole}
-                      onChange={(e) => setMemberRole(e.target.value)}
-                      placeholder="e.g. Powertrain Engineer"
-                      className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Department</label>
-                    <select
-                      value={memberDepartment}
-                      onChange={(e) => setMemberDepartment(e.target.value)}
-                      className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                    >
-                      {departments.map((d) => (
-                        <option key={d} value={d} className="bg-black text-white">{d}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Profile Picture</label>
-                    <input
-                      type="file"
-                      required
-                      accept="image/*"
-                      onChange={(e) => setMemberFile(e.target.files?.[0] || null)}
-                      className="w-full text-xs text-white/60 file:mr-2 file:py-1.5 file:px-3 file:border-0 file:bg-white/10 file:text-white file:text-xs file:font-mono file:cursor-pointer"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">LinkedIn URL</label>
-                      <input
-                        type="url"
-                        value={memberLinkedin}
-                        onChange={(e) => setMemberLinkedin(e.target.value)}
-                        className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Instagram URL</label>
-                      <input
-                        type="url"
-                        value={memberInstagram}
-                        onChange={(e) => setMemberInstagram(e.target.value)}
-                        className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white"
-                      />
-                    </div>
-                  </div>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <button
+                  onClick={() => setShowProgressionModal(true)}
+                  className="px-4 py-2.5 bg-gradient-to-r from-racing-red to-red-700 hover:from-white hover:to-white text-white hover:text-black text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(210,39,48,0.4)]"
+                >
+                  <GraduationCap className="w-4 h-4" />
+                  <span>Annual Batch Progression</span>
+                </button>
 
-                  <button
-                    type="submit"
-                    disabled={uploading}
-                    className="w-full bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase py-2.5 transition-all disabled:opacity-50"
-                  >
-                    {uploading ? "Uploading..." : "Save Member"}
-                  </button>
-                </form>
+                <button
+                  onClick={handleExportMembersExcel}
+                  className="px-4 py-2.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/40 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-colors"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span>Export Squad to Excel</span>
+                </button>
               </div>
             </div>
 
-            <div className="lg:col-span-2">
-              <div className="bg-[#0b0c10] border border-white/10 p-6">
-                <h3 className="text-base font-bold uppercase font-display text-white mb-4 pb-3 border-b border-white/10">
-                  Active Roster ({members.length})
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[650px] overflow-y-auto pr-1">
-                  {members.map((member) => (
-                    <div
-                      key={member.id}
-                      className="bg-black/50 border border-white/10 p-3 flex items-center justify-between group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={member.image_url}
-                          alt={member.name}
-                          className="w-11 h-11 object-cover border border-white/20 shrink-0"
-                        />
-                        <div className="truncate">
-                          <h4 className="font-bold text-xs text-white truncate">{member.name}</h4>
-                          <p className="text-[10px] text-racing-red font-mono uppercase">{member.department}</p>
-                          <p className="text-[10px] text-white/50 truncate">{member.role}</p>
-                        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Form Column */}
+              <div className="lg:col-span-1">
+                <div className="bg-[#0b0c10] border border-white/10 p-6 sticky top-24">
+                  <h2 className="text-base font-bold uppercase mb-4 flex items-center gap-2 font-display text-white">
+                    <UserPlus className="w-4 h-4 text-racing-red" />
+                    <span>Add Active Team Member</span>
+                  </h2>
+
+                  <form onSubmit={handleMemberSubmit} className="space-y-3.5">
+                    <div>
+                      <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Full Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={memberName}
+                        onChange={(e) => setMemberName(e.target.value)}
+                        placeholder="e.g. Aditya Mishra"
+                        className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Role / Designation</label>
+                      <input
+                        type="text"
+                        required
+                        value={memberRole}
+                        onChange={(e) => setMemberRole(e.target.value)}
+                        placeholder="e.g. Battery Enclosure Lead"
+                        className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Department</label>
+                        <select
+                          value={memberDepartment}
+                          onChange={(e) => setMemberDepartment(e.target.value)}
+                          className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                        >
+                          {departments.map((d) => (
+                            <option key={d} value={d} className="bg-black text-white">{d}</option>
+                          ))}
+                        </select>
                       </div>
 
-                      <button
-                        onClick={() => deleteMember(member.id, member.name)}
-                        className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors shrink-0"
-                        title="Delete Member"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div>
+                        <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Year of Study</label>
+                        <select
+                          value={memberYearOfStudy}
+                          onChange={(e) => setMemberYearOfStudy(e.target.value)}
+                          className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                        >
+                          <option value="1st Year">1st Year</option>
+                          <option value="2nd Year">2nd Year</option>
+                          <option value="3rd Year">3rd Year</option>
+                          <option value="4th Year">4th Year</option>
+                        </select>
+                      </div>
                     </div>
-                  ))}
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Roll Number</label>
+                        <input
+                          type="text"
+                          value={memberRollNo}
+                          onChange={(e) => setMemberRollNo(e.target.value)}
+                          placeholder="e.g. 2302040019"
+                          className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Blood Group</label>
+                        <input
+                          type="text"
+                          value={memberBloodGroup}
+                          onChange={(e) => setMemberBloodGroup(e.target.value)}
+                          placeholder="O+, B+, A+"
+                          className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Profile Picture</label>
+                      <input
+                        type="file"
+                        required
+                        accept="image/*"
+                        onChange={(e) => setMemberFile(e.target.files?.[0] || null)}
+                        className="w-full text-xs text-white/60 file:mr-2 file:py-1.5 file:px-3 file:border-0 file:bg-white/10 file:text-white file:text-xs file:font-mono file:cursor-pointer"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">LinkedIn URL</label>
+                        <input
+                          type="url"
+                          value={memberLinkedin}
+                          onChange={(e) => setMemberLinkedin(e.target.value)}
+                          className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Instagram URL</label>
+                        <input
+                          type="url"
+                          value={memberInstagram}
+                          onChange={(e) => setMemberInstagram(e.target.value)}
+                          className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={uploading}
+                      className="w-full bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase py-2.5 transition-all disabled:opacity-50"
+                    >
+                      {uploading ? "Saving..." : "Add to Active Squad"}
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              {/* List Column */}
+              <div className="lg:col-span-2">
+                <div className="bg-[#0b0c10] border border-white/10 p-6">
+                  {/* Roster Header & Year Filter */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5 pb-4 border-b border-white/10">
+                    <h3 className="text-base font-bold uppercase font-display text-white">
+                      Active Roster ({members.length})
+                    </h3>
+
+                    {/* Filter Pills */}
+                    <div className="flex flex-wrap gap-1.5 text-[10px] font-mono">
+                      {["ALL", "1st Year", "2nd Year", "3rd Year", "4th Year"].map((yr) => (
+                        <button
+                          key={yr}
+                          onClick={() => setMemberYearFilter(yr)}
+                          className={`px-2.5 py-1 uppercase font-bold transition-colors ${
+                            memberYearFilter === yr
+                              ? "bg-racing-red text-white"
+                              : "bg-white/5 text-white/60 hover:text-white"
+                          }`}
+                        >
+                          {yr}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Members Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 max-h-[750px] overflow-y-auto pr-1">
+                    {members
+                      .filter((m) => memberYearFilter === "ALL" || (m.year_of_study || "").includes(memberYearFilter.replace(" Year", "")))
+                      .map((member) => (
+                        <div
+                          key={member.id}
+                          className="bg-black/50 border border-white/10 hover:border-white/20 p-3.5 flex items-center justify-between group transition-colors"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <img
+                              src={member.image_url}
+                              alt={member.name}
+                              className="w-12 h-12 object-cover object-top border border-white/20 shrink-0"
+                            />
+                            <div className="truncate">
+                              <div className="flex items-center gap-1.5 truncate">
+                                <h4 className="font-bold text-xs text-white truncate">{member.name}</h4>
+                                <span className="text-[9px] font-mono bg-racing-red/20 text-racing-red px-1.5 py-0.2 shrink-0 font-bold">
+                                  {member.year_of_study || "3rd Year"}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-racing-red font-mono uppercase truncate">{member.department}</p>
+                              <p className="text-[10px] text-white/50 truncate">{member.role}</p>
+                              {member.roll_no && (
+                                <p className="text-[9px] text-white/30 font-mono">Roll: {member.roll_no}</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => setSelectedMemberForDatasheet(member)}
+                              className="px-2 py-1 bg-white/5 hover:bg-white/20 text-white/80 hover:text-white text-[10px] font-mono uppercase flex items-center gap-1 transition-colors"
+                              title="View & Edit Full Member Datasheet"
+                            >
+                              <BookOpen className="w-3 h-3 text-racing-red" />
+                              <span>Datasheet</span>
+                            </button>
+                            <button
+                              onClick={() => deleteMember(member.id, member.name)}
+                              className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+                              title="Delete Member"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+        )}
+
+        {/* =========================================================================
+            TAB 6: COSTS & BILLS TRACKER (WITH EXCEL EXPORT)
+        ========================================================================= */}
+        {activeTab === "expenses" && (
+          <ExpensesTab
+            expenses={expenses}
+            uploading={uploading}
+            onAddExpense={handleAddExpense}
+            onDeleteExpense={handleDeleteExpense}
+            onUpdateStatus={handleUpdateExpenseStatus}
+          />
+        )}
+
+        {/* =========================================================================
+            TAB 7: RECRUITMENT APPLICATIONS & INDUCTION CHECKLIST
+        ========================================================================= */}
+        {activeTab === "recruitment" && (
+          <RecruitmentTab
+            recruits={recruits}
+            siteSettings={siteSettings}
+            onUpdateSettings={handleUpdateSettings}
+            onUpdateStatus={handleUpdateRecruitStatus}
+            onUpdateScore={handleUpdateRecruitScore}
+            onDeleteApplication={handleDeleteApplication}
+          />
+        )}
+
+        {/* =========================================================================
+            TAB 8: CUSTOM CLUB DATABASES (WITH EXCEL EXPORT)
+        ========================================================================= */}
+        {activeTab === "custom_dbs" && (
+          <CustomDbsTab
+            databases={customDbs}
+            onCreateDatabase={handleCreateDatabase}
+            onDeleteDatabase={handleDeleteDatabase}
+            onAddRecord={handleAddCustomDbRecord}
+            onDeleteRecord={handleDeleteCustomDbRecord}
+          />
+        )}
+
+        {/* =========================================================================
+            ACTIVE MODALS
+        ========================================================================= */}
+        {selectedMemberForDatasheet && (
+          <MemberDatasheetModal
+            member={selectedMemberForDatasheet}
+            onClose={() => setSelectedMemberForDatasheet(null)}
+            onSave={handleSaveMemberDatasheet}
+          />
+        )}
+
+        {showProgressionModal && (
+          <BatchProgressionModal
+            members={members}
+            onClose={() => setShowProgressionModal(false)}
+            onConfirm={handleExecuteProgression}
+          />
         )}
 
       </div>
