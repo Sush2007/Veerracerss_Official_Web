@@ -11,11 +11,12 @@ import { ReactLenis } from 'lenis/react';
 
 const NAV_ITEMS = [
   { label: 'THE CAR', path: '/#car-spotlight', matchValue: 'car-spotlight' },
-  { label: 'ALUMNI', path: '/#alumni', matchValue: 'alumni' },
+  { label: 'GALLERY', path: '/gallery', matchValue: '/gallery' },
+  { label: 'ALUMNI', path: '/alumni', matchValue: '/alumni' },
   { label: 'TEAM', path: '/members', matchValue: '/members' },
   { label: 'ACHIEVEMENTS', path: '/achievements', matchValue: '/achievements' },
   { label: 'SPONSORS', path: '/#partners', matchValue: 'partners' },
-  { label: 'CONTACT', path: '/#contact', matchValue: 'contact' },
+  { label: 'CONTACT', path: 'mailto:veerracersselectric.database@gmail.com?subject=General%20Inquiry%20-%20VeerRacerss%20Electric', matchValue: 'contact' },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -100,7 +101,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   const isActive = activeNavItem === item.matchValue;
                   return (
                     <div key={item.path} className="relative group">
-                      {item.path.startsWith('/#') ? (
+                      {item.path.startsWith('/#') || item.path.startsWith('mailto:') ? (
                         <a href={item.path} className={`relative z-10 text-[12px] uppercase tracking-[0.1em] font-bold transition-all duration-300 font-sans ${isActive ? 'text-white' : 'text-white/60 hover:text-white'}`}>
                           {item.label}
                         </a>
@@ -131,7 +132,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="fixed inset-0 z-40 bg-[#0A0A0A]/98 backdrop-blur-3xl md:hidden flex flex-col items-center justify-center space-y-6 sm:space-y-8 overflow-y-auto px-6 py-20 animate-in fade-in zoom-in-95 duration-200">
             {NAV_ITEMS.map((item) => {
                const isActive = activeNavItem === item.matchValue;
-               return item.path.startsWith('/#') ? (
+               return item.path.startsWith('/#') || item.path.startsWith('mailto:') ? (
                   <a key={item.path} href={item.path} onClick={() => setIsMobileMenuOpen(false)} className={`text-lg sm:text-xl font-display uppercase tracking-[0.18em] font-bold transition-all duration-300 ${isActive ? 'text-racing-red' : 'text-white/80 hover:text-white'}`}>
                     {item.label}
                   </a>

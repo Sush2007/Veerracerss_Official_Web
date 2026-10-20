@@ -1,10 +1,35 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Linkedin, Briefcase, GraduationCap, ArrowUpRight, MessageSquare, Network } from "lucide-react";
-import { ALUMNI_PROFILES } from "../data/alumni_data";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Linkedin, Briefcase, ArrowUpRight, MessageSquare, Network, ArrowRight } from "lucide-react";
+import { createClient } from "@/src/lib/supabase/client";
+import { DEFAULT_ALUMNI_RECORDS, AlumniRecord } from "@/src/data/cms_defaults";
 
 export function AlumniNetwork() {
+  const [alumniList, setAlumniList] = useState<AlumniRecord[]>(DEFAULT_ALUMNI_RECORDS);
+
+  useEffect(() => {
+    async function loadAlumni() {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("alumni")
+          .select("*")
+          .order("order_index", { ascending: true })
+          .limit(4);
+
+        if (data && data.length > 0 && !error) {
+          setAlumniList(data);
+        }
+      } catch {
+        // Safe fallback active
+      }
+    }
+    loadAlumni();
+  }, []);
+
   return (
     <section id="alumni" className="py-20 sm:py-28 bg-[#070709] relative z-10 overflow-hidden border-b border-white/10">
       
@@ -15,29 +40,34 @@ export function AlumniNetwork() {
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16 relative z-10">
         
         {/* Section Header */}
-        <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-2 mb-3 px-3.5 py-1.5 bg-white/5 border border-white/10 text-white/80 font-mono text-xs uppercase tracking-widest font-semibold"
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 sm:mb-16">
+          <div>
+            <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 bg-white/5 border border-white/10 text-white/80 font-mono text-xs uppercase tracking-widest font-semibold">
+              <Network className="w-3.5 h-3.5 text-racing-red" />
+              <span>GLOBAL AUTOMOTIVE & EV ALUMNI NETWORK</span>
+            </div>
+
+            <h2 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl uppercase text-white tracking-tight leading-[1.05]">
+              ALUMNI <span className="text-racing-red">//</span> FROM WORKSHOP TO INDUSTRY
+            </h2>
+
+            <p className="font-sans text-white/60 text-xs sm:text-sm md:text-base mt-3 font-light max-w-2xl leading-relaxed">
+              Our engineers lead innovation across top automotive, EV, and tech giants. From early chassis design in Burla to developing production electric mobility across India.
+            </p>
+          </div>
+
+          <Link
+            href="/alumni"
+            className="inline-flex items-center gap-2 bg-racing-red text-white hover:bg-white hover:text-black px-6 py-3.5 font-sans font-bold text-xs uppercase tracking-[0.18em] transition-all shadow-md group shrink-0"
           >
-            <Network className="w-3.5 h-3.5 text-racing-red" />
-            <span>GLOBAL AUTOMOTIVE & EV ALUMNI NETWORK</span>
-          </motion.div>
-
-          <h2 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl uppercase text-white tracking-tight leading-[1.05]">
-            <span className="text-racing-red">/</span> ALUMNI PADDOCK <span className="text-racing-red">//</span> FROM WORKSHOP TO INDUSTRY <span className="text-racing-red">/</span>
-          </h2>
-
-          <p className="font-sans text-white/60 text-xs sm:text-sm md:text-base mt-3 sm:mt-4 font-light leading-relaxed">
-            Our engineers lead innovation across top automotive, EV, and tech giants. From early chassis design in Burla to developing production electric mobility across India.
-          </p>
+            <span>VIEW ALL ALUMNI</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </Link>
         </div>
 
         {/* 4 Alumni Profiles Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {ALUMNI_PROFILES.map((alumnus, index) => (
+          {alumniList.slice(0, 4).map((alumnus, index) => (
             <motion.div
               key={alumnus.id}
               initial={{ opacity: 0, y: 25 }}
@@ -50,7 +80,7 @@ export function AlumniNetwork() {
                 {/* Portrait Card */}
                 <div className="relative aspect-square w-full overflow-hidden bg-[#141416] border border-white/5 mb-4 group-hover:border-racing-red/30 transition-colors">
                   <img
-                    src={alumnus.image}
+                    src={alumnus.image_url}
                     alt={alumnus.name}
                     className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                   />
@@ -71,24 +101,24 @@ export function AlumniNetwork() {
                 
                 <div className="flex items-center gap-1.5 text-racing-red text-[11px] font-mono font-semibold tracking-wider uppercase mt-1 mb-2">
                   <Briefcase className="w-3 h-3" />
-                  <span>{alumnus.currentRole}</span>
+                  <span>{alumnus.current_role}</span>
                 </div>
 
                 {/* Company Tag */}
                 <div className="bg-white/5 border border-white/10 px-2.5 py-1 text-xs font-mono text-white/90 font-bold inline-block mb-3">
-                  @ {alumnus.company}
+                  @ {alumnus.current_company}
                 </div>
 
                 {/* Mentorship Focus */}
                 <p className="text-[11px] font-sans text-white/50 leading-relaxed font-light mb-4">
                   <span className="text-white/70 font-medium">Domain: </span>
-                  {alumnus.mentorshipDomain}
+                  {alumnus.mentorship_domain}
                 </p>
               </div>
 
               {/* LinkedIn Connect Button */}
               <a
-                href={alumnus.linkedin}
+                href={alumnus.linkedin_url || "https://www.linkedin.com/company/veerracerss-electric/"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 bg-[#121216] border border-white/10 hover:border-racing-red hover:bg-racing-red/20 text-white font-mono text-xs uppercase tracking-wider py-2.5 px-3 transition-colors duration-200"
@@ -102,7 +132,7 @@ export function AlumniNetwork() {
           ))}
         </div>
 
-        {/* Mentorship Banner (Matching Mockup) */}
+        {/* Mentorship Banner */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -124,7 +154,7 @@ export function AlumniNetwork() {
           </div>
 
           <a
-            href="mailto:veerracersselectric.database@gmail.com?subject=Alumni%20Mentorship%20Inquiry%20-%20VeerRacerss"
+            href="mailto:veerracersselectric.database@gmail.com?subject=Alumni%20Mentorship%20Inquiry%20-%20VeerRacerss%20Electric"
             className="shrink-0 bg-racing-red hover:bg-racing-red/90 text-white font-sans font-bold text-xs uppercase tracking-[0.18em] px-6 py-3.5 shadow-[0_0_25px_rgba(210,39,48,0.4)] transition-all hover:scale-105"
           >
             CONNECT MENTORSHIP

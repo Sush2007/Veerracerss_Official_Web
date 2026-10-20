@@ -37,7 +37,8 @@ export function Footer() {
             <ul className="space-y-2.5 sm:space-y-3.5 text-xs sm:text-sm">
               <li><Link href="/about" className="text-white/50 hover:text-racing-red transition-colors">About Us</Link></li>
               <li><Link href="/cars" className="text-white/50 hover:text-racing-red transition-colors">The Fleet & Cars</Link></li>
-              <li><Link href="/#alumni" className="text-white/50 hover:text-racing-red transition-colors">Alumni Network</Link></li>
+              <li><Link href="/alumni" className="text-white/50 hover:text-racing-red transition-colors">Alumni Network</Link></li>
+              <li><Link href="/gallery" className="text-white/50 hover:text-racing-red transition-colors">Track Gallery</Link></li>
               <li><Link href="/members" className="text-white/50 hover:text-racing-red transition-colors">Team & Squad Roster</Link></li>
               <li><Link href="/achievements" className="text-white/50 hover:text-racing-red transition-colors">Hall of Fame</Link></li>
               <li><Link href="/#partners" className="text-white/50 hover:text-racing-red transition-colors">Sponsors & Partners</Link></li>
@@ -50,7 +51,7 @@ export function Footer() {
             <ul className="space-y-4">
               <li className="flex items-start gap-4 text-white/50 text-sm group">
                 <Mail className="w-5 h-5 text-racing-red mt-0.5 shrink-0 group-hover:scale-110 transition-transform" />
-                <a href="mailto:veerracersselectric.database@gmail.com" className="hover:text-white transition-colors">veerracersselectric.database@gmail.com</a>
+                <a href="mailto:veerracersselectric.database@gmail.com?subject=General%20Inquiry%20-%20VeerRacerss%20Electric" className="hover:text-white transition-colors">veerracersselectric.database@gmail.com</a>
               </li>
               <li className="flex items-start gap-4 text-white/50 text-sm group">
                 <Phone className="w-5 h-5 text-racing-red mt-0.5 shrink-0 group-hover:scale-110 transition-transform" />

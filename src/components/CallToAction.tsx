@@ -28,12 +28,12 @@ export function CallToAction() {
             Whether your passion lies in high-voltage battery architecture, carbon composite aerodynamics, vehicle dynamics, or sponsor relations, join VeerRacerss Electric to push the boundaries of motorsport engineering.
           </p>
 
-          <Link 
-            href="/#contact" 
+          <a 
+            href="mailto:veerracersselectric.database@gmail.com?subject=Recruitment%20%26%20Induction%20Inquiry%20-%20VeerRacerss%20Electric" 
             className="w-full sm:w-auto text-center block sm:inline-block bg-racing-red text-white px-8 sm:px-12 py-3.5 sm:py-4 font-sans font-bold text-xs sm:text-[13px] uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-all duration-300 rounded-none shadow-[0_0_20px_rgba(210,39,48,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)]"
           >
             JOIN US
-          </Link>
+          </a>
         </motion.div>
       </div>
     </section>

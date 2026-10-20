@@ -1,15 +1,17 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "motion/react";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { ChevronRight, Gauge, Zap, Weight, Trophy, Activity } from "lucide-react";
+import { ChevronRight, ArrowUpRight } from "lucide-react";
+import { createClient } from "@/src/lib/supabase/client";
+import { DEFAULT_SITE_SETTINGS, SiteSettings } from "@/src/data/cms_defaults";
 
 const HeroCar3D = dynamic(() => import("./HeroCar3D"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full min-h-[300px] flex items-center justify-center">
+    <div className="w-full h-full min-h-[320px] flex items-center justify-center">
       <div className="flex items-center gap-2 text-white/50 font-mono text-xs tracking-widest uppercase">
         <span className="w-2 h-2 rounded-full bg-racing-red animate-pulse"></span>
         LOADING 3D FORMULA CAD...
@@ -18,15 +20,10 @@ const HeroCar3D = dynamic(() => import("./HeroCar3D"), {
   ),
 });
 
-const HERO_TELEMETRY = [
-  { label: "0-100 KM/H", value: "3.1s", icon: Gauge },
-  { label: "ACCUMULATOR", value: "72V CUSTOM", icon: Zap },
-  { label: "CURB WEIGHT", value: "182 KG", icon: Weight },
-  { label: "NATIONAL RANK", value: "AIR 1 LIGHTWEIGHT", icon: Trophy },
-];
-
 export function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
@@ -34,11 +31,38 @@ export function Hero() {
 
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
 
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("site_settings")
+          .select("*")
+          .limit(1)
+          .maybeSingle();
+
+        if (data && !error) {
+          setSettings({
+            recruitment_cta_label: data.recruitment_cta_label || DEFAULT_SITE_SETTINGS.recruitment_cta_label,
+            recruitment_cta_url: data.recruitment_cta_url || DEFAULT_SITE_SETTINGS.recruitment_cta_url,
+            recruitment_cta_enabled: data.recruitment_cta_enabled !== false,
+            announcement_badge_text: data.announcement_badge_text || DEFAULT_SITE_SETTINGS.announcement_badge_text,
+            announcement_badge_enabled: data.announcement_badge_enabled !== false,
+            contact_email: data.contact_email || DEFAULT_SITE_SETTINGS.contact_email,
+          });
+        }
+      } catch {
+        // Safe fallback already active
+      }
+    }
+    loadSettings();
+  }, []);
+
   return (
     <section 
       ref={containerRef}
       id="home" 
-      className="relative min-h-[100dvh] w-full flex flex-col justify-between overflow-hidden bg-[#050505] pt-20 sm:pt-24 lg:pt-28"
+      className="relative min-h-[92dvh] lg:min-h-[96dvh] w-full flex flex-col justify-center overflow-hidden bg-[#050505] pt-20 sm:pt-24 lg:pt-28 pb-12 sm:pb-16"
     >
       {/* Background Grid & Subtle Parallax Texture */}
       <motion.div style={{ y }} className="absolute inset-0 telemetry-grid opacity-15 pointer-events-none z-0"></motion.div>
@@ -48,12 +72,22 @@ export function Hero() {
       <div className="absolute top-0 left-0 w-1 md:w-1.5 h-full bg-racing-red shadow-[0_0_35px_rgba(210,39,48,0.9)] z-10 pointer-events-none"></div>
 
       {/* Main Responsive Hero Grid */}
-      <div className="relative z-20 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16 flex-1 flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-6 lg:gap-8">
+      <div className="relative z-20 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16 flex-1 flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-8 lg:gap-12">
         
-        {/* Left Column: Hero Cockpit HUD Typography & CTAs */}
+        {/* Left Column: Headline, Engineering Tagline & CTAs */}
         <div className="w-full lg:w-[48%] xl:w-[46%] flex flex-col items-start z-20 pointer-events-auto">
           
-
+          {/* Optional Announcement Pill */}
+          {settings.announcement_badge_enabled && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center gap-2 px-3 py-1 bg-white/[0.04] border border-white/10 rounded-full mb-4 sm:mb-5 text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-white/70"
+            >
+              <span className="w-2 h-2 rounded-full bg-racing-red animate-pulse"></span>
+              <span>{settings.announcement_badge_text}</span>
+            </motion.div>
+          )}
 
           {/* Main Headline */}
           <motion.div
@@ -61,7 +95,7 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 120, delay: 0.1 }}
           >
-            <h1 className="font-display font-black text-4xl min-[380px]:text-5xl sm:text-6xl md:text-7xl lg:text-[72px] xl:text-[82px] leading-[0.98] tracking-tight uppercase text-white drop-shadow-[0_12px_35px_rgba(0,0,0,0.95)]">
+            <h1 className="font-display font-black text-4xl min-[380px]:text-5xl sm:text-6xl md:text-7xl lg:text-[72px] xl:text-[80px] leading-[0.98] tracking-tight uppercase text-white drop-shadow-[0_12px_35px_rgba(0,0,0,0.95)]">
               VEERRACERSS <br />
               <span className="text-racing-red">ELECTRIC</span>
             </h1>
@@ -85,82 +119,63 @@ export function Hero() {
             transition={{ type: "spring", damping: 20, stiffness: 100, delay: 0.4 }}
             className="flex flex-row flex-wrap items-center gap-3 sm:gap-4 mt-6 sm:mt-8 w-full sm:w-auto"
           >
+            {/* Primary Static CTA: Always navigates to the car section */}
             <a 
               href="#car-spotlight" 
-              className="flex-1 sm:flex-none bg-racing-red text-white px-5 py-3.5 sm:px-8 sm:py-4 font-sans font-bold text-xs sm:text-[13px] uppercase tracking-[0.18em] hover:bg-white hover:text-black hover:shadow-[0_0_30px_rgba(255,255,255,0.6)] transition-all duration-300 text-center relative overflow-hidden group flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-none bg-racing-red text-white px-6 py-3.5 sm:px-8 sm:py-4 font-sans font-bold text-xs sm:text-[13px] uppercase tracking-[0.18em] hover:bg-white hover:text-black hover:shadow-[0_0_30px_rgba(255,255,255,0.6)] transition-all duration-300 text-center relative overflow-hidden group flex items-center justify-center gap-2"
             >
               <span className="relative z-10">EXPLORE FLEET</span>
               <ChevronRight className="w-4 h-4 relative z-10 group-hover:translate-x-1 transition-transform" />
               <div className="absolute inset-0 bg-white transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out z-0"></div>
             </a>
             
-            <Link 
-              href="/members" 
-              className="flex-1 sm:flex-none bg-black/70 backdrop-blur-md border border-white/20 text-white px-5 py-3.5 sm:px-8 sm:py-4 font-sans font-bold text-xs sm:text-[13px] uppercase tracking-[0.18em] hover:border-racing-red hover:text-racing-red hover:bg-racing-red/10 transition-all duration-300 text-center relative overflow-hidden group"
-            >
-              <span className="relative z-10">RECRUITMENT 2026</span>
-            </Link>
+            {/* Dynamic Secondary CTA: Fully manageable by PR */}
+            {settings.recruitment_cta_enabled && (
+              settings.recruitment_cta_url.startsWith("http") ? (
+                <a
+                  href={settings.recruitment_cta_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 sm:flex-none bg-black/70 backdrop-blur-md border border-white/20 text-white px-6 py-3.5 sm:px-8 sm:py-4 font-sans font-bold text-xs sm:text-[13px] uppercase tracking-[0.18em] hover:border-racing-red hover:text-racing-red hover:bg-racing-red/10 transition-all duration-300 text-center relative overflow-hidden group flex items-center justify-center gap-1.5"
+                >
+                  <span className="relative z-10">{settings.recruitment_cta_label}</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 relative z-10 opacity-70 group-hover:opacity-100 transition-opacity" />
+                </a>
+              ) : (
+                <Link 
+                  href={settings.recruitment_cta_url}
+                  className="flex-1 sm:flex-none bg-black/70 backdrop-blur-md border border-white/20 text-white px-6 py-3.5 sm:px-8 sm:py-4 font-sans font-bold text-xs sm:text-[13px] uppercase tracking-[0.18em] hover:border-racing-red hover:text-racing-red hover:bg-racing-red/10 transition-all duration-300 text-center relative overflow-hidden group"
+                >
+                  <span className="relative z-10">{settings.recruitment_cta_label}</span>
+                </Link>
+              )
+            )}
           </motion.div>
 
-          {/* Quick HUD Metrics Strip (Mobile/Compact) */}
+          {/* Minimal Key Benchmark Line (Clean, unstacked, non-repetitive) */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="grid grid-cols-2 min-[440px]:grid-cols-4 gap-2 sm:gap-3 mt-6 sm:mt-8 w-full border-t border-white/10 pt-4"
+            className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-8 sm:mt-10 pt-4 border-t border-white/10 text-white/50 text-[11px] font-mono tracking-wider uppercase"
           >
-            {HERO_TELEMETRY.map((item, idx) => {
-              const Icon = item.icon;
-              return (
-                <div key={idx} className="bg-white/[0.03] border border-white/5 p-2 sm:p-2.5 flex flex-col">
-                  <div className="flex items-center gap-1.5 text-white/40 mb-1">
-                    <Icon className="w-3 h-3 text-racing-red" />
-                    <span className="text-[9px] font-mono tracking-wider uppercase">{item.label}</span>
-                  </div>
-                  <span className="text-xs sm:text-sm font-display font-bold text-white tracking-wide">{item.value}</span>
-                </div>
-              );
-            })}
+            <div><span className="text-white/30">0-100:</span> <strong className="text-white font-bold">3.1s</strong></div>
+            <div className="hidden sm:inline text-white/20">•</div>
+            <div><span className="text-white/30">TOP SPEED:</span> <strong className="text-white font-bold">115 KM/H</strong></div>
+            <div className="hidden sm:inline text-white/20">•</div>
+            <div><span className="text-white/30">WEIGHT:</span> <strong className="text-white font-bold">182 KG</strong></div>
+            <div className="hidden sm:inline text-white/20">•</div>
+            <div><span className="text-white/30">ACCUMULATOR:</span> <strong className="text-racing-red font-bold">72V LI-ION</strong></div>
           </motion.div>
 
         </div>
 
-        {/* Right Column: 3D Vehicle Interactive Canvas (Preserved with high fidelity) */}
+        {/* Right Column: 3D Vehicle Interactive Model with generous breathing room */}
         <div className="w-full lg:w-[52%] xl:w-[54%] flex items-center justify-center z-10 mt-2 sm:mt-4 lg:mt-0 pointer-events-auto">
           <HeroCar3D />
         </div>
 
       </div>
-
-      {/* Paddock Telemetry Strip (Footer HUD Ticker) */}
-      <div className="relative z-20 w-full bg-[#0a0a0a] border-t border-white/10 py-3 px-4 sm:px-6 md:px-16 overflow-x-auto no-scrollbar">
-        <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-6 sm:gap-10 text-[10px] sm:text-xs font-mono text-white/60 uppercase tracking-widest whitespace-nowrap">
-          <div className="flex items-center gap-2 text-racing-red font-bold">
-            <Activity className="w-3.5 h-3.5 animate-pulse" />
-            <span>LIVE TELEMETRY:</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-white/40">ACCELERATION:</span>
-            <span className="text-white font-bold">0-100 IN 3.1s</span>
-          </div>
-          <span className="text-white/20">|</span>
-          <div className="flex items-center gap-1.5">
-            <span className="text-white/40">BATTERY:</span>
-            <span className="text-white font-bold">72V CUSTOM ACCUMULATOR</span>
-          </div>
-          <span className="text-white/20">|</span>
-          <div className="flex items-center gap-1.5">
-            <span className="text-white/40">CHASSIS:</span>
-            <span className="text-white font-bold">182 KG CURB WEIGHT</span>
-          </div>
-          <span className="text-white/20">|</span>
-          <div className="flex items-center gap-1.5">
-            <span className="text-white/40">ENGINEERING:</span>
-            <span className="text-racing-red font-bold">AIR 11 DESIGN TROPHY</span>
-          </div>
-        </div>
-      </div>
-
     </section>
   );
 }

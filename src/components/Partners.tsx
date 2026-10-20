@@ -207,12 +207,12 @@ export function Partners() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="w-full sm:w-auto text-center"
         >
-          <Link 
-            href="/#contact" 
+          <a 
+            href="mailto:veerracersselectric.database@gmail.com?subject=Partnership%20%26%20Sponsorship%20Inquiry%20-%20VeerRacerss%20Electric" 
             className="w-full sm:w-auto inline-block bg-transparent border border-white/30 text-white px-8 sm:px-10 py-3.5 sm:py-4 font-sans font-bold text-xs uppercase tracking-[0.2em] hover:bg-white hover:text-black hover:border-white transition-all duration-300 rounded-none shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] text-center"
           >
             BECOME A PARTNER
-          </Link>
+          </a>
         </motion.div>
 
       </div>

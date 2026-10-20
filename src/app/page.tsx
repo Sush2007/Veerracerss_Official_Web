@@ -1,4 +1,5 @@
 import { Hero } from '../components/Hero';
+import { TrackMoments } from '../components/TrackMoments';
 import { StatsStrip } from '../components/StatsStrip';
 import { CarSpotlight } from '../components/CarSpotlight';
 import { About } from '../components/About';
@@ -12,19 +13,22 @@ import { CallToAction } from '../components/CallToAction';
 export default function Home() {
   return (
     <>
-      {/* 1. Hero Cockpit HUD with 3D CAD Formula Model */}
+      {/* 1. Hero Cockpit with 3D CAD Formula Model */}
       <Hero />
 
-      {/* 2. Formula Timing Board Paddock Stats */}
+      {/* 2. Track & Workshop Moments: Autoplay Horizontal Reel */}
+      <TrackMoments />
+
+      {/* 3. Racing Track Record Stats */}
       <StatsStrip />
 
-      {/* 3. Flagship Car Spotlight: AETHER 2024-25 */}
+      {/* 4. Flagship Car Spotlight: AETHER */}
       <CarSpotlight />
 
-      {/* 4. Club Origin & Engineering Legacy */}
+      {/* 5. Club Origin & Engineering Legacy */}
       <About />
 
-      {/* 5. Alumni Network & Industry Mentorship */}
+      {/* 6. Alumni Network & Industry Mentorship */}
       <AlumniNetwork />
 
       {/* 7. Academic Patronage / Faculty Advisors */}
