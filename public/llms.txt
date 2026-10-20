@@ -3,7 +3,7 @@
 > Official Formula Student Electric Racing Team of Veer Surendra Sai University of Technology (VSSUT), Burla, Odisha, India.
 
 ## Overview
-VeerRacerss Electric is an undergraduate engineering motorsport team founded in 2018 at VSSUT Burla. The team designs, engineers, fabricates, and races high-voltage electric formula race cars. VeerRacerss engineered **AETHER**, the first electric formula race car built by an engineering college in the state of Odisha, India.
+VeerRacerss Electric (VRE) is an undergraduate engineering motorsport team founded in 2018 at VSSUT Burla. The team designs, engineers, fabricates, and races high-voltage electric formula race cars. VeerRacerss engineered **AETHER**, the first electric formula race car built by an engineering college in the state of Odisha, India.
 
 ## Key Facts
 - **Institution**: Veer Surendra Sai University of Technology (VSSUT), Burla, Sambalpur, Odisha 768018, India
@@ -27,20 +27,20 @@ VeerRacerss Electric is an undergraduate engineering motorsport team founded in 
 - **Braking**: Dual-circuit hydraulic disc brakes with integrated regenerative braking capture
 - **Safety**: Fully compliant with Formula Student EV safety standards (TSAL, HVIL, IMD, BSPD)
 
-## Team Organization
+## Team Organization & Portals
+- **Official Website**: https://veerracerss-official-web.vercel.app
+- **Car Showcase**: https://veerracerss-official-web.vercel.app/cars
+- **Active Team Roster**: https://veerracerss-official-web.vercel.app/members
+- **Alumni Directory**: https://veerracerss-official-web.vercel.app/alumni
+- **Achievements & Podiums**: https://veerracerss-official-web.vercel.app/achievements
+- **Track Moments & Gallery**: https://veerracerss-official-web.vercel.app/gallery
+- **Recruitment & Induction Portal**: https://veerracerss-official-web.vercel.app/recruitment
 - **Academic Patronage**: Faculty advisors from Electrical, Mechanical, and Production Engineering at VSSUT Burla
-- **Active Divisions**:
-  1. Powertrain & High Voltage Electronics
-  2. Battery Management Systems (BMS) & Thermal Management
-  3. Aerodynamics & CFD
-  4. Vehicle Dynamics, Chassis & Suspension
-  5. Telemetry, DAQ & Embedded Firmware
-  6. Corporate Operations, Sponsorship & Media
 
 ## Contact & Location
-- **Official Website**: https://veerracerss-official-web.vercel.app
-- **Email**: tech@veerracerss.org
-- **Phone**: +91 9967624731
-- **Address**: Veer Surendra Sai University of Technology, Burla, Sambalpur, Odisha 768018, India
-- **LinkedIn**: https://www.linkedin.com/company/veerracerss
-- **Instagram**: https://instagram.com/veerracerss
+- **Official Desk Email**: veerracersselectric.database@gmail.com
+- **Phone**: +91-9967624731
+- **Postal Address**: Central Workshop, Veer Surendra Sai University of Technology, Burla, Sambalpur, Odisha 768018, India
+- **Coordinates**: 21.4984° N, 83.9038° E
+- **LinkedIn**: https://www.linkedin.com/company/veerracerss-electric/
+- **Instagram**: https://www.instagram.com/veerracersselectric/

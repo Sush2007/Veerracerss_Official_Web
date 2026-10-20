@@ -13,8 +13,10 @@
 - Coordinates: Latitude 21.4984 N, Longitude 83.9038 E
 - Established: 2018
 - Official Website: https://veerracerss-official-web.vercel.app
-- Contact Email: tech@veerracerss.org
-- Technical Inquiries: +91 9967624731
+- Contact Email: veerracersselectric.database@gmail.com
+- Technical Inquiries: +91-9967624731
+- LinkedIn: https://www.linkedin.com/company/veerracerss-electric/
+- Instagram: https://www.instagram.com/veerracersselectric/
 
 ## Full Historical Vehicle Registry
 
@@ -78,4 +80,4 @@ Q: What competitions does VeerRacerss attend?
 A: Formula Bharat, Formula Imperial (ISIE India), SUPRA SAEINDIA, and FFS INDIA.
 
 Q: How to contact or sponsor the team?
-A: Inquiries can be directed to tech@veerracerss.org or via phone at +91 9967624731. Official website: https://veerracerss-official-web.vercel.app.
+A: Inquiries can be directed to veerracersselectric.database@gmail.com or via phone at +91-9967624731. Official website: https://veerracerss-official-web.vercel.app.
