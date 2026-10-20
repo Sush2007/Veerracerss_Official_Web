@@ -102,7 +102,7 @@ export default function AdminDashboard() {
   const [memberRole, setMemberRole] = useState("");
   const [memberDepartment, setMemberDepartment] = useState("Leadership");
   const [memberYearOfStudy, setMemberYearOfStudy] = useState("3rd Year");
-  const [memberRollNo, setMemberRollNo] = useState("");
+  const [memberPrSkills, setMemberPrSkills] = useState("None (Technical Only)");
   const [memberBranch, setMemberBranch] = useState("Mechanical Engineering");
   const [memberBloodGroup, setMemberBloodGroup] = useState("O+");
   const [memberPhone, setMemberPhone] = useState("");
@@ -191,7 +191,24 @@ export default function AdminDashboard() {
     // 5. Members
     try {
       const { data: memData } = await supabase.from("members").select("*").order("created_at", { ascending: false });
-      if (memData) setMembers(memData);
+      if (memData) {
+        setMembers(
+          memData.map((m: any) => {
+            let yearOfStudy = m.year_of_study;
+            if (!yearOfStudy && m.year) {
+              if (m.year.includes("4th") || (m.year.includes("Final") && !m.year.includes("Pre-Final"))) yearOfStudy = "4th Year";
+              else if (m.year.includes("3rd") || m.year.includes("Pre-Final")) yearOfStudy = "3rd Year";
+              else if (m.year.includes("2nd")) yearOfStudy = "2nd Year";
+              else if (m.year.includes("1st")) yearOfStudy = "1st Year";
+              else yearOfStudy = m.year;
+            }
+            return {
+              ...m,
+              year_of_study: yearOfStudy || "3rd Year",
+            };
+          })
+        );
+      }
     } catch {}
 
     // 6. Club Expenses
@@ -524,10 +541,10 @@ export default function AdminDashboard() {
         linkedin: memberLinkedin || "#",
         instagram: memberInstagram || "#",
         year_of_study: memberYearOfStudy,
-        roll_no: memberRollNo,
         academic_branch: memberBranch,
         blood_group: memberBloodGroup,
         phone: memberPhone,
+        pr_domain_skills: memberPrSkills,
         joining_year: new Date().getFullYear().toString(),
       };
 
@@ -549,7 +566,6 @@ export default function AdminDashboard() {
 
       setMemberName("");
       setMemberRole("");
-      setMemberRollNo("");
       setMemberPhone("");
       setMemberFile(null);
       setMemberLinkedin("");
@@ -586,11 +602,10 @@ export default function AdminDashboard() {
           role: updated.role,
           department: updated.department,
           year_of_study: updated.year_of_study,
-          roll_no: updated.roll_no,
           academic_branch: updated.academic_branch,
           blood_group: updated.blood_group,
           phone: updated.phone,
-          emergency_contact: updated.emergency_contact,
+          pr_domain_skills: updated.pr_domain_skills,
           joining_year: updated.joining_year,
           linkedin: updated.linkedin,
         })
@@ -622,7 +637,12 @@ export default function AdminDashboard() {
   const handleExecuteProgression = async () => {
     try {
       const gradYear = new Date().getFullYear();
-      const fourthYears = members.filter((m) => (m.year_of_study || "").includes("4th"));
+      const fourthYears = members.filter(
+        (m) =>
+          (m.year_of_study || "").includes("4th") ||
+          (m.year || "").includes("4th") ||
+          ((m.year || "").includes("Final") && !(m.year || "").includes("Pre-Final"))
+      );
 
       // 1. Migrate each 4th year member into alumni table
       for (const m of fourthYears) {
@@ -632,39 +652,74 @@ export default function AdminDashboard() {
           former_role: m.role || "Club Engineer",
           current_company: "VSSUT Burla / Graduate Placement",
           role_name: "Graduate Engineer",
-          image_url: m.image_url,
+          image_url: m.image_url || "/members/default-avatar.png",
           linkedin_url: m.linkedin || "https://www.linkedin.com/company/veerracerss-electric/",
           mentorship_domain: m.department || "Vehicle Engineering",
           bio: `Graduated former ${m.role} of VeerRacerss Electric (${m.department}). Mentoring new recruits for Formula Student competitions.`,
           order_index: alumniList.length + 1,
         };
 
-        let { error: alErr } = await supabase.from("alumni").insert([alumniPayload]);
-        if (alErr && alErr.message?.includes("role_name")) {
+        let insertSuccess = false;
+        const { error: alErr } = await supabase.from("alumni").insert([alumniPayload]);
+        if (!alErr) {
+          insertSuccess = true;
+        } else if (alErr.message?.includes("role_name") || alErr.message?.includes("current_role")) {
           const fallback = { ...alumniPayload };
           delete (fallback as any).role_name;
           (fallback as any).current_role = "Graduate Engineer";
-          await supabase.from("alumni").insert([fallback]);
+          const { error: fbErr } = await supabase.from("alumni").insert([fallback]);
+          if (!fbErr) insertSuccess = true;
+          else console.error("Alumni fallback insert failed:", fbErr);
+        } else {
+          console.error("Alumni insert failed for member:", m.name, alErr);
         }
-        await supabase.from("members").delete().eq("id", m.id);
+
+        // Only delete from active members if alumni record was created successfully
+        if (insertSuccess) {
+          await supabase.from("members").delete().eq("id", m.id);
+        } else {
+          showError(`Could not transfer ${m.name} to Alumni. Record retained in members table.`);
+        }
       }
 
-      // 2. Increment active student years
+      // 2. Increment active student years (skipping 4th years)
       for (const m of members) {
-        let newYear = m.year_of_study;
-        if ((m.year_of_study || "").includes("3rd")) newYear = "4th Year";
-        else if ((m.year_of_study || "").includes("2nd")) newYear = "3rd Year";
-        else if ((m.year_of_study || "").includes("1st")) newYear = "2nd Year";
+        if (fourthYears.some((f) => f.id === m.id)) continue;
 
-        if (newYear && newYear !== m.year_of_study) {
+        const currentY = m.year_of_study || m.year || "";
+        let newYear = currentY;
+        let newLegacyYear = "";
+
+        if (currentY.includes("3rd") || currentY.includes("Pre-Final")) {
+          newYear = "4th Year";
+          newLegacyYear = "Final Year (4th Year)";
+        } else if (currentY.includes("2nd")) {
+          newYear = "3rd Year";
+          newLegacyYear = "3rd Year (Pre-Final)";
+        } else if (currentY.includes("1st")) {
+          newYear = "2nd Year";
+          newLegacyYear = "2nd Year";
+        }
+
+        if (newYear && newYear !== currentY) {
           try {
-            await supabase.from("members").update({ year_of_study: newYear }).eq("id", m.id);
-          } catch {}
+            await supabase
+              .from("members")
+              .update({
+                year_of_study: newYear,
+                year: newLegacyYear || newYear,
+              })
+              .eq("id", m.id);
+          } catch (upErr) {
+            console.warn(`Could not advance year for ${m.name}:`, upErr);
+          }
         }
       }
 
       await fetchAllData();
-      showToast(`Annual progression complete! ${fourthYears.length} members graduated to Alumni, active squads promoted.`);
+      showToast(
+        `Annual progression complete! ${fourthYears.length} members graduated to Alumni, active squads promoted.`
+      );
     } catch (err: any) {
       showError(err.message || "Failed to execute batch progression.");
     }
@@ -679,11 +734,10 @@ export default function AdminDashboard() {
         "Club Role": m.role,
         "Domain / Department": m.department,
         "Year of Study": m.year_of_study || "3rd Year",
-        "Roll Number": m.roll_no || "N/A",
         "Academic Branch": m.academic_branch || "Mechanical Engineering",
         "Blood Group": m.blood_group || "O+",
         "Phone (WhatsApp)": m.phone || "N/A",
-        "Emergency Contact": m.emergency_contact || "N/A",
+        "PR Specialization": m.pr_domain_skills || "None",
         "Joining Year": m.joining_year || "2023",
         "LinkedIn": m.linkedin || "N/A",
       })),
@@ -703,11 +757,10 @@ export default function AdminDashboard() {
             Role: m.role,
             Department: m.department,
             "Year of Study": m.year_of_study || "3rd Year",
-            "Roll No": m.roll_no || "",
             Branch: m.academic_branch || "",
             "Blood Group": m.blood_group || "",
             Phone: m.phone || "",
-            "Emergency Contact": m.emergency_contact || "",
+            "PR Specialization": m.pr_domain_skills || "None",
           })),
         },
         {
@@ -731,7 +784,6 @@ export default function AdminDashboard() {
             Vendor: e.vendor || "",
             Date: e.expense_date,
             "Paid By": e.paid_by || "",
-            Status: e.status,
             Notes: e.notes || "",
           })),
         },
@@ -762,9 +814,13 @@ export default function AdminDashboard() {
       let receiptUrl = "";
       if (receiptFile) {
         try {
-          receiptUrl = await uploadToStorage(receiptFile, "member-images", "bills-receipts");
+          receiptUrl = await uploadToStorage(receiptFile, "expenses-receipts");
         } catch {
-          // If storage bucket isn't created yet, continue with empty receipt
+          try {
+            receiptUrl = await uploadToStorage(receiptFile, "member-images", "bills-receipts");
+          } catch {
+            // If storage bucket isn't created yet, continue with empty receipt
+          }
         }
       }
 
@@ -978,11 +1034,11 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Section Tabs */}
-        <div className="flex flex-wrap gap-2 sm:gap-2.5 mb-8 border-b border-white/10 pb-4">
+        {/* Section Tabs - Responsive Horizontal Scrollable Bar on Mobile, Clean Grid on Desktop */}
+        <div className="flex overflow-x-auto no-scrollbar scroll-smooth gap-2 pb-3 mb-8 border-b border-white/10 sm:flex-wrap items-center">
           <button
             onClick={() => setActiveTab("hero")}
-            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
               activeTab === "hero" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
@@ -992,7 +1048,7 @@ export default function AdminDashboard() {
 
           <button
             onClick={() => setActiveTab("machine")}
-            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
               activeTab === "machine" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
@@ -1002,7 +1058,7 @@ export default function AdminDashboard() {
 
           <button
             onClick={() => setActiveTab("media")}
-            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
               activeTab === "media" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
@@ -1012,7 +1068,7 @@ export default function AdminDashboard() {
 
           <button
             onClick={() => setActiveTab("alumni")}
-            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
               activeTab === "alumni" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
@@ -1022,7 +1078,7 @@ export default function AdminDashboard() {
 
           <button
             onClick={() => setActiveTab("members")}
-            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
               activeTab === "members" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
@@ -1032,7 +1088,7 @@ export default function AdminDashboard() {
 
           <button
             onClick={() => setActiveTab("expenses")}
-            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
               activeTab === "expenses" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
@@ -1042,7 +1098,7 @@ export default function AdminDashboard() {
 
           <button
             onClick={() => setActiveTab("recruitment")}
-            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
               activeTab === "recruitment" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
@@ -1052,7 +1108,7 @@ export default function AdminDashboard() {
 
           <button
             onClick={() => setActiveTab("custom_dbs")}
-            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
               activeTab === "custom_dbs" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
@@ -1928,14 +1984,19 @@ export default function AdminDashboard() {
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Roll Number</label>
-                        <input
-                          type="text"
-                          value={memberRollNo}
-                          onChange={(e) => setMemberRollNo(e.target.value)}
-                          placeholder="e.g. 2302040019"
+                        <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">PR Specialization</label>
+                        <select
+                          value={memberPrSkills}
+                          onChange={(e) => setMemberPrSkills(e.target.value)}
                           className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
-                        />
+                        >
+                          <option value="None (Technical Only)">None (Technical Only)</option>
+                          <option value="Web Development & Site Maintenance">Web Development</option>
+                          <option value="Graphic Designing & Poster Art">Graphic Designing</option>
+                          <option value="Video Editing & Track Reels">Video Editing</option>
+                          <option value="Social Media & Content Strategy">Social Media & Content</option>
+                          <option value="3D CAD Rendering & Blender Animation">3D Render / Animation</option>
+                        </select>
                       </div>
 
                       <div>
@@ -2044,8 +2105,8 @@ export default function AdminDashboard() {
                               </div>
                               <p className="text-[10px] text-racing-red font-mono uppercase truncate">{member.department}</p>
                               <p className="text-[10px] text-white/50 truncate">{member.role}</p>
-                              {member.roll_no && (
-                                <p className="text-[9px] text-white/30 font-mono">Roll: {member.roll_no}</p>
+                              {member.pr_domain_skills && member.pr_domain_skills !== "None (Technical Only)" && (
+                                <p className="text-[9px] text-amber-400 font-mono truncate">PR: {member.pr_domain_skills}</p>
                               )}
                             </div>
                           </div>
@@ -2085,7 +2146,6 @@ export default function AdminDashboard() {
             uploading={uploading}
             onAddExpense={handleAddExpense}
             onDeleteExpense={handleDeleteExpense}
-            onUpdateStatus={handleUpdateExpenseStatus}
           />
         )}
 

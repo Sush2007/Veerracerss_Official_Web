@@ -20,13 +20,15 @@ export interface MemberRecord {
   image_url: string;
   linkedin?: string;
   instagram?: string;
+  year?: string; // Legacy/Public sync: '1st Year' | '2nd Year' | '3rd Year (Pre-Final)' | 'Final Year (4th Year)'
   year_of_study?: string; // '1st Year' | '2nd Year' | '3rd Year' | '4th Year'
-  roll_no?: string;
   academic_branch?: string;
   blood_group?: string;
   phone?: string;
-  emergency_contact?: string;
+  pr_domain_skills?: string; // Optional: 'Web Development' | 'Graphic Designing' | 'Video Editing' | etc.
   joining_year?: string;
+  subgroup?: string;
+  is_council?: boolean;
   created_at?: string;
 }
 
@@ -39,7 +41,6 @@ export interface ClubExpense {
   receipt_url?: string;
   expense_date: string;
   paid_by?: string;
-  status: string; // 'Pending' | 'Approved' | 'Reimbursed'
   notes?: string;
   created_at?: string;
 }
@@ -313,7 +314,6 @@ export const DEFAULT_EXPENSES: ClubExpense[] = [
     receipt_url: "/cars/aether-spotlight.jpg",
     expense_date: "2026-02-15",
     paid_by: "Captain / Technical Lead",
-    status: "Approved",
     notes: "Main hoop and front roll hoop structural tubes with mill test certificates.",
   },
   {
@@ -325,7 +325,6 @@ export const DEFAULT_EXPENSES: ClubExpense[] = [
     receipt_url: "/cars/aether.jpg",
     expense_date: "2026-02-22",
     paid_by: "Electronics Domain Lead",
-    status: "Approved",
     notes: "Master BMS module with dual CAN transceivers and isolation barriers.",
   },
   {
@@ -337,7 +336,6 @@ export const DEFAULT_EXPENSES: ClubExpense[] = [
     receipt_url: "/cars/aether.jpg",
     expense_date: "2026-03-01",
     paid_by: "Safety Officer",
-    status: "Approved",
     notes: "SFI/FIA approved 6-point quick-release restraint harness.",
   },
 ];

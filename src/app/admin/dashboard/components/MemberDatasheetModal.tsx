@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Save, FileSpreadsheet, User, Phone, BookOpen, Heart, Calendar } from "lucide-react";
+import { X, Save, FileSpreadsheet, Sparkles, BookOpen } from "lucide-react";
 import { MemberRecord } from "@/src/data/cms_defaults";
 import { exportTableToExcel } from "@/src/lib/exportToExcel";
 
@@ -15,11 +15,10 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
   const [formData, setFormData] = useState<MemberRecord>({
     ...member,
     year_of_study: member.year_of_study || "3rd Year",
-    roll_no: member.roll_no || "",
     academic_branch: member.academic_branch || "Mechanical Engineering",
     blood_group: member.blood_group || "O+",
     phone: member.phone || "",
-    emergency_contact: member.emergency_contact || "",
+    pr_domain_skills: member.pr_domain_skills || "None (Technical Only)",
     joining_year: member.joining_year || "2023",
   });
   const [saving, setSaving] = useState(false);
@@ -37,6 +36,16 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
     "Civil Engineering",
   ];
 
+  const prSkills = [
+    "None (Technical Only)",
+    "Web Development & Site Maintenance",
+    "Graphic Designing & Poster Art",
+    "Video Editing & Track Reels",
+    "Social Media & Content Strategy",
+    "3D CAD Rendering & Blender Animation",
+    "Corporate Sponsorship Outreach",
+  ];
+
   const handleExportSingle = () => {
     exportTableToExcel(
       [
@@ -45,11 +54,10 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
           "Team Role": formData.role,
           "Domain / Department": formData.department,
           "Year of Study": formData.year_of_study,
-          "Roll Number": formData.roll_no,
           "Academic Branch": formData.academic_branch,
           "Blood Group": formData.blood_group,
-          "Contact Number": formData.phone,
-          "Emergency Contact": formData.emergency_contact,
+          "Contact Number (WhatsApp)": formData.phone,
+          "PR Specialization": formData.pr_domain_skills || "None",
           "Joining Year": formData.joining_year,
           "LinkedIn": formData.linkedin || "N/A",
         },
@@ -71,11 +79,11 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-[#0b0c10] border border-white/15 w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl relative animate-in zoom-in-95">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-[#0b0c10] border border-white/15 w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl relative animate-in zoom-in-95">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+        <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
           <div className="flex items-center gap-3">
             <img
               src={formData.image_url || "/members/default-avatar.png"}
@@ -84,7 +92,7 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
             />
             <div>
               <span className="text-[10px] font-mono uppercase text-racing-red font-bold">
-                MEMBER OFFICIAL DATASHEET
+                MEMBER OFFICIAL PROFILE & DATASHEET
               </span>
               <h3 className="text-xl font-display font-black uppercase text-white">{formData.name}</h3>
             </div>
@@ -147,7 +155,7 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
             </div>
 
             <div>
-              <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Current Year of Study</label>
+              <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Year of Study</label>
               <select
                 value={formData.year_of_study}
                 onChange={(e) => setFormData({ ...formData, year_of_study: e.target.value })}
@@ -163,17 +171,6 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">University Roll / Reg No</label>
-              <input
-                type="text"
-                value={formData.roll_no}
-                onChange={(e) => setFormData({ ...formData, roll_no: e.target.value })}
-                placeholder="e.g. 2302040015"
-                className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-              />
-            </div>
-
-            <div>
               <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Academic Branch</label>
               <select
                 value={formData.academic_branch}
@@ -187,9 +184,7 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
                 ))}
               </select>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Blood Group</label>
               <input
@@ -200,7 +195,31 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
                 className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
               />
             </div>
+          </div>
 
+          {/* PR Domain & Media Specialization (Optional) */}
+          <div className="bg-[#121318] border border-white/10 p-3.5 space-y-1.5">
+            <label className="text-[11px] font-mono uppercase text-racing-red font-bold flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>PR & Media Specialization (Optional Domain Skill)</span>
+            </label>
+            <p className="text-[10px] text-white/50 font-mono">
+              Assign sub-skills to team members to help the PR lead delegate media tasks.
+            </p>
+            <select
+              value={formData.pr_domain_skills}
+              onChange={(e) => setFormData({ ...formData, pr_domain_skills: e.target.value })}
+              className="w-full bg-[#0b0c10] border border-white/15 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none mt-1"
+            >
+              {prSkills.map((skill) => (
+                <option key={skill} value={skill}>
+                  {skill}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Phone (WhatsApp)</label>
               <input
@@ -213,19 +232,6 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
             </div>
 
             <div>
-              <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Emergency Contact</label>
-              <input
-                type="text"
-                value={formData.emergency_contact}
-                onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })}
-                placeholder="Parent / Guardian Contact"
-                className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
               <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Joining Year</label>
               <input
                 type="text"
@@ -235,20 +241,20 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
                 className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
               />
             </div>
-
-            <div>
-              <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">LinkedIn Profile URL</label>
-              <input
-                type="url"
-                value={formData.linkedin || ""}
-                onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
-                placeholder="https://linkedin.com/in/..."
-                className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-              />
-            </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+          <div>
+            <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">LinkedIn Profile URL</label>
+            <input
+              type="url"
+              value={formData.linkedin || ""}
+              onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
+              placeholder="https://linkedin.com/in/..."
+              className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-3 border-t border-white/10">
             <button
               type="button"
               onClick={onClose}

@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   { label: 'TEAM', path: '/members', matchValue: '/members' },
   { label: 'ACHIEVEMENTS', path: '/achievements', matchValue: '/achievements' },
   { label: 'SPONSORS', path: '/#partners', matchValue: 'partners' },
-  { label: 'CONTACT', path: 'mailto:veerracersselectric.database@gmail.com?subject=General%20Inquiry%20-%20VeerRacerss%20Electric', matchValue: 'contact' },
+  { label: 'LOGIN', path: '/admin/login', matchValue: '/admin/login' },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -141,16 +141,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </Link>
                );
             })}
-            
-            <div className="h-px w-20 bg-white/10 my-2" />
-            
-            <Link 
-              href="/admin/login"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm sm:text-base font-display font-bold uppercase tracking-[0.2em] text-racing-red hover:text-white transition-colors"
-            >
-              Login
-            </Link>
           </div>
         )}
 

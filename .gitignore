@@ -4,7 +4,7 @@ dist/
 coverage/
 .DS_Store
 *.log
-.env*
+.env.local
 !.env.example
 .next/
 raw_member_photos/
@@ -12,3 +12,5 @@ raw_member_photos/
 !public/members/
 homepage_redesign_mockups/
 scripts/
+.agents/
+tests/

@@ -18,17 +18,39 @@ export function BatchProgressionModal({
   const [executing, setExecuting] = useState(false);
   const currentGradYear = new Date().getFullYear();
 
-  // Filter members by year
-  const fourthYears = members.filter((m) => (m.year_of_study || "").includes("4th"));
-  const thirdYears = members.filter((m) => (m.year_of_study || "").includes("3rd"));
-  const secondYears = members.filter((m) => (m.year_of_study || "").includes("2nd"));
-  const firstYears = members.filter((m) => (m.year_of_study || "").includes("1st"));
+  // Filter members by year (resilient to both year_of_study and legacy year strings)
+  const fourthYears = members.filter(
+    (m) =>
+      (m.year_of_study || "").includes("4th") ||
+      (m.year || "").includes("4th") ||
+      ((m.year || "").includes("Final") && !(m.year || "").includes("Pre-Final"))
+  );
+  const thirdYears = members.filter(
+    (m) =>
+      !fourthYears.some((f) => f.id === m.id) &&
+      ((m.year_of_study || "").includes("3rd") ||
+        (m.year || "").includes("3rd") ||
+        (m.year || "").includes("Pre-Final"))
+  );
+  const secondYears = members.filter(
+    (m) =>
+      !fourthYears.some((f) => f.id === m.id) &&
+      !thirdYears.some((t) => t.id === m.id) &&
+      ((m.year_of_study || "").includes("2nd") || (m.year || "").includes("2nd"))
+  );
+  const firstYears = members.filter(
+    (m) =>
+      !fourthYears.some((f) => f.id === m.id) &&
+      !thirdYears.some((t) => t.id === m.id) &&
+      !secondYears.some((s) => s.id === m.id) &&
+      ((m.year_of_study || "").includes("1st") || (m.year || "").includes("1st"))
+  );
   const otherMembers = members.filter(
     (m) =>
-      !(m.year_of_study || "").includes("4th") &&
-      !(m.year_of_study || "").includes("3rd") &&
-      !(m.year_of_study || "").includes("2nd") &&
-      !(m.year_of_study || "").includes("1st")
+      !fourthYears.some((f) => f.id === m.id) &&
+      !thirdYears.some((t) => t.id === m.id) &&
+      !secondYears.some((s) => s.id === m.id) &&
+      !firstYears.some((fi) => fi.id === m.id)
   );
 
   const handleExecute = async () => {

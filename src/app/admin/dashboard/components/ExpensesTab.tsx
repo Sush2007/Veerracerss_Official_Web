@@ -8,13 +8,8 @@ import {
   FileSpreadsheet,
   Search,
   Receipt,
-  ExternalLink,
-  CheckCircle2,
-  Clock,
-  Check,
   X,
-  Tag,
-  AlertCircle,
+  CreditCard,
 } from "lucide-react";
 import { ClubExpense } from "@/src/data/cms_defaults";
 import { exportTableToExcel } from "@/src/lib/exportToExcel";
@@ -24,7 +19,6 @@ interface ExpensesTabProps {
   uploading: boolean;
   onAddExpense: (expense: Omit<ClubExpense, "id" | "created_at">, receiptFile: File | null) => Promise<void>;
   onDeleteExpense: (id: string, title: string) => Promise<void>;
-  onUpdateStatus: (id: string, status: string) => Promise<void>;
 }
 
 export function ExpensesTab({
@@ -32,7 +26,6 @@ export function ExpensesTab({
   uploading,
   onAddExpense,
   onDeleteExpense,
-  onUpdateStatus,
 }: ExpensesTabProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
@@ -45,7 +38,6 @@ export function ExpensesTab({
   const [vendor, setVendor] = useState("");
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split("T")[0]);
   const [paidBy, setPaidBy] = useState("");
-  const [status, setStatus] = useState("Approved");
   const [notes, setNotes] = useState("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
@@ -62,12 +54,7 @@ export function ExpensesTab({
 
   // Calculate Metrics
   const totalAmount = expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-  const approvedAmount = expenses
-    .filter((e) => e.status === "Approved")
-    .reduce((sum, item) => sum + Number(item.amount || 0), 0);
-  const pendingAmount = expenses
-    .filter((e) => e.status === "Pending")
-    .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const totalReceipts = expenses.filter((e) => Boolean(e.receipt_url)).length;
 
   const filteredExpenses = expenses.filter((e) => {
     const matchesCat = selectedCategory === "ALL" || e.category === selectedCategory;
@@ -91,7 +78,6 @@ export function ExpensesTab({
         "Vendor": e.vendor || "N/A",
         "Date": e.expense_date,
         "Paid By": e.paid_by || "N/A",
-        "Approval Status": e.status,
         "Receipt URL": e.receipt_url || "No Receipt",
         "Notes": e.notes || "",
       })),
@@ -112,7 +98,6 @@ export function ExpensesTab({
         vendor,
         expense_date: expenseDate,
         paid_by: paidBy,
-        status,
         notes,
       },
       receiptFile
@@ -128,9 +113,10 @@ export function ExpensesTab({
   };
 
   return (
-    <div className="space-y-8">
-      {/* Metrics Banner */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <div className="space-y-6">
+      
+      {/* Clean Metrics Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-[#0b0c10] border border-white/10 p-5">
           <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest block mb-1">
             Total Logged Expenses
@@ -138,58 +124,48 @@ export function ExpensesTab({
           <div className="text-2xl sm:text-3xl font-display font-black text-white">
             ₹{totalAmount.toLocaleString("en-IN")}
           </div>
-          <span className="text-[10px] font-mono text-white/40">{expenses.length} Total Vouchers</span>
+          <span className="text-[10px] font-mono text-white/40">{expenses.length} Total Records</span>
         </div>
 
-        <div className="bg-[#0b0c10] border border-emerald-500/30 p-5">
-          <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest block mb-1">
-            Approved & Committed
+        <div className="bg-[#0b0c10] border border-white/10 p-5">
+          <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest block mb-1">
+            Receipts Attached
           </span>
-          <div className="text-2xl sm:text-3xl font-display font-black text-emerald-300">
-            ₹{approvedAmount.toLocaleString("en-IN")}
+          <div className="text-2xl sm:text-3xl font-display font-black text-white">
+            {totalReceipts} / {expenses.length}
           </div>
-          <span className="text-[10px] font-mono text-white/40">Verified by Technical Council</span>
-        </div>
-
-        <div className="bg-[#0b0c10] border border-amber-500/30 p-5">
-          <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest block mb-1">
-            Pending Reimbursement
-          </span>
-          <div className="text-2xl sm:text-3xl font-display font-black text-amber-300">
-            ₹{pendingAmount.toLocaleString("en-IN")}
-          </div>
-          <span className="text-[10px] font-mono text-white/40">Awaiting Settlement</span>
+          <span className="text-[10px] font-mono text-white/40">Verified Invoices</span>
         </div>
 
         <div className="bg-[#0b0c10] border border-white/10 p-5 flex flex-col justify-between">
           <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest block mb-1">
-            Excel Export
+            Spreadsheet Export
           </span>
           <button
             onClick={handleExport}
             className="w-full inline-flex items-center justify-center gap-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/40 px-3 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-colors"
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>Download Excel</span>
+            <span>Download Expenses (.xlsx)</span>
           </button>
         </div>
       </div>
 
       {/* Main Grid: Add Form + Expenses Table */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Form Column */}
         <div className="lg:col-span-1">
-          <div className="bg-[#0b0c10] border border-white/10 p-6 sticky top-24">
+          <div className="bg-[#0b0c10] border border-white/10 p-5 sm:p-6 sticky top-24">
             <h2 className="text-base font-bold uppercase mb-4 flex items-center gap-2 font-display text-white">
               <Plus className="w-4 h-4 text-racing-red" />
-              <span>Record New Expense / Bill</span>
+              <span>Log Bill / Expense</span>
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-3.5">
               <div>
                 <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">
-                  Item Description / Title <span className="text-racing-red">*</span>
+                  Description / Item <span className="text-racing-red">*</span>
                 </label>
                 <input
                   type="text"
@@ -230,7 +206,7 @@ export function ExpensesTab({
               </div>
 
               <div>
-                <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Category</label>
+                <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Domain / Category</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
@@ -269,20 +245,7 @@ export function ExpensesTab({
               </div>
 
               <div>
-                <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Status</label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                >
-                  <option value="Approved">Approved</option>
-                  <option value="Pending">Pending Approval</option>
-                  <option value="Reimbursed">Reimbursed</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Receipt / Invoice Scan</label>
+                <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Bill / Receipt Scan</label>
                 <input
                   type="file"
                   accept="image/*,application/pdf"
@@ -292,12 +255,12 @@ export function ExpensesTab({
               </div>
 
               <div>
-                <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Notes / Invoice No</label>
+                <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Remarks / Invoice No</label>
                 <textarea
                   rows={2}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Material specs, PO number, or remarks..."
+                  placeholder="Material specs, invoice number, or remarks..."
                   className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
                 />
               </div>
@@ -307,7 +270,7 @@ export function ExpensesTab({
                 disabled={uploading}
                 className="w-full bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase py-2.5 transition-all disabled:opacity-50"
               >
-                {uploading ? "Recording..." : "Log Bill / Expense"}
+                {uploading ? "Saving..." : "Record Expense"}
               </button>
             </form>
           </div>
@@ -315,10 +278,10 @@ export function ExpensesTab({
 
         {/* List Column */}
         <div className="lg:col-span-2">
-          <div className="bg-[#0b0c10] border border-white/10 p-6">
+          <div className="bg-[#0b0c10] border border-white/10 p-5 sm:p-6">
             
             {/* Filter Bar */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-white/10">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-white/10">
               <div className="relative flex-1">
                 <Search className="w-3.5 h-3.5 text-white/40 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
@@ -350,19 +313,19 @@ export function ExpensesTab({
                 No expense vouchers found matching filter.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5 max-h-[750px] overflow-y-auto pr-1">
                 {filteredExpenses.map((exp) => (
                   <div
                     key={exp.id}
-                    className="bg-black/50 border border-white/10 hover:border-white/20 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors"
+                    className="bg-black/50 border border-white/10 hover:border-white/20 p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-colors"
                   >
-                    <div className="space-y-1">
+                    <div className="space-y-1 flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-white">{exp.title}</span>
+                        <span className="text-xs font-bold text-white truncate">{exp.title}</span>
                         {exp.receipt_url && (
                           <button
                             onClick={() => setViewingReceipt(exp.receipt_url || null)}
-                            className="text-[10px] font-mono text-racing-red hover:underline inline-flex items-center gap-1"
+                            className="text-[10px] font-mono text-racing-red hover:underline inline-flex items-center gap-1 shrink-0"
                           >
                             <Receipt className="w-3 h-3" />
                             <span>Receipt</span>
@@ -378,30 +341,13 @@ export function ExpensesTab({
                       </div>
 
                       {exp.notes && (
-                        <p className="text-[11px] font-sans text-white/60 font-light pt-1">{exp.notes}</p>
+                        <p className="text-[11px] font-sans text-white/60 font-light pt-0.5">{exp.notes}</p>
                       )}
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
-                      <div className="text-right">
-                        <div className="font-display font-black text-base text-white">
-                          ₹{Number(exp.amount).toLocaleString("en-IN")}
-                        </div>
-                        <select
-                          value={exp.status}
-                          onChange={(e) => onUpdateStatus(exp.id, e.target.value)}
-                          className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 border outline-none cursor-pointer ${
-                            exp.status === "Approved"
-                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                              : exp.status === "Reimbursed"
-                              ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
-                              : "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                          }`}
-                        >
-                          <option value="Approved" className="bg-[#111] text-white">Approved</option>
-                          <option value="Pending" className="bg-[#111] text-white">Pending</option>
-                          <option value="Reimbursed" className="bg-[#111] text-white">Reimbursed</option>
-                        </select>
+                      <div className="font-display font-black text-sm sm:text-base text-white">
+                        ₹{Number(exp.amount).toLocaleString("en-IN")}
                       </div>
 
                       <button
