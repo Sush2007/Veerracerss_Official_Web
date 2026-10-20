@@ -10,6 +10,7 @@ import {
   Receipt,
   X,
   CreditCard,
+  ExternalLink,
 } from "lucide-react";
 import { ClubExpense } from "@/src/data/cms_defaults";
 import { exportTableToExcel } from "@/src/lib/exportToExcel";
@@ -370,15 +371,34 @@ export function ExpensesTab({
       {/* Receipt Modal */}
       {viewingReceipt && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
-          <div className="max-w-2xl max-h-[90vh] bg-[#0b0c10] border border-white/20 p-4 relative">
+          <div className="w-full max-w-4xl max-h-[90vh] bg-[#0b0c10] border border-white/20 p-4 sm:p-6 relative flex flex-col">
+            <div className="flex items-center justify-between mb-3 pr-8">
+              <h4 className="text-xs font-mono uppercase text-white/70">Receipt / Invoice Document</h4>
+              <a
+                href={viewingReceipt}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] font-mono text-racing-red hover:underline flex items-center gap-1"
+              >
+                <span>Open in New Tab / Download</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
             <button
               onClick={() => setViewingReceipt(null)}
-              className="absolute top-2 right-2 p-1.5 bg-white/10 hover:bg-white/20 text-white"
+              className="absolute top-3 right-3 p-1.5 bg-white/10 hover:bg-white/20 text-white transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
-            <h4 className="text-xs font-mono uppercase text-white/70 mb-3">Receipt / Invoice Document</h4>
-            <img src={viewingReceipt} alt="Receipt" className="max-h-[75vh] w-auto object-contain mx-auto" />
+            {viewingReceipt.toLowerCase().includes(".pdf") || viewingReceipt.startsWith("data:application/pdf") ? (
+              <iframe
+                src={viewingReceipt}
+                title="Receipt PDF Preview"
+                className="w-full h-[75vh] rounded border border-white/10"
+              />
+            ) : (
+              <img src={viewingReceipt} alt="Receipt" className="max-h-[75vh] w-auto object-contain mx-auto" />
+            )}
           </div>
         </div>
       )}

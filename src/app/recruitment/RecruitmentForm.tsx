@@ -22,10 +22,9 @@ export function RecruitmentForm({
   const [rollNo, setRollNo] = useState("");
   const [branch, setBranch] = useState("Mechanical Engineering");
   const [yearOfStudy, setYearOfStudy] = useState("1st Year");
-  const [primaryDomain, setPrimaryDomain] = useState("Powertrain & High Voltage");
-  const [secondaryDomain, setSecondaryDomain] = useState("Chassis & Aerodynamics");
+  const [primaryDomain, setPrimaryDomain] = useState("Powertrain & High Voltage (Battery & Inverters)");
+  const [secondaryDomain, setSecondaryDomain] = useState("Chassis & Aerodynamics (Spaceframe & Carbon Aero)");
   const [experienceSummary, setExperienceSummary] = useState("");
-  const [portfolioUrl, setPortfolioUrl] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -72,7 +71,6 @@ export function RecruitmentForm({
           primary_domain: primaryDomain,
           secondary_domain: secondaryDomain,
           experience_summary: experienceSummary,
-          portfolio_url: portfolioUrl,
         }),
       });
 
@@ -136,7 +134,6 @@ export function RecruitmentForm({
             setPhone("");
             setRollNo("");
             setExperienceSummary("");
-            setPortfolioUrl("");
           }}
           className="bg-white/10 hover:bg-white hover:text-black text-white text-xs font-mono font-bold px-6 py-3 transition-all uppercase tracking-wider"
         >
@@ -316,20 +313,6 @@ export function RecruitmentForm({
             value={experienceSummary}
             onChange={(e) => setExperienceSummary(e.target.value)}
             placeholder="Tell us about your interests, past projects (CAD, Arduino, coding, fabrication, sponsorship outreach), or what drives you toward electric motorsport..."
-            className="w-full bg-[#121318] border border-white/10 focus:border-racing-red px-3.5 py-2.5 text-xs font-mono text-white outline-none transition-colors"
-          />
-        </div>
-
-        {/* Portfolio / LinkedIn */}
-        <div>
-          <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block">
-            Portfolio / Resume / GitHub / LinkedIn URL (Optional)
-          </label>
-          <input
-            type="url"
-            value={portfolioUrl}
-            onChange={(e) => setPortfolioUrl(e.target.value)}
-            placeholder="https://github.com/your-username or Google Drive link"
             className="w-full bg-[#121318] border border-white/10 focus:border-racing-red px-3.5 py-2.5 text-xs font-mono text-white outline-none transition-colors"
           />
         </div>

@@ -1,9 +1,54 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { Cpu, Wrench, Flag } from "lucide-react";
+import { createClient } from "@/src/lib/supabase/client";
+import { DEFAULT_SITE_SETTINGS } from "@/src/data/cms_defaults";
 
 export function About() {
+  const [aboutData, setAboutData] = useState({
+    image_url: DEFAULT_SITE_SETTINGS.about_image_url || "/team/who-we-are.jpg",
+    title: DEFAULT_SITE_SETTINGS.about_title || "WHO WE ARE",
+    subtitle: DEFAULT_SITE_SETTINGS.about_subtitle || "THE OFFICIAL STUDENT FORMULA RACING CLUB",
+    description: DEFAULT_SITE_SETTINGS.about_description || "We are VeerRacerss Electric, the official Formula Student EV team of VSSUT Burla. We design, fabricate, and race high-performance electric race cars from the ground up, pushing the limits of lightweight composites, battery thermal safety, and dynamic vehicle telemetry.",
+  });
+
+  useEffect(() => {
+    async function loadAboutSettings() {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase.from("site_settings").select("*").limit(1).maybeSingle();
+        
+        let localExt: any = {};
+        if (typeof window !== "undefined") {
+          try {
+            const raw = localStorage.getItem("vr_about_settings");
+            if (raw) localExt = JSON.parse(raw);
+          } catch {}
+        }
+
+        if (data) {
+          setAboutData({
+            image_url: data.about_image_url || localExt.about_image_url || DEFAULT_SITE_SETTINGS.about_image_url || "/team/who-we-are.jpg",
+            title: data.about_title || localExt.about_title || DEFAULT_SITE_SETTINGS.about_title || "WHO WE ARE",
+            subtitle: data.about_subtitle || localExt.about_subtitle || DEFAULT_SITE_SETTINGS.about_subtitle || "THE OFFICIAL STUDENT FORMULA RACING CLUB",
+            description: data.about_description || localExt.about_description || DEFAULT_SITE_SETTINGS.about_description || "We are VeerRacerss Electric, the official Formula Student EV team of VSSUT Burla. We design, fabricate, and race high-performance electric race cars from the ground up, pushing the limits of lightweight composites, battery thermal safety, and dynamic vehicle telemetry.",
+          });
+        } else if (localExt.about_image_url || localExt.about_title || localExt.about_description) {
+          setAboutData((prev) => ({
+            ...prev,
+            ...localExt,
+          }));
+        }
+      } catch {
+        // Fallback already assigned in initial state
+      }
+    }
+
+    loadAboutSettings();
+  }, []);
+
   return (
     <section id="about" className="py-16 sm:py-24 md:py-32 bg-[#0A0A0A] relative z-10 overflow-hidden border-b border-white/5">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-16">
@@ -22,7 +67,7 @@ export function About() {
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-racing-red animate-pulse"></span>
                 <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-wider text-white uppercase">
-                  THE OFFICIAL STUDENT FORMULA RACING CLUB
+                  {aboutData.subtitle}
                 </span>
               </div>
               <span className="text-[9px] font-mono text-racing-red tracking-widest uppercase font-semibold hidden sm:inline">
@@ -33,7 +78,7 @@ export function About() {
             {/* Photo Viewport with object-bottom so the car & team are 100% visible */}
             <div className="relative aspect-[3/4] sm:aspect-[4/5] lg:aspect-[3/4] w-full overflow-hidden bg-[#0A0A0A]">
               <img 
-                src="/team/who-we-are.jpg"
+                src={aboutData.image_url}
                 alt="VeerRacerss Electric - The Official Student Formula Racing Club at VSSUT Burla"
                 className="w-full h-full object-cover object-bottom group-hover:scale-105 transition-transform duration-700 ease-out"
               />
@@ -55,14 +100,14 @@ export function About() {
             >
               <div className="flex items-center gap-3 mb-3 sm:mb-4">
                 <span className="text-racing-red font-sans font-bold tracking-[0.2em] uppercase text-[11px] sm:text-xs">
-                  THE OFFICIAL STUDENT FORMULA RACING CLUB
+                  {aboutData.subtitle}
                 </span>
               </div>
               <h2 className="font-display font-black text-3xl sm:text-4xl md:text-5xl lg:text-6xl uppercase text-white leading-[1.1] mb-4 sm:mb-6 tracking-tight">
-                WHO WE ARE
+                {aboutData.title}
               </h2>
-              <p className="font-sans text-white/70 text-sm sm:text-base md:text-lg leading-relaxed font-light">
-                We are VeerRacerss Electric, the official Formula Student EV team of VSSUT Burla. We design, fabricate, and race high-performance electric race cars from the ground up, pushing the limits of lightweight composites, battery thermal safety, and dynamic vehicle telemetry.
+              <p className="font-sans text-white/70 text-sm sm:text-base md:text-lg leading-relaxed font-light whitespace-pre-line">
+                {aboutData.description}
               </p>
             </motion.div>
 
@@ -106,11 +151,12 @@ export function About() {
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center mb-3 sm:mb-5 group-hover:bg-racing-red transition-colors duration-300">
                   <Flag className="w-4 h-4 sm:w-5 sm:h-5 text-racing-red group-hover:text-white transition-colors duration-300" strokeWidth={2} />
                 </div>
-                <h3 className="font-display font-bold text-[12px] sm:text-[13px] text-white uppercase tracking-wider mb-1.5 sm:mb-2">RACE TO WIN</h3>
-                <p className="font-sans text-xs sm:text-[13px] text-white/50 leading-relaxed font-light">P3 at Buddh International Circuit (Formula Imperial) & Formula Bharat.</p>
+                <h3 className="font-display font-bold text-[12px] sm:text-[13px] text-white uppercase tracking-wider mb-1.5 sm:mb-2">TRACK PROVEN</h3>
+                <p className="font-sans text-xs sm:text-[13px] text-white/50 leading-relaxed font-light">National podium contenders across Formula Bharat & Imperial.</p>
               </motion.div>
 
             </div>
+
           </div>
 
         </div>

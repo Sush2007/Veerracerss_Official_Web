@@ -42,6 +42,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
     if (pathname !== '/') return;
 
     const sections = Array.from(document.querySelectorAll('section[id]'));
@@ -66,10 +77,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   useEffect(() => {
+    // Disable automatic browser scroll restoration to guarantee every page loads from top
+    if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+  }, []);
+
+  useEffect(() => {
     if (!hash) {
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
     }
   }, [pathname, hash]);
+
+  const isDashboard = pathname?.startsWith('/admin/dashboard') || pathname === '/admin';
 
   const activeNavItem = pathname === '/' 
     ? activeHashRoute || hash.replace('#', '') || 'home'
@@ -84,50 +106,52 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div className="font-sans text-on-surface selection:bg-racing-red selection:text-white min-h-screen relative dark">
         <SplashScreen />
         
-        {/* TopNavBar */}
-        <header className={headerClasses}>
-          <nav className="flex justify-between items-center w-full">
-            <div className="flex items-center">
-              <Link href="/" className="flex items-center gap-2 sm:gap-3.5">
-                <img src="/VRE%20Logo.png" alt="VeerRacerss Logo" className="h-7 sm:h-9 md:h-11 w-auto object-contain transition-all duration-300 ease-in-out" />
-                <span className="text-white font-display font-bold text-[11px] min-[360px]:text-xs sm:text-base md:text-lg lg:text-xl tracking-[0.08em] sm:tracking-[0.12em] uppercase block whitespace-nowrap">
-                  VeerRacerss Electric
-                </span>
-              </Link>
-            </div>
-            <div className="hidden md:flex items-center space-x-6 lg:space-x-8 relative pt-2">
-              {NAV_ITEMS.map((item) => {
-                  const isActive = activeNavItem === item.matchValue;
-                  return (
-                    <div key={item.path} className="relative group">
-                      {item.path.startsWith('/#') || item.path.startsWith('mailto:') ? (
-                        <a href={item.path} className={`relative z-10 text-[12px] uppercase tracking-[0.1em] font-bold transition-all duration-300 font-sans ${isActive ? 'text-white' : 'text-white/60 hover:text-white'}`}>
-                          {item.label}
-                        </a>
-                      ) : (
-                        <Link href={item.path} className={`relative z-10 text-[12px] uppercase tracking-[0.1em] font-bold transition-all duration-300 font-sans ${isActive ? 'text-white' : 'text-white/60 hover:text-white'}`}>
-                          {item.label}
-                        </Link>
-                      )}
-                      
-                      {/* Active Underline */}
-                      <div className={`absolute -bottom-2 left-0 h-[2px] bg-racing-red transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`} />
-                    </div>
-                  );
-              })}
-            </div>
-            <button 
-              className="md:hidden text-white p-2 -mr-2 cursor-pointer focus:outline-none" 
-              aria-label="Toggle mobile menu" 
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X className="w-6 h-6 text-racing-red" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </nav>
-        </header>
+        {/* TopNavBar - Hidden on Dashboard */}
+        {!isDashboard && (
+          <header className={headerClasses}>
+            <nav className="flex justify-between items-center w-full">
+              <div className="flex items-center">
+                <Link href="/" className="flex items-center gap-2 sm:gap-3.5">
+                  <img src="/VRE%20Logo.png" alt="VeerRacerss Logo" className="h-7 sm:h-9 md:h-11 w-auto object-contain transition-all duration-300 ease-in-out" />
+                  <span className="text-white font-display font-bold text-[11px] min-[360px]:text-xs sm:text-base md:text-lg lg:text-xl tracking-[0.08em] sm:tracking-[0.12em] uppercase block whitespace-nowrap">
+                    VeerRacerss Electric
+                  </span>
+                </Link>
+              </div>
+              <div className="hidden md:flex items-center space-x-6 lg:space-x-8 relative pt-2">
+                {NAV_ITEMS.map((item) => {
+                    const isActive = activeNavItem === item.matchValue;
+                    return (
+                      <div key={item.path} className="relative group">
+                        {item.path.startsWith('/#') || item.path.startsWith('mailto:') ? (
+                          <a href={item.path} className={`relative z-10 text-[12px] uppercase tracking-[0.1em] font-bold transition-all duration-300 font-sans ${isActive ? 'text-white' : 'text-white/60 hover:text-white'}`}>
+                            {item.label}
+                          </a>
+                        ) : (
+                          <Link href={item.path} className={`relative z-10 text-[12px] uppercase tracking-[0.1em] font-bold transition-all duration-300 font-sans ${isActive ? 'text-white' : 'text-white/60 hover:text-white'}`}>
+                            {item.label}
+                          </Link>
+                        )}
+                        
+                        {/* Active Underline */}
+                        <div className={`absolute -bottom-2 left-0 h-[2px] bg-racing-red transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`} />
+                      </div>
+                    );
+                })}
+              </div>
+              <button 
+                className="md:hidden text-white p-2 -mr-2 cursor-pointer focus:outline-none" 
+                aria-label="Toggle mobile menu" 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? <X className="w-6 h-6 text-racing-red" /> : <Menu className="w-6 h-6" />}
+              </button>
+            </nav>
+          </header>
+        )}
 
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
+        {/* Mobile Menu - Hidden on Dashboard */}
+        {!isDashboard && isMobileMenuOpen && (
           <div className="fixed inset-0 z-40 bg-[#0A0A0A]/98 backdrop-blur-3xl md:hidden flex flex-col items-center justify-center space-y-6 sm:space-y-8 overflow-y-auto px-6 py-20 animate-in fade-in zoom-in-95 duration-200">
             {NAV_ITEMS.map((item) => {
                const isActive = activeNavItem === item.matchValue;
@@ -149,7 +173,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
 
-        <Footer />
+        {!isDashboard && <Footer />}
       </div>
     </ReactLenis>
   );

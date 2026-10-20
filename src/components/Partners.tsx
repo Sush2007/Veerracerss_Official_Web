@@ -23,7 +23,7 @@ const TITLE_SPONSORS: Sponsor[] = [
     name: "CrossHead Engineering",
     category: "Title Sponsor & Precision Engineering",
     logo: "/sponsors/crosshead.svg",
-    url: "https://veerracersselectric.netlify.app/sponsor",
+    url: "https://www.instagram.com/crosshead_engineering/",
     tier: "title"
   }
 ];
@@ -61,7 +61,7 @@ const TECHNICAL_SPONSORS: Sponsor[] = [
     name: "AMEC Mobility",
     category: "EV Lithium Battery & Powertrain",
     logo: "/sponsors/amec.svg",
-    url: "https://veerracersselectric.netlify.app/sponsor",
+    url: "https://www.amecmobility.com",
     tier: "partner"
   },
   {
@@ -75,7 +75,7 @@ const TECHNICAL_SPONSORS: Sponsor[] = [
     name: "My Pit Crew",
     category: "Trackside & Engineering Solutions",
     logo: "/sponsors/mypitcrew.svg",
-    url: "https://veerracersselectric.netlify.app/sponsor",
+    url: "https://www.instagram.com/mypitcrew.india/",
     tier: "partner"
   },
   {

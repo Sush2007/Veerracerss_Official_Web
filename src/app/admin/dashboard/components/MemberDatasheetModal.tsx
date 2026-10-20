@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { X, Save, FileSpreadsheet, Sparkles, BookOpen } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Save, Sparkles, BookOpen } from "lucide-react";
 import { MemberRecord } from "@/src/data/cms_defaults";
-import { exportTableToExcel } from "@/src/lib/exportToExcel";
 
 interface MemberDatasheetModalProps {
   member: MemberRecord;
@@ -22,6 +21,15 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
     joining_year: member.joining_year || "2023",
   });
   const [saving, setSaving] = useState(false);
+
+  // Lock background scrolling while modal is open
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
 
   const branches = [
     "Mechanical Engineering",
@@ -46,27 +54,6 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
     "Corporate Sponsorship Outreach",
   ];
 
-  const handleExportSingle = () => {
-    exportTableToExcel(
-      [
-        {
-          "Full Name": formData.name,
-          "Team Role": formData.role,
-          "Domain / Department": formData.department,
-          "Year of Study": formData.year_of_study,
-          "Academic Branch": formData.academic_branch,
-          "Blood Group": formData.blood_group,
-          "Contact Number (WhatsApp)": formData.phone,
-          "PR Specialization": formData.pr_domain_skills || "None",
-          "Joining Year": formData.joining_year,
-          "LinkedIn": formData.linkedin || "N/A",
-        },
-      ],
-      `member-datasheet-${formData.name.toLowerCase().replace(/\s+/g, "-")}`,
-      "Member Datasheet"
-    );
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -79,8 +66,8 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-[#0b0c10] border border-white/15 w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl relative animate-in zoom-in-95">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm overflow-y-auto p-4 sm:p-6 flex items-start sm:items-center justify-center overscroll-contain">
+      <div className="bg-[#0b0c10] border border-white/15 w-full max-w-xl my-auto p-6 sm:p-8 shadow-2xl relative animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
@@ -99,14 +86,6 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleExportSingle}
-              className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-mono uppercase flex items-center gap-1.5 transition-colors"
-              title="Download single member datasheet in Excel"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Excel</span>
-            </button>
             <button
               onClick={onClose}
               className="p-1.5 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 transition-colors"

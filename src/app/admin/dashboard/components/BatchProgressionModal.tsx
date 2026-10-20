@@ -16,6 +16,7 @@ export function BatchProgressionModal({
   onConfirm,
 }: BatchProgressionModalProps) {
   const [executing, setExecuting] = useState(false);
+  const [hasUnderstood, setHasUnderstood] = useState(false);
   const currentGradYear = new Date().getFullYear();
 
   // Filter members by year (resilient to both year_of_study and legacy year strings)
@@ -169,6 +170,20 @@ export function BatchProgressionModal({
           </div>
         </div>
 
+        {/* Soft Check Mistake Prevention */}
+        <div className="bg-[#14151b] border border-amber-500/30 p-3.5 flex items-start gap-3">
+          <input
+            type="checkbox"
+            id="confirmProgressionCheck"
+            checked={hasUnderstood}
+            onChange={(e) => setHasUnderstood(e.target.checked)}
+            className="mt-0.5 w-4 h-4 accent-racing-red cursor-pointer shrink-0"
+          />
+          <label htmlFor="confirmProgressionCheck" className="text-xs text-white/80 font-mono cursor-pointer leading-relaxed">
+            <strong className="text-amber-400 uppercase">Mistake Prevention Check:</strong> I have verified this list and confirm graduating {fourthYears.length} final-year members to Alumni and advancing lower batches to their next academic year.
+          </label>
+        </div>
+
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
           <button
@@ -182,8 +197,8 @@ export function BatchProgressionModal({
           <button
             type="button"
             onClick={handleExecute}
-            disabled={executing}
-            className="px-6 py-2 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50"
+            disabled={executing || !hasUnderstood}
+            className="px-6 py-2 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {executing ? (
               <>

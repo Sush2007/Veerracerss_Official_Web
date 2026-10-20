@@ -1,15 +1,30 @@
 export interface SiteSettings {
+  hero_title?: string;
+  hero_subtitle?: string;
   recruitment_cta_label: string;
   recruitment_cta_url: string;
   recruitment_cta_enabled: boolean;
   announcement_badge_text: string;
   announcement_badge_enabled: boolean;
   contact_email: string;
+  recruitment_open?: boolean;
   recruitment_form_enabled?: boolean;
   recruitment_form_title?: string;
   recruitment_form_deadline?: string;
+  recruitment_instructions?: string;
+  recruitment_eligibility?: string;
   onboarding_email_template?: string;
   whatsapp_recruit_link?: string;
+  about_image_url?: string;
+  about_title?: string;
+  about_subtitle?: string;
+  about_description?: string;
+  telemetry_stats?: Array<{
+    stat: string;
+    unit: string;
+    label: string;
+    detail: string;
+  }>;
 }
 
 export interface MemberRecord {
@@ -84,6 +99,7 @@ export interface FeaturedMachine {
   car_name: string;
   season_tag: string;
   description: string;
+  cad_model_url?: string;
   cad_image_url: string;
   track_image_url: string;
   top_speed_val: string;
@@ -127,16 +143,57 @@ export interface AlumniRecord {
 }
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
+  hero_title: "VEERRACERSS ELECTRIC",
+  hero_subtitle: "Odisha’s Premier Formula Student EV Racing Team | VSSUT Burla • Est. 2018.\nEngineered from raw CAD into high-voltage, track-dominating electric formula racecars.",
   recruitment_cta_label: "RECRUITMENT 2026",
   recruitment_cta_url: "/recruitment",
   recruitment_cta_enabled: true,
   announcement_badge_text: "FORMULA STUDENT ELECTRIC // VSSUT BURLA",
   announcement_badge_enabled: true,
   contact_email: "veerracersselectric.database@gmail.com",
+  recruitment_open: true,
   recruitment_form_enabled: true,
   recruitment_form_title: "Formula Student Electric 2026 - Official Recruitment",
   recruitment_form_deadline: "Season 2026 Phase 1 Induction",
+  recruitment_instructions: "Complete all fields accurately. Shortlisted candidates will be contacted via WhatsApp/Email for the technical discussion and workshop induction.",
+  recruitment_eligibility: "Open to 1st Year (Freshers) & 2nd Year (Lateral) B.Tech students across all engineering branches of VSSUT Burla.",
   whatsapp_recruit_link: "https://chat.whatsapp.com/veerracerss-recruits-2026",
+  about_image_url: "/team/who-we-are.jpg",
+  about_title: "WHO WE ARE",
+  about_subtitle: "THE OFFICIAL STUDENT FORMULA RACING CLUB",
+  about_description: "We are VeerRacerss Electric, the official Formula Student EV team of VSSUT Burla. We design, fabricate, and race high-performance electric race cars from the ground up, pushing the limits of lightweight composites, battery thermal safety, and dynamic vehicle telemetry.",
+  telemetry_stats: [
+    {
+      stat: "P3",
+      unit: "OVERALL",
+      label: "NATIONAL PODIUM",
+      detail: "Formula Imperial EV at Buddh International Circuit",
+    },
+    {
+      stat: "AIR 1",
+      unit: "TROPHY",
+      label: "LIGHTEST EV",
+      detail: "Lowest curb weight in national formula scrutiny",
+    },
+    {
+      stat: "55+",
+      unit: "ENGINEERS",
+      label: "STUDENT SQUAD",
+      detail: "Multi-disciplinary R&D and race crew",
+    },
+    {
+      stat: "6",
+      unit: "GENERATIONS",
+      label: "EV FLEET ITERATIONS",
+      detail: "Ventus series through flagship Aether",
+    },
+    {
+      stat: "100%",
+      unit: "IN-HOUSE",
+      label: "FABRICATION & CODE",
+      detail: "Spaceframe, BMS, aerodynamics & telemetry",
+    },
+  ],
   onboarding_email_template: `Dear {{name}},
 
 Congratulations! On behalf of VeerRacerss Electric, we are thrilled to formally welcome you to the official Formula Student team of VSSUT Burla for Season 2026.
@@ -159,10 +216,13 @@ VeerRacerss Electric // VSSUT Burla
 veerracersselectric.database@gmail.com`,
 };
 
+export const DEFAULT_SETTINGS = DEFAULT_SITE_SETTINGS;
+
 export const DEFAULT_FEATURED_MACHINE: FeaturedMachine = {
   car_name: "AETHER 2024-25",
   season_tag: "FORMULA STUDENT EV PROTOTYPE",
   description: "Engineered from the ground up by student engineers at VSSUT Burla. Passing rigorous technical scrutiny at Formula Imperial (Buddh International Circuit).",
+  cad_model_url: "/car-raw.glb",
   cad_image_url: "/cars/aether-spotlight.jpg",
   track_image_url: "/cars/aether.jpg",
   top_speed_val: "115",
@@ -178,6 +238,8 @@ export const DEFAULT_FEATURED_MACHINE: FeaturedMachine = {
   aero_headline: "Dual-Element Carbon Wings",
   aero_specs: "CFD Optimised Endplates • Drag Reduction System • High Downforce",
 };
+
+export const DEFAULT_MACHINE = DEFAULT_FEATURED_MACHINE;
 
 export const DEFAULT_MEDIA_ITEMS: MediaItem[] = [
   {
@@ -342,7 +404,7 @@ export const DEFAULT_EXPENSES: ClubExpense[] = [
 
 export const DEFAULT_RECRUITS: RecruitmentApplication[] = [
   {
-    id: "rec-1",
+    id: "00000000-0000-0000-0000-000000000001",
     full_name: "Aman Kumar Dash",
     email: "aman.dash@vssut.ac.in",
     phone: "+91 94391 22341",
@@ -360,7 +422,7 @@ export const DEFAULT_RECRUITS: RecruitmentApplication[] = [
     created_at: "2026-03-02T10:15:00Z",
   },
   {
-    id: "rec-2",
+    id: "00000000-0000-0000-0000-000000000002",
     full_name: "Priya Sahu",
     email: "priya.sahu@vssut.ac.in",
     phone: "+91 98610 88722",

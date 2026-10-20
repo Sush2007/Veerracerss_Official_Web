@@ -20,12 +20,13 @@ export default async function RecruitmentPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from("site_settings")
-      .select("recruitment_form_enabled, recruitment_form_title, recruitment_form_deadline, contact_email")
+      .select("recruitment_open, recruitment_form_enabled, recruitment_form_title, recruitment_form_deadline, contact_email")
       .limit(1)
       .maybeSingle();
 
     if (data) {
-      if (typeof data.recruitment_form_enabled === "boolean") formEnabled = data.recruitment_form_enabled;
+      if (typeof data.recruitment_open === "boolean") formEnabled = data.recruitment_open;
+      else if (typeof data.recruitment_form_enabled === "boolean") formEnabled = data.recruitment_form_enabled;
       if (data.recruitment_form_title) formTitle = data.recruitment_form_title;
       if (data.recruitment_form_deadline) formDeadline = data.recruitment_form_deadline;
       if (data.contact_email) contactEmail = data.contact_email;

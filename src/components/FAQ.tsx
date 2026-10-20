@@ -121,7 +121,7 @@ export function FAQ() {
             </p>
           </div>
           <a
-            href="mailto:tech@veerracerss.org"
+            href="mailto:veerracersselectric.database@gmail.com?subject=Technical%20Inquiry%20-%20VeerRacerss%20Electric"
             className="shrink-0 bg-racing-red/10 border border-racing-red text-white hover:bg-racing-red px-5 py-2.5 text-xs font-sans font-bold tracking-widest uppercase transition-colors"
           >
             CONTACT DESK

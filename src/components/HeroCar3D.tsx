@@ -61,14 +61,16 @@ const sharedMaterials = {
 function HeroCarModel({ 
   isInteracting, 
   autoRotate,
-  isMobile 
+  isMobile,
+  modelUrl = "/car-raw.glb",
 }: { 
   isInteracting: boolean; 
   autoRotate: boolean;
   isMobile: boolean;
+  modelUrl?: string;
 }) {
   // Load original intact SolidWorks CAD model with 100% full raw geometry
-  const { scene } = useGLTF("/car-raw.glb");
+  const { scene } = useGLTF(modelUrl);
   const modelRef = useRef<THREE.Group>(null);
 
   // Apply batched materials so 200+ meshes collapse into ~7 draw calls
@@ -189,7 +191,11 @@ function HeroLoader() {
   );
 }
 
-export default function HeroCar3D() {
+export interface HeroCar3DProps {
+  modelUrl?: string;
+}
+
+export default function HeroCar3D({ modelUrl = "/car-raw.glb" }: HeroCar3DProps = {}) {
   const [isInteracting, setIsInteracting] = useState(false);
   const [autoRotate] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -275,7 +281,7 @@ export default function HeroCar3D() {
           <directionalLight position={[-6, 8, 4]} intensity={1.2} color="#38BDF8" />
 
           {/* 3D Car Model centered at [0, 0, 0] */}
-          <HeroCarModel isInteracting={isInteracting} autoRotate={autoRotate} isMobile={isMobile} />
+          <HeroCarModel isInteracting={isInteracting} autoRotate={autoRotate} isMobile={isMobile} modelUrl={modelUrl} />
 
           {/* Contact Ground Shadow aligned beneath tires (Fast 256 resolution) */}
           <ContactShadows

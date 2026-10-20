@@ -6,8 +6,8 @@ import { OrbitControls, useGLTF, Center, ContactShadows, Float } from "@react-th
 import * as THREE from "three";
 import { RotateCw, ZoomIn, Eye, Sparkles } from "lucide-react";
 
-function CarModel({ autoRotate }: { autoRotate: boolean }) {
-  const { scene } = useGLTF("/car-raw.glb");
+function CarModel({ autoRotate, modelUrl = "/car-raw.glb" }: { autoRotate: boolean; modelUrl?: string }) {
+  const { scene } = useGLTF(modelUrl);
   const modelRef = useRef<THREE.Group>(null);
 
   // Ensure all meshes have standard PBR properties and DoubleSide
@@ -71,7 +71,11 @@ function Loader() {
   );
 }
 
-export default function CarViewer3D() {
+export interface CarViewer3DProps {
+  modelUrl?: string;
+}
+
+export default function CarViewer3D({ modelUrl = "/car-raw.glb" }: CarViewer3DProps = {}) {
   const [autoRotate, setAutoRotate] = useState(true);
   const [mounted, setMounted] = useState(false);
   const controlsRef = useRef<any>(null);
@@ -158,7 +162,7 @@ export default function CarViewer3D() {
           <pointLight position={[0, -2, 0]} intensity={0.5} color="#D22730" />
 
           {/* 3D Car Model */}
-          <CarModel autoRotate={autoRotate} />
+          <CarModel autoRotate={autoRotate} modelUrl={modelUrl} />
 
           {/* Realistic Floor Contact Shadow */}
           <ContactShadows

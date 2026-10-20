@@ -72,6 +72,7 @@ export default function AdminDashboard() {
   const [machine, setMachine] = useState<FeaturedMachine>(DEFAULT_FEATURED_MACHINE);
   const [savingMachine, setSavingMachine] = useState(false);
   const [cadFile, setCadFile] = useState<File | null>(null);
+  const [cadModelFile, setCadModelFile] = useState<File | null>(null);
   const [trackFile, setTrackFile] = useState<File | null>(null);
 
   // 3. Media Items & Gallery State
@@ -81,6 +82,10 @@ export default function AdminDashboard() {
   const [mediaYear, setMediaYear] = useState(new Date().getFullYear().toString());
   const [mediaFeatured, setMediaFeatured] = useState(true);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaSourceType, setMediaSourceType] = useState<"upload" | "url">("upload");
+  const [mediaDirectUrl, setMediaDirectUrl] = useState("");
+  const [showMediaModal, setShowMediaModal] = useState(false);
+  const [deleteConfirmMedia, setDeleteConfirmMedia] = useState<MediaItem | null>(null);
   const [editingMedia, setEditingMedia] = useState<MediaItem | null>(null);
 
   // 4. Alumni State
@@ -94,10 +99,16 @@ export default function AdminDashboard() {
   const [alumniMentorshipDomain, setAlumniMentorshipDomain] = useState("");
   const [alumniBio, setAlumniBio] = useState("");
   const [alumniFile, setAlumniFile] = useState<File | null>(null);
+  const [alumniPhotoSource, setAlumniPhotoSource] = useState<"upload" | "url">("upload");
+  const [alumniDirectUrl, setAlumniDirectUrl] = useState("");
+  const [showAlumniModal, setShowAlumniModal] = useState(false);
+  const [deleteConfirmAlumni, setDeleteConfirmAlumni] = useState<AlumniRecord | null>(null);
   const [editingAlumni, setEditingAlumni] = useState<AlumniRecord | null>(null);
 
   // 5. Active Squad Members State
   const [members, setMembers] = useState<MemberRecord[]>([]);
+  const [deleteConfirmMember, setDeleteConfirmMember] = useState<MemberRecord | null>(null);
+  const [uploadingAboutImg, setUploadingAboutImg] = useState(false);
   const [memberName, setMemberName] = useState("");
   const [memberRole, setMemberRole] = useState("");
   const [memberDepartment, setMemberDepartment] = useState("Leadership");
@@ -159,13 +170,67 @@ export default function AdminDashboard() {
     // 1. Site Settings
     try {
       const { data: sData } = await supabase.from("site_settings").select("*").limit(1).maybeSingle();
-      if (sData) setSiteSettings(sData);
+      let localExt: any = {};
+      let localAbout: any = {};
+      let localTelemetry: any = null;
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("vr_site_settings_extended");
+          if (raw) localExt = JSON.parse(raw);
+          const rawAbout = localStorage.getItem("vr_about_settings");
+          if (rawAbout) localAbout = JSON.parse(rawAbout);
+          const rawTel = localStorage.getItem("vr_telemetry_stats");
+          if (rawTel) localTelemetry = JSON.parse(rawTel);
+        } catch {}
+      }
+      if (sData) {
+        setSiteSettings({
+          ...DEFAULT_SITE_SETTINGS,
+          ...sData,
+          ...localExt,
+          about_image_url: sData.about_image_url || localAbout.about_image_url || DEFAULT_SITE_SETTINGS.about_image_url,
+          about_title: sData.about_title || localAbout.about_title || DEFAULT_SITE_SETTINGS.about_title,
+          about_subtitle: sData.about_subtitle || localAbout.about_subtitle || DEFAULT_SITE_SETTINGS.about_subtitle,
+          about_description: sData.about_description || localAbout.about_description || DEFAULT_SITE_SETTINGS.about_description,
+          telemetry_stats: (sData.telemetry_stats && sData.telemetry_stats.length > 0)
+            ? sData.telemetry_stats
+            : (localTelemetry && localTelemetry.length > 0)
+            ? localTelemetry
+            : DEFAULT_SITE_SETTINGS.telemetry_stats,
+        });
+      } else {
+        setSiteSettings((prev) => ({
+          ...DEFAULT_SITE_SETTINGS,
+          ...prev,
+          ...localExt,
+          about_image_url: localAbout.about_image_url || DEFAULT_SITE_SETTINGS.about_image_url,
+          about_title: localAbout.about_title || DEFAULT_SITE_SETTINGS.about_title,
+          about_subtitle: localAbout.about_subtitle || DEFAULT_SITE_SETTINGS.about_subtitle,
+          about_description: localAbout.about_description || DEFAULT_SITE_SETTINGS.about_description,
+          telemetry_stats: (localTelemetry && localTelemetry.length > 0) ? localTelemetry : DEFAULT_SITE_SETTINGS.telemetry_stats,
+        }));
+      }
     } catch {}
 
     // 2. Featured Machine
     try {
       const { data: mData } = await supabase.from("featured_machine").select("*").limit(1).maybeSingle();
-      if (mData) setMachine(mData);
+      let localExt: any = {};
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("vr_machine_extended");
+          if (raw) localExt = JSON.parse(raw);
+        } catch {}
+      }
+      if (mData) {
+        setMachine({
+          ...DEFAULT_FEATURED_MACHINE,
+          ...localExt,
+          ...mData,
+        });
+      } else if (localExt.cad_model_url) {
+        setMachine((prev) => ({ ...prev, ...localExt }));
+      }
     } catch {}
 
     // 3. Media Items
@@ -261,18 +326,67 @@ export default function AdminDashboard() {
     try {
       const { data: existing } = await supabase.from("site_settings").select("id").limit(1).maybeSingle();
       const settingsPayload: any = {
+        hero_title: siteSettings.hero_title || DEFAULT_SITE_SETTINGS.hero_title,
+        hero_subtitle: siteSettings.hero_subtitle || DEFAULT_SITE_SETTINGS.hero_subtitle,
         recruitment_cta_label: siteSettings.recruitment_cta_label,
         recruitment_cta_url: siteSettings.recruitment_cta_url,
         recruitment_cta_enabled: siteSettings.recruitment_cta_enabled,
         announcement_badge_text: siteSettings.announcement_badge_text,
         announcement_badge_enabled: siteSettings.announcement_badge_enabled,
         contact_email: siteSettings.contact_email,
+        recruitment_open: siteSettings.recruitment_open !== false,
         recruitment_form_enabled: siteSettings.recruitment_form_enabled !== false,
         recruitment_form_title: siteSettings.recruitment_form_title || "Formula Student Electric 2026 - Official Recruitment",
         recruitment_form_deadline: siteSettings.recruitment_form_deadline || "Season 2026 Phase 1 Induction",
+        recruitment_instructions: siteSettings.recruitment_instructions || DEFAULT_SITE_SETTINGS.recruitment_instructions,
+        recruitment_eligibility: siteSettings.recruitment_eligibility || DEFAULT_SITE_SETTINGS.recruitment_eligibility,
         whatsapp_recruit_link: siteSettings.whatsapp_recruit_link || "https://chat.whatsapp.com/veerracerss-recruits-2026",
         onboarding_email_template: siteSettings.onboarding_email_template,
+        about_image_url: siteSettings.about_image_url || DEFAULT_SITE_SETTINGS.about_image_url,
+        about_title: siteSettings.about_title || DEFAULT_SITE_SETTINGS.about_title,
+        about_subtitle: siteSettings.about_subtitle || DEFAULT_SITE_SETTINGS.about_subtitle,
+        about_description: siteSettings.about_description || DEFAULT_SITE_SETTINGS.about_description,
+        telemetry_stats: siteSettings.telemetry_stats || DEFAULT_SITE_SETTINGS.telemetry_stats,
         updated_at: new Date().toISOString()
+      };
+
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_site_settings_extended", JSON.stringify({
+            hero_title: siteSettings.hero_title || DEFAULT_SITE_SETTINGS.hero_title,
+            hero_subtitle: siteSettings.hero_subtitle || DEFAULT_SITE_SETTINGS.hero_subtitle,
+            recruitment_open: siteSettings.recruitment_open,
+          }));
+          localStorage.setItem("vr_about_settings", JSON.stringify({
+            about_image_url: siteSettings.about_image_url || DEFAULT_SITE_SETTINGS.about_image_url,
+            about_title: siteSettings.about_title || DEFAULT_SITE_SETTINGS.about_title,
+            about_subtitle: siteSettings.about_subtitle || DEFAULT_SITE_SETTINGS.about_subtitle,
+            about_description: siteSettings.about_description || DEFAULT_SITE_SETTINGS.about_description,
+          }));
+          if (siteSettings.telemetry_stats) {
+            localStorage.setItem("vr_telemetry_stats", JSON.stringify(siteSettings.telemetry_stats));
+          }
+        } catch {}
+      }
+
+      const stripExtended = (payload: any) => {
+        const clean = { ...payload };
+        delete clean.hero_title;
+        delete clean.hero_subtitle;
+        delete clean.recruitment_open;
+        delete clean.recruitment_form_enabled;
+        delete clean.recruitment_form_title;
+        delete clean.recruitment_form_deadline;
+        delete clean.recruitment_instructions;
+        delete clean.recruitment_eligibility;
+        delete clean.whatsapp_recruit_link;
+        delete clean.onboarding_email_template;
+        delete clean.about_image_url;
+        delete clean.about_title;
+        delete clean.about_subtitle;
+        delete clean.about_description;
+        delete clean.telemetry_stats;
+        return clean;
       };
 
       let res;
@@ -280,23 +394,44 @@ export default function AdminDashboard() {
         res = await supabase.from("site_settings").update(settingsPayload).eq("id", existing.id);
         if (res.error && res.error.message?.includes("column")) {
           // Fallback if extended columns not yet run in supabase
-          delete settingsPayload.recruitment_form_enabled;
-          delete settingsPayload.recruitment_form_title;
-          delete settingsPayload.recruitment_form_deadline;
-          delete settingsPayload.whatsapp_recruit_link;
-          delete settingsPayload.onboarding_email_template;
-          res = await supabase.from("site_settings").update(settingsPayload).eq("id", existing.id);
+          res = await supabase.from("site_settings").update(stripExtended(settingsPayload)).eq("id", existing.id);
         }
       } else {
         res = await supabase.from("site_settings").insert([settingsPayload]);
+        if (res.error && res.error.message?.includes("column")) {
+          res = await supabase.from("site_settings").insert([stripExtended(settingsPayload)]);
+        }
       }
       if (res.error) throw res.error;
-      showToast("Hero and Site Settings updated successfully!");
+      showToast("Hero, About & Telemetry Settings updated successfully!");
     } catch (err: any) {
       showError(err.message || "Failed to save settings. If table doesn't exist, execute supabase-cms-setup.sql.");
     } finally {
       setSavingSettings(false);
     }
+  };
+
+  const handleAboutImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAboutImg(true);
+    try {
+      const url = await uploadToStorage(file, "member-images", "about");
+      setSiteSettings((prev) => ({ ...prev, about_image_url: url }));
+      showToast("Who We Are image uploaded! Click 'Save Changes' to apply.");
+    } catch (err: any) {
+      showError(err.message || "Failed to upload image.");
+    } finally {
+      setUploadingAboutImg(false);
+    }
+  };
+
+  const handleUpdateTelemetryCard = (index: number, field: string, val: string) => {
+    const current = siteSettings.telemetry_stats
+      ? [...siteSettings.telemetry_stats]
+      : [...(DEFAULT_SITE_SETTINGS.telemetry_stats || [])];
+    current[index] = { ...current[index], [field]: val };
+    setSiteSettings({ ...siteSettings, telemetry_stats: current });
   };
 
   // 2. Save Featured Machine
@@ -306,6 +441,7 @@ export default function AdminDashboard() {
     try {
       let cadUrl = machine.cad_image_url;
       let trackUrl = machine.track_image_url;
+      let cadModelUrl = machine.cad_model_url || DEFAULT_FEATURED_MACHINE.cad_model_url || "/car-raw.glb";
 
       if (cadFile) {
         cadUrl = await uploadToStorage(cadFile, "member-images", "cars");
@@ -313,26 +449,49 @@ export default function AdminDashboard() {
       if (trackFile) {
         trackUrl = await uploadToStorage(trackFile, "member-images", "cars");
       }
+      if (cadModelFile) {
+        cadModelUrl = await uploadToStorage(cadModelFile, "member-images", "cars");
+      }
 
       const payload = {
         ...machine,
+        cad_model_url: cadModelUrl,
         cad_image_url: cadUrl,
         track_image_url: trackUrl,
         updated_at: new Date().toISOString()
       };
 
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_machine_extended", JSON.stringify({
+            cad_model_url: cadModelUrl,
+          }));
+        } catch {}
+      }
+
       const { data: existing } = await supabase.from("featured_machine").select("id").limit(1).maybeSingle();
       let res;
       if (existing) {
         res = await supabase.from("featured_machine").update(payload).eq("id", existing.id);
+        if (res.error && res.error.message?.includes("column")) {
+          const fallback = { ...payload };
+          delete (fallback as any).cad_model_url;
+          res = await supabase.from("featured_machine").update(fallback).eq("id", existing.id);
+        }
       } else {
         res = await supabase.from("featured_machine").insert([payload]);
+        if (res.error && res.error.message?.includes("column")) {
+          const fallback = { ...payload };
+          delete (fallback as any).cad_model_url;
+          res = await supabase.from("featured_machine").insert([fallback]);
+        }
       }
       if (res.error) throw res.error;
 
       setMachine(payload);
       setCadFile(null);
       setTrackFile(null);
+      setCadModelFile(null);
       showToast("The Car spotlight specs and photos updated successfully!");
     } catch (err: any) {
       showError(err.message || "Failed to save car details.");
@@ -341,188 +500,271 @@ export default function AdminDashboard() {
     }
   };
 
-  // 3. Media Items: Add
-  const handleAddMedia = async (e: React.FormEvent) => {
+  // 3. Media Items: Open Modals
+  const handleOpenAddMedia = () => {
+    setEditingMedia(null);
+    setMediaTitle("");
+    setMediaType("image");
+    setMediaYear(new Date().getFullYear().toString());
+    setMediaFeatured(true);
+    setMediaFile(null);
+    setMediaDirectUrl("");
+    setMediaSourceType("upload");
+    setShowMediaModal(true);
+  };
+
+  const handleOpenEditMedia = (item: MediaItem) => {
+    setEditingMedia(item);
+    setMediaTitle(item.title);
+    setMediaType(item.media_type);
+    setMediaYear(item.year);
+    setMediaFeatured(item.featured_on_home);
+    setMediaFile(null);
+    setMediaDirectUrl(item.media_url);
+    setMediaSourceType(item.media_url.startsWith("http") ? "url" : "upload");
+    setShowMediaModal(true);
+  };
+
+  // 3. Media Items: Add or Update Submit
+  const handleSaveMediaSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!mediaFile) return showError("Please select an image or video file.");
     setUploading(true);
     try {
-      const mediaUrl = await uploadToStorage(mediaFile, "reel-media");
-      const newItem = {
-        title: mediaTitle,
-        media_type: mediaType,
-        media_url: mediaUrl,
-        year: mediaYear,
-        featured_on_home: mediaFeatured,
-        order_index: mediaList.length + 1
-      };
+      let finalUrl = editingMedia?.media_url || "";
+      if (mediaSourceType === "upload" && mediaFile) {
+        finalUrl = await uploadToStorage(mediaFile, "reel-media");
+      } else if (mediaSourceType === "url") {
+        if (!mediaDirectUrl.trim()) return showError("Please provide a valid photo/video URL.");
+        finalUrl = mediaDirectUrl.trim();
+      }
 
-      const { data, error } = await supabase.from("media_items").insert([newItem]).select().single();
-      if (error) throw error;
+      if (!finalUrl && !editingMedia) {
+        return showError("Please select a file or enter a media URL.");
+      }
 
-      setMediaList([...mediaList, data]);
-      setMediaTitle("");
-      setMediaFile(null);
-      showToast("Media item added successfully!");
+      if (editingMedia) {
+        const updatedItem: MediaItem = {
+          ...editingMedia,
+          title: mediaTitle,
+          year: mediaYear,
+          media_type: mediaType,
+          media_url: finalUrl || editingMedia.media_url,
+          featured_on_home: mediaFeatured,
+        };
+
+        const { error } = await supabase
+          .from("media_items")
+          .update({
+            title: updatedItem.title,
+            year: updatedItem.year,
+            media_type: updatedItem.media_type,
+            media_url: updatedItem.media_url,
+            featured_on_home: updatedItem.featured_on_home,
+          })
+          .eq("id", editingMedia.id);
+
+        if (error) throw error;
+        setMediaList(mediaList.map((m) => (m.id === editingMedia.id ? updatedItem : m)));
+        setShowMediaModal(false);
+        setEditingMedia(null);
+        showToast("Media item updated successfully!");
+      } else {
+        const newItem = {
+          title: mediaTitle,
+          media_type: mediaType,
+          media_url: finalUrl,
+          year: mediaYear,
+          featured_on_home: mediaFeatured,
+          order_index: mediaList.length + 1,
+        };
+
+        const { data, error } = await supabase.from("media_items").insert([newItem]).select().single();
+        if (error) throw error;
+
+        setMediaList([...mediaList, data]);
+        setShowMediaModal(false);
+        setMediaTitle("");
+        setMediaFile(null);
+        setMediaDirectUrl("");
+        showToast("Media item added successfully!");
+      }
     } catch (err: any) {
-      showError(err.message || "Failed to add media item.");
+      showError(err.message || "Failed to save media item.");
     } finally {
       setUploading(false);
     }
   };
 
-  // 3. Media Items: Edit
-  const handleUpdateMedia = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingMedia) return;
-    setUploading(true);
-    try {
-      const { error } = await supabase
-        .from("media_items")
-        .update({
-          title: editingMedia.title,
-          year: editingMedia.year,
-          featured_on_home: editingMedia.featured_on_home
-        })
-        .eq("id", editingMedia.id);
-
-      if (error) throw error;
-      setMediaList(mediaList.map((m) => (m.id === editingMedia.id ? editingMedia : m)));
-      setEditingMedia(null);
-      showToast("Media item updated successfully!");
-    } catch (err: any) {
-      showError(err.message || "Failed to update media item.");
-    } finally {
-      setUploading(false);
-    }
+  // 3. Media Items: Delete Confirmation
+  const handleDeleteMedia = (item: MediaItem) => {
+    setDeleteConfirmMedia(item);
   };
 
-  // 3. Media Items: Delete
-  const handleDeleteMedia = async (item: MediaItem) => {
-    if (!confirm(`Are you sure you want to delete "${item.title}"?`)) return;
+  const handleConfirmDeleteMedia = async () => {
+    if (!deleteConfirmMedia) return;
     try {
-      const { error } = await supabase.from("media_items").delete().eq("id", item.id);
+      const { error } = await supabase.from("media_items").delete().eq("id", deleteConfirmMedia.id);
       if (error) throw error;
-      setMediaList(mediaList.filter((m) => m.id !== item.id));
+      setMediaList(mediaList.filter((m) => m.id !== deleteConfirmMedia.id));
       showToast("Media item deleted.");
     } catch (err: any) {
       showError(err.message || "Failed to delete item.");
-    }
-  };
-
-  // 4. Alumni: Add
-  const handleAddAlumni = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!alumniFile) return showError("Please select an alumnus photo.");
-    setUploading(true);
-    try {
-      const imgUrl = await uploadToStorage(alumniFile, "alumni-images");
-      const newAlumnusPayload: any = {
-        name: alumniName,
-        batch: alumniBatch,
-        former_role: alumniFormerRole,
-        current_company: alumniCompany,
-        role_name: alumniCurrentRole,
-        image_url: imgUrl,
-        linkedin_url: alumniLinkedin,
-        mentorship_domain: alumniMentorshipDomain,
-        bio: alumniBio,
-        order_index: alumniList.length + 1
-      };
-
-      let { data, error } = await supabase.from("alumni").insert([newAlumnusPayload]).select().single();
-      if (error && error.message?.includes("column \"role_name\" does not exist")) {
-        const fallback = { ...newAlumnusPayload };
-        delete fallback.role_name;
-        fallback.current_role = alumniCurrentRole;
-        const res = await supabase.from("alumni").insert([fallback]).select().single();
-        data = res.data;
-        error = res.error;
-      }
-      if (error) throw error;
-
-      const savedItem: AlumniRecord = {
-        ...data,
-        role_name: data.role_name || data.current_role || alumniCurrentRole,
-        current_role: data.role_name || data.current_role || alumniCurrentRole,
-      };
-
-      setAlumniList([...alumniList, savedItem]);
-      setAlumniName("");
-      setAlumniFormerRole("");
-      setAlumniCompany("");
-      setAlumniCurrentRole("");
-      setAlumniMentorshipDomain("");
-      setAlumniBio("");
-      setAlumniFile(null);
-      showToast("Alumni profile added successfully!");
-    } catch (err: any) {
-      showError(err.message || "Failed to add alumni.");
     } finally {
-      setUploading(false);
+      setDeleteConfirmMedia(null);
     }
   };
 
-  // 4. Alumni: Edit
-  const handleUpdateAlumni = async (e: React.FormEvent) => {
+  // 4. Alumni: Open Modals
+  const handleOpenAddAlumni = () => {
+    setEditingAlumni(null);
+    setAlumniName("");
+    setAlumniBatch("Batch 2024");
+    setAlumniFormerRole("");
+    setAlumniCompany("");
+    setAlumniCurrentRole("");
+    setAlumniLinkedin("https://www.linkedin.com/company/veerracerss-electric/");
+    setAlumniMentorshipDomain("");
+    setAlumniBio("");
+    setAlumniFile(null);
+    setAlumniDirectUrl("");
+    setAlumniPhotoSource("upload");
+    setShowAlumniModal(true);
+  };
+
+  const handleOpenEditAlumni = (item: AlumniRecord) => {
+    setEditingAlumni(item);
+    setAlumniName(item.name);
+    setAlumniBatch(item.batch);
+    setAlumniFormerRole(item.former_role);
+    setAlumniCompany(item.current_company);
+    setAlumniCurrentRole(item.role_name || item.current_role || "");
+    setAlumniLinkedin(item.linkedin_url);
+    setAlumniMentorshipDomain(item.mentorship_domain);
+    setAlumniBio(item.bio || "");
+    setAlumniFile(null);
+    setAlumniDirectUrl(item.image_url);
+    setAlumniPhotoSource(item.image_url.startsWith("http") ? "url" : "upload");
+    setShowAlumniModal(true);
+  };
+
+  // 4. Alumni: Add or Update Submit
+  const handleSaveAlumniSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingAlumni) return;
     setUploading(true);
     try {
-      const roleVal = editingAlumni.role_name || editingAlumni.current_role || "";
-      const updatePayload: any = {
-        name: editingAlumni.name,
-        batch: editingAlumni.batch,
-        former_role: editingAlumni.former_role,
-        current_company: editingAlumni.current_company,
-        role_name: roleVal,
-        linkedin_url: editingAlumni.linkedin_url,
-        mentorship_domain: editingAlumni.mentorship_domain,
-        bio: editingAlumni.bio
-      };
+      let imgUrl = editingAlumni?.image_url || "/alumni/default-alumni.jpg";
+      if (alumniPhotoSource === "upload" && alumniFile) {
+        imgUrl = await uploadToStorage(alumniFile, "alumni-images");
+      } else if (alumniPhotoSource === "url" && alumniDirectUrl.trim()) {
+        imgUrl = alumniDirectUrl.trim();
+      }
 
-      let { error } = await supabase
-        .from("alumni")
-        .update(updatePayload)
-        .eq("id", editingAlumni.id);
+      const roleVal = alumniCurrentRole;
 
-      if (error && error.message?.includes("column \"role_name\" does not exist")) {
-        delete updatePayload.role_name;
-        updatePayload.current_role = roleVal;
-        const res = await supabase
+      if (editingAlumni) {
+        const updatePayload: any = {
+          name: alumniName,
+          batch: alumniBatch,
+          former_role: alumniFormerRole,
+          current_company: alumniCompany,
+          role_name: roleVal,
+          image_url: imgUrl,
+          linkedin_url: alumniLinkedin,
+          mentorship_domain: alumniMentorshipDomain,
+          bio: alumniBio,
+        };
+
+        let { error } = await supabase
           .from("alumni")
           .update(updatePayload)
           .eq("id", editingAlumni.id);
-        error = res.error;
-      }
 
-      if (error) throw error;
-      setAlumniList(
-        alumniList.map((a) =>
-          a.id === editingAlumni.id
-            ? { ...editingAlumni, role_name: roleVal, current_role: roleVal }
-            : a
-        )
-      );
-      setEditingAlumni(null);
-      showToast("Alumni profile updated successfully!");
+        if (error && error.message?.includes("column \"role_name\" does not exist")) {
+          delete updatePayload.role_name;
+          updatePayload.current_role = roleVal;
+          const res = await supabase.from("alumni").update(updatePayload).eq("id", editingAlumni.id);
+          error = res.error;
+        }
+
+        if (error) throw error;
+
+        const updatedItem: AlumniRecord = {
+          ...editingAlumni,
+          ...updatePayload,
+          role_name: roleVal,
+          current_role: roleVal,
+        };
+
+        setAlumniList(alumniList.map((a) => (a.id === editingAlumni.id ? updatedItem : a)));
+        setShowAlumniModal(false);
+        setEditingAlumni(null);
+        showToast("Alumni profile updated successfully!");
+      } else {
+        const newAlumnusPayload: any = {
+          name: alumniName,
+          batch: alumniBatch,
+          former_role: alumniFormerRole,
+          current_company: alumniCompany,
+          role_name: alumniCurrentRole,
+          image_url: imgUrl,
+          linkedin_url: alumniLinkedin,
+          mentorship_domain: alumniMentorshipDomain,
+          bio: alumniBio,
+          order_index: alumniList.length + 1,
+        };
+
+        let { data, error } = await supabase.from("alumni").insert([newAlumnusPayload]).select().single();
+        if (error && error.message?.includes("column \"role_name\" does not exist")) {
+          const fallback = { ...newAlumnusPayload };
+          delete fallback.role_name;
+          fallback.current_role = alumniCurrentRole;
+          const res = await supabase.from("alumni").insert([fallback]).select().single();
+          data = res.data;
+          error = res.error;
+        }
+        if (error) throw error;
+
+        const savedItem: AlumniRecord = {
+          ...data,
+          role_name: data.role_name || data.current_role || alumniCurrentRole,
+          current_role: data.role_name || data.current_role || alumniCurrentRole,
+        };
+
+        setAlumniList([...alumniList, savedItem]);
+        setShowAlumniModal(false);
+        setAlumniName("");
+        setAlumniFormerRole("");
+        setAlumniCompany("");
+        setAlumniCurrentRole("");
+        setAlumniMentorshipDomain("");
+        setAlumniBio("");
+        setAlumniFile(null);
+        setAlumniDirectUrl("");
+        showToast("Alumni profile added successfully!");
+      }
     } catch (err: any) {
-      showError(err.message || "Failed to update alumni.");
+      showError(err.message || "Failed to save alumni profile.");
     } finally {
       setUploading(false);
     }
   };
 
-  // 4. Alumni: Delete
-  const handleDeleteAlumni = async (alumnus: AlumniRecord) => {
-    if (!confirm(`Are you sure you want to delete alumni profile: "${alumnus.name}"?`)) return;
+  // 4. Alumni: Delete Confirmation
+  const handleDeleteAlumni = (alumnus: AlumniRecord) => {
+    setDeleteConfirmAlumni(alumnus);
+  };
+
+  const handleConfirmDeleteAlumni = async () => {
+    if (!deleteConfirmAlumni) return;
     try {
-      const { error } = await supabase.from("alumni").delete().eq("id", alumnus.id);
+      const { error } = await supabase.from("alumni").delete().eq("id", deleteConfirmAlumni.id);
       if (error) throw error;
-      setAlumniList(alumniList.filter((a) => a.id !== alumnus.id));
+      setAlumniList(alumniList.filter((a) => a.id !== deleteConfirmAlumni.id));
       showToast("Alumni profile deleted.");
     } catch (err: any) {
       showError(err.message || "Failed to delete alumni.");
+    } finally {
+      setDeleteConfirmAlumni(null);
     }
   };
 
@@ -533,7 +775,7 @@ export default function AdminDashboard() {
     setUploading(true);
     try {
       const imgUrl = await uploadToStorage(memberFile, "member-images", "domain-members");
-      const newMemberPayload = {
+      const newMemberPayload: any = {
         name: memberName,
         role: memberRole,
         department: memberDepartment,
@@ -544,11 +786,18 @@ export default function AdminDashboard() {
         academic_branch: memberBranch,
         blood_group: memberBloodGroup,
         phone: memberPhone,
+        phone_number: memberPhone,
         pr_domain_skills: memberPrSkills,
         joining_year: new Date().getFullYear().toString(),
       };
 
       let { error } = await supabase.from("members").insert([newMemberPayload]);
+      if (error && (error.message?.includes("phone_number") || error.code === "PGRST204")) {
+        // Fallback for live database schema which defines column 'phone'
+        delete newMemberPayload.phone_number;
+        const retryRes = await supabase.from("members").insert([newMemberPayload]);
+        error = retryRes.error;
+      }
       if (error && error.message?.includes("column")) {
         // Fallback without extended fields if table not altered yet
         const simplePayload = {
@@ -579,16 +828,22 @@ export default function AdminDashboard() {
     }
   };
 
-  // 5. Member: Delete
-  const deleteMember = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to remove ${name} from the active roster?`)) return;
+  // 5. Member: Delete (Soft check modal)
+  const handleDeleteMember = (member: MemberRecord) => {
+    setDeleteConfirmMember(member);
+  };
+
+  const handleConfirmDeleteMember = async () => {
+    if (!deleteConfirmMember) return;
     try {
-      const { error } = await supabase.from("members").delete().eq("id", id);
+      const { error } = await supabase.from("members").delete().eq("id", deleteConfirmMember.id);
       if (error) throw error;
-      fetchAllData();
-      showToast("Member removed.");
+      setMembers(members.filter((m) => m.id !== deleteConfirmMember.id));
+      showToast(`Member "${deleteConfirmMember.name}" removed.`);
     } catch (err: any) {
       showError(err.message || "Failed to delete member.");
+    } finally {
+      setDeleteConfirmMember(null);
     }
   };
 
@@ -644,79 +899,128 @@ export default function AdminDashboard() {
           ((m.year || "").includes("Final") && !(m.year || "").includes("Pre-Final"))
       );
 
-      // 1. Migrate each 4th year member into alumni table
-      for (const m of fourthYears) {
-        const alumniPayload = {
-          name: m.name,
-          batch: `Batch ${gradYear}`,
-          former_role: m.role || "Club Engineer",
-          current_company: "VSSUT Burla / Graduate Placement",
-          role_name: "Graduate Engineer",
-          image_url: m.image_url || "/members/default-avatar.png",
-          linkedin_url: m.linkedin || "https://www.linkedin.com/company/veerracerss-electric/",
-          mentorship_domain: m.department || "Vehicle Engineering",
-          bio: `Graduated former ${m.role} of VeerRacerss Electric (${m.department}). Mentoring new recruits for Formula Student competitions.`,
-          order_index: alumniList.length + 1,
-        };
-
-        let insertSuccess = false;
-        const { error: alErr } = await supabase.from("alumni").insert([alumniPayload]);
-        if (!alErr) {
-          insertSuccess = true;
-        } else if (alErr.message?.includes("role_name") || alErr.message?.includes("current_role")) {
-          const fallback = { ...alumniPayload };
-          delete (fallback as any).role_name;
-          (fallback as any).current_role = "Graduate Engineer";
-          const { error: fbErr } = await supabase.from("alumni").insert([fallback]);
-          if (!fbErr) insertSuccess = true;
-          else console.error("Alumni fallback insert failed:", fbErr);
-        } else {
-          console.error("Alumni insert failed for member:", m.name, alErr);
+      // Duplicate prevention: track existing alumni names
+      const existingAlumniNames = new Set(alumniList.map((a) => a.name.trim().toLowerCase()));
+      try {
+        const { data: dbAlumni } = await supabase.from("alumni").select("name");
+        if (dbAlumni) {
+          dbAlumni.forEach((a: any) => {
+            if (a.name) existingAlumniNames.add(a.name.trim().toLowerCase());
+          });
         }
+      } catch {}
 
-        // Only delete from active members if alumni record was created successfully
-        if (insertSuccess) {
-          await supabase.from("members").delete().eq("id", m.id);
-        } else {
-          showError(`Could not transfer ${m.name} to Alumni. Record retained in members table.`);
+      // 1. Prepare batch alumni payloads for non-duplicate 4th years
+      const toMigrate = fourthYears.filter((m) => !existingAlumniNames.has(m.name.trim().toLowerCase()));
+      const alumniPayloads = toMigrate.map((m, idx) => ({
+        name: m.name,
+        batch: `Batch ${gradYear}`,
+        former_role: m.role || "Club Engineer",
+        current_company: "VSSUT Burla / Graduate Placement",
+        role_name: "Graduate Engineer",
+        image_url: m.image_url || "/members/default-avatar.png",
+        linkedin_url: m.linkedin || "https://www.linkedin.com/company/veerracerss-electric/",
+        mentorship_domain: m.department || "Vehicle Engineering",
+        bio: `Graduated former ${m.role} of VeerRacerss Electric (${m.department}). Mentoring new recruits for Formula Student competitions.`,
+        order_index: alumniList.length + idx + 1,
+      }));
+
+      let insertSuccess = true;
+      if (alumniPayloads.length > 0) {
+        let { error: alErr } = await supabase.from("alumni").insert(alumniPayloads);
+        if (alErr && (alErr.message?.includes("role_name") || alErr.message?.includes("current_role"))) {
+          const fallbackPayloads = alumniPayloads.map((p) => {
+            const fb: any = { ...p };
+            delete fb.role_name;
+            fb.current_role = "Graduate Engineer";
+            return fb;
+          });
+          const { error: fbErr } = await supabase.from("alumni").insert(fallbackPayloads);
+          if (fbErr) {
+            insertSuccess = false;
+            console.error("Batch alumni fallback insert failed:", fbErr);
+          }
+        } else if (alErr) {
+          insertSuccess = false;
+          console.error("Batch alumni insert failed:", alErr);
         }
       }
 
-      // 2. Increment active student years (skipping 4th years)
+      // Batch delete graduated 4th years from active members
+      if (insertSuccess && fourthYears.length > 0) {
+        const fourthYearIds = fourthYears.map((m) => m.id);
+        const { error: delErr } = await supabase.from("members").delete().in("id", fourthYearIds);
+        if (delErr) {
+          console.error("Batch delete graduated members failed:", delErr);
+        }
+      } else if (!insertSuccess) {
+        showError("Could not batch transfer some members to Alumni. Graduated records retained in members table.");
+      }
+
+      // 2. Batch increment active lower year students (in parallel cohorts)
+      const thirdYearIds: string[] = [];
+      const secondYearIds: string[] = [];
+      const firstYearIds: string[] = [];
+
       for (const m of members) {
         if (fourthYears.some((f) => f.id === m.id)) continue;
-
         const currentY = m.year_of_study || m.year || "";
-        let newYear = currentY;
-        let newLegacyYear = "";
-
         if (currentY.includes("3rd") || currentY.includes("Pre-Final")) {
-          newYear = "4th Year";
-          newLegacyYear = "Final Year (4th Year)";
+          thirdYearIds.push(m.id);
         } else if (currentY.includes("2nd")) {
-          newYear = "3rd Year";
-          newLegacyYear = "3rd Year (Pre-Final)";
+          secondYearIds.push(m.id);
         } else if (currentY.includes("1st")) {
-          newYear = "2nd Year";
-          newLegacyYear = "2nd Year";
+          firstYearIds.push(m.id);
         }
+      }
 
-        if (newYear && newYear !== currentY) {
-          try {
-            await supabase
+      const updateBatchPromises: Promise<any>[] = [];
+      if (thirdYearIds.length > 0) {
+        updateBatchPromises.push(
+          Promise.resolve(
+            supabase
               .from("members")
               .update({
-                year_of_study: newYear,
-                year: newLegacyYear || newYear,
+                year_of_study: "4th Year",
+                year: "Final Year (4th Year)",
               })
-              .eq("id", m.id);
-          } catch (upErr) {
-            console.warn(`Could not advance year for ${m.name}:`, upErr);
-          }
-        }
+              .in("id", thirdYearIds)
+          )
+        );
+      }
+      if (secondYearIds.length > 0) {
+        updateBatchPromises.push(
+          Promise.resolve(
+            supabase
+              .from("members")
+              .update({
+                year_of_study: "3rd Year",
+                year: "3rd Year (Pre-Final)",
+              })
+              .in("id", secondYearIds)
+          )
+        );
+      }
+      if (firstYearIds.length > 0) {
+        updateBatchPromises.push(
+          Promise.resolve(
+            supabase
+              .from("members")
+              .update({
+                year_of_study: "2nd Year",
+                year: "2nd Year",
+              })
+              .in("id", firstYearIds)
+          )
+        );
+      }
+
+      if (updateBatchPromises.length > 0) {
+        await Promise.all(updateBatchPromises);
       }
 
       await fetchAllData();
+      setShowProgressionModal(false);
       showToast(
         `Annual progression complete! ${fourthYears.length} members graduated to Alumni, active squads promoted.`
       );
@@ -748,63 +1052,114 @@ export default function AdminDashboard() {
 
   // Master: Export All Databases to One Multi-Sheet Excel Workbook
   const handleExportMasterBackup = () => {
-    exportMultiSheetExcel(
-      [
-        {
-          sheetName: "Active Squad",
-          data: members.map((m) => ({
-            Name: m.name,
-            Role: m.role,
-            Department: m.department,
-            "Year of Study": m.year_of_study || "3rd Year",
-            Branch: m.academic_branch || "",
-            "Blood Group": m.blood_group || "",
-            Phone: m.phone || "",
-            "PR Specialization": m.pr_domain_skills || "None",
+    const sheets: Array<{ sheetName: string; data: Record<string, any>[] }> = [
+      {
+        sheetName: "Active Squad",
+        data: members.map((m) => ({
+          Name: m.name,
+          Role: m.role,
+          Department: m.department,
+          "Year of Study": m.year_of_study || "3rd Year",
+          Branch: m.academic_branch || "",
+          "Blood Group": m.blood_group || "",
+          Phone: m.phone || "",
+          "PR Specialization": m.pr_domain_skills || "None",
+        })),
+      },
+      {
+        sheetName: "Alumni Directory",
+        data: alumniList.map((a) => ({
+          Name: a.name,
+          Batch: a.batch,
+          "Former Role": a.former_role,
+          "Current Company": a.current_company,
+          "Role Name": a.role_name || a.current_role,
+          "Mentorship Domain": a.mentorship_domain,
+          LinkedIn: a.linkedin_url,
+        })),
+      },
+      {
+        sheetName: "Expenses & Bills",
+        data: expenses.map((e) => ({
+          Item: e.title,
+          Category: e.category,
+          "Amount (INR)": e.amount,
+          Vendor: e.vendor || "",
+          Date: e.expense_date,
+          "Paid By": e.paid_by || "",
+          Notes: e.notes || "",
+        })),
+      },
+      {
+        sheetName: "Recruitment Applications",
+        data: recruits.map((r) => ({
+          Name: r.full_name,
+          Email: r.email,
+          Phone: r.phone,
+          "Roll No": r.roll_no,
+          Branch: r.branch,
+          "Year of Study": r.year_of_study,
+          "Primary Domain": r.primary_domain,
+          "Secondary Domain": r.secondary_domain || "",
+          Status: r.status,
+          Score: r.interview_score || "",
+        })),
+      },
+      {
+        sheetName: "CMS & Telemetry Settings",
+        data: [
+          { Setting: "Hero Headline", Value: siteSettings.hero_title || DEFAULT_SITE_SETTINGS.hero_title },
+          { Setting: "Hero Subtitle Narrative", Value: siteSettings.hero_subtitle || DEFAULT_SITE_SETTINGS.hero_subtitle },
+          { Setting: "Top Announcement Badge", Value: siteSettings.announcement_badge_text || DEFAULT_SITE_SETTINGS.announcement_badge_text },
+          { Setting: "Announcement Enabled", Value: siteSettings.announcement_badge_enabled ? "Yes" : "No" },
+          { Setting: "Recruitment CTA Label", Value: siteSettings.recruitment_cta_label || DEFAULT_SITE_SETTINGS.recruitment_cta_label },
+          { Setting: "Recruitment CTA URL", Value: siteSettings.recruitment_cta_url || DEFAULT_SITE_SETTINGS.recruitment_cta_url },
+          { Setting: "Recruitment Open Status", Value: siteSettings.recruitment_open !== false ? "Open" : "Closed" },
+          { Setting: "Recruitment Form Title", Value: siteSettings.recruitment_form_title || DEFAULT_SITE_SETTINGS.recruitment_form_title },
+          { Setting: "Recruitment Deadline", Value: siteSettings.recruitment_form_deadline || DEFAULT_SITE_SETTINGS.recruitment_form_deadline },
+          { Setting: "WhatsApp Community Link", Value: siteSettings.whatsapp_recruit_link || DEFAULT_SITE_SETTINGS.whatsapp_recruit_link },
+          { Setting: "Official Contact Email", Value: siteSettings.contact_email || DEFAULT_SITE_SETTINGS.contact_email },
+          { Setting: "About Section Headline", Value: siteSettings.about_title || DEFAULT_SITE_SETTINGS.about_title },
+          { Setting: "About Section Subtitle", Value: siteSettings.about_subtitle || DEFAULT_SITE_SETTINGS.about_subtitle },
+          { Setting: "About Section Image URL", Value: siteSettings.about_image_url || DEFAULT_SITE_SETTINGS.about_image_url },
+          { Setting: "About Section Description", Value: siteSettings.about_description || DEFAULT_SITE_SETTINGS.about_description },
+          ...(siteSettings.telemetry_stats || DEFAULT_SITE_SETTINGS.telemetry_stats || []).map((t, idx) => ({
+            Setting: `Telemetry Metric #${idx + 1} (${t.label})`,
+            Value: `${t.stat} ${t.unit} - ${t.detail}`,
           })),
-        },
-        {
-          sheetName: "Alumni Directory",
-          data: alumniList.map((a) => ({
-            Name: a.name,
-            Batch: a.batch,
-            "Former Role": a.former_role,
-            "Current Company": a.current_company,
-            "Role Name": a.role_name || a.current_role,
-            "Mentorship Domain": a.mentorship_domain,
-            LinkedIn: a.linkedin_url,
-          })),
-        },
-        {
-          sheetName: "Expenses & Bills",
-          data: expenses.map((e) => ({
-            Item: e.title,
-            Category: e.category,
-            "Amount (INR)": e.amount,
-            Vendor: e.vendor || "",
-            Date: e.expense_date,
-            "Paid By": e.paid_by || "",
-            Notes: e.notes || "",
-          })),
-        },
-        {
-          sheetName: "Recruitment Applications",
-          data: recruits.map((r) => ({
-            Name: r.full_name,
-            Email: r.email,
-            Phone: r.phone,
-            "Roll No": r.roll_no,
-            Branch: r.branch,
-            "Year of Study": r.year_of_study,
-            "Primary Domain": r.primary_domain,
-            "Secondary Domain": r.secondary_domain || "",
-            Status: r.status,
-            Score: r.interview_score || "",
-          })),
-        },
-      ],
-      "veerracerss-master-club-backup"
-    );
+          { Setting: "Backup Generated At", Value: new Date().toISOString() },
+        ],
+      },
+    ];
+
+    // Include all custom databases as individual worksheets
+    const usedSheetNames = new Set(sheets.map((s) => s.sheetName.toLowerCase()));
+    customDbs.forEach((db, i) => {
+      const dbRows = (db.records || []).map((row) => {
+        const cleanRow: Record<string, any> = {};
+        (db.schema_definition || []).forEach((col) => {
+          cleanRow[col.label] = row[col.key] !== undefined && row[col.key] !== null ? row[col.key] : "";
+        });
+        return cleanRow;
+      });
+
+      let safeSheetName = (db.db_name || `Custom DB ${i + 1}`)
+        .replace(/[\\/?*:[\]]/g, "")
+        .trim()
+        .substring(0, 31) || `Custom DB ${i + 1}`;
+
+      if (usedSheetNames.has(safeSheetName.toLowerCase())) {
+        safeSheetName = safeSheetName.substring(0, 27) + ` (${i + 1})`;
+      }
+      usedSheetNames.add(safeSheetName.toLowerCase());
+
+      sheets.push({
+        sheetName: safeSheetName,
+        data: dbRows,
+      });
+    });
+
+    exportMultiSheetExcel(sheets, "veerracerss-master-club-backup");
   };
 
   // 6. Expenses Handlers
@@ -874,11 +1229,43 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleUpdateRecruitStatus = async (id: string, newStatus: "Pending" | "Shortlisted" | "Accepted" | "Declined") => {
+  const handleUpdateRecruitStatus = async (
+    id: string,
+    newStatus: "Pending" | "Shortlisted" | "Accepted" | "Declined",
+    onboardingEmailSent?: boolean
+  ) => {
     try {
-      const { error } = await supabase.from("recruitment_applications").update({ status: newStatus }).eq("id", id);
-      if (error) throw error;
-      setRecruits(recruits.map((r) => (r.id === id ? { ...r, status: newStatus } : r)));
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (isUuid) {
+        const { data: existing } = await supabase
+          .from("recruitment_applications")
+          .select("id")
+          .eq("id", id)
+          .maybeSingle();
+
+        if (existing) {
+          const updatePayload: Record<string, any> = { status: newStatus };
+          if (onboardingEmailSent !== undefined) {
+            updatePayload.onboarding_email_sent = onboardingEmailSent;
+          }
+          const { error } = await supabase.from("recruitment_applications").update(updatePayload).eq("id", id);
+          if (error && error.code !== "22P02") {
+            throw error;
+          }
+        }
+      }
+
+      setRecruits((prev) =>
+        prev.map((r) =>
+          r.id === id
+            ? {
+                ...r,
+                status: newStatus,
+                ...(onboardingEmailSent !== undefined ? { onboarding_email_sent: onboardingEmailSent } : {}),
+              }
+            : r
+        )
+      );
       showToast(`Applicant marked as ${newStatus}.`);
     } catch (err: any) {
       showError(err.message || "Failed to update candidate status.");
@@ -887,16 +1274,48 @@ export default function AdminDashboard() {
 
   const handleUpdateRecruitScore = async (id: string, score: string) => {
     try {
-      await supabase.from("recruitment_applications").update({ interview_score: score }).eq("id", id);
-      setRecruits(recruits.map((r) => (r.id === id ? { ...r, interview_score: score } : r)));
-    } catch {}
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (isUuid) {
+        const { data: existing } = await supabase
+          .from("recruitment_applications")
+          .select("id")
+          .eq("id", id)
+          .maybeSingle();
+
+        if (existing) {
+          const { error } = await supabase.from("recruitment_applications").update({ interview_score: score }).eq("id", id);
+          if (error && error.code !== "22P02") {
+            throw error;
+          }
+        }
+      }
+      setRecruits((prev) => prev.map((r) => (r.id === id ? { ...r, interview_score: score } : r)));
+      showToast("Candidate evaluation score updated.");
+    } catch (err: any) {
+      showError(err.message || "Failed to update review score.");
+      throw err;
+    }
   };
 
   const handleDeleteApplication = async (id: string, name: string) => {
     if (!confirm(`Delete application for "${name}"?`)) return;
     try {
-      await supabase.from("recruitment_applications").delete().eq("id", id);
-      setRecruits(recruits.filter((r) => r.id !== id));
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (isUuid) {
+        const { data: existing } = await supabase
+          .from("recruitment_applications")
+          .select("id")
+          .eq("id", id)
+          .maybeSingle();
+
+        if (existing) {
+          const { error } = await supabase.from("recruitment_applications").delete().eq("id", id);
+          if (error && error.code !== "22P02") {
+            throw error;
+          }
+        }
+      }
+      setRecruits((prev) => prev.filter((r) => r.id !== id));
       showToast("Application deleted.");
     } catch (err: any) {
       showError(err.message || "Failed to delete application.");
@@ -963,6 +1382,28 @@ export default function AdminDashboard() {
       showToast("Record deleted.");
     } catch (err: any) {
       showError(err.message || "Failed to delete record.");
+    }
+  };
+
+  const handleUpdateCustomDbRecord = async (dbId: string, recordId: string, updatedRecord: Record<string, any>) => {
+    try {
+      const targetDb = customDbs.find((db) => db.id === dbId);
+      if (!targetDb) return;
+      const updatedRecords = (targetDb.records || []).map((r) =>
+        r.id === recordId ? { ...r, ...updatedRecord, id: recordId } : r
+      );
+      const { error } = await supabase
+        .from("custom_databases")
+        .update({ records: updatedRecords, updated_at: new Date().toISOString() })
+        .eq("id", dbId);
+      if (error) throw error;
+
+      setCustomDbs(
+        customDbs.map((db) => (db.id === dbId ? { ...db, records: updatedRecords } : db))
+      );
+      showToast("Record updated successfully!");
+    } catch (err: any) {
+      showError(err.message || "Failed to update record.");
     }
   };
 
@@ -1132,6 +1573,38 @@ export default function AdminDashboard() {
             </div>
 
             <form onSubmit={handleSaveSettings} className="space-y-6">
+              {/* Dynamic Hero Headline & Subtitle (F07 / D-05) */}
+              <div className="bg-black/40 border border-white/10 p-4 sm:p-5 space-y-4">
+                <span className="text-xs font-mono uppercase text-white/70 tracking-wider block font-bold">
+                  Hero Headline & Description
+                </span>
+                <div>
+                  <label className="text-xs uppercase text-white/50 mb-1 block font-mono">Hero Headline / Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={siteSettings.hero_title || ""}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, hero_title: e.target.value })}
+                    placeholder="e.g. VEERRACERSS ELECTRIC"
+                    className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                  />
+                  <span className="text-[10px] text-white/40 block mt-1 font-mono">
+                    Note: The word &quot;ELECTRIC&quot; or line breaks will automatically receive signature red styling.
+                  </span>
+                </div>
+                <div>
+                  <label className="text-xs uppercase text-white/50 mb-1 block font-mono">Hero Subtitle Narrative</label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={siteSettings.hero_subtitle || ""}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, hero_subtitle: e.target.value })}
+                    placeholder="e.g. Odisha’s Premier Formula Student EV Racing Team | VSSUT Burla • Est. 2018..."
+                    className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
+                  />
+                </div>
+              </div>
+
               {/* Dynamic Recruitment CTA Toggle & Fields */}
               <div className="bg-black/40 border border-white/10 p-4 sm:p-5 space-y-4">
                 <div className="flex items-center justify-between">
@@ -1223,6 +1696,178 @@ export default function AdminDashboard() {
                   onChange={(e) => setSiteSettings({ ...siteSettings, contact_email: e.target.value })}
                   className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
                 />
+              </div>
+
+              {/* "Who We Are" Section: Team Photo, Headline & Narrative */}
+              <div className="bg-black/40 border border-white/10 p-4 sm:p-5 space-y-4">
+                <div className="border-b border-white/10 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-racing-red animate-pulse"></span>
+                    <label className="text-sm font-bold uppercase text-white tracking-wider">
+                      Homepage &quot;Who We Are&quot; Story & Photo
+                    </label>
+                  </div>
+                  <p className="text-[11px] text-white/50 mt-1">
+                    Manage the main team introduction photo, subtitle bar, and mission narrative beneath the hero section.
+                  </p>
+                </div>
+
+                {/* Dimension Recommendation Alert */}
+                <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono flex items-start gap-2.5">
+                  <span className="text-amber-400 font-bold shrink-0">ℹ RECOMMENDED DIMENSIONS:</span>
+                  <span>
+                    <strong>800 × 1000 px</strong> (4:5 or 3:4 portrait ratio), max 2MB (WebP or JPG recommended). High-res team photos with the formula car yield the best visual framing.
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs uppercase text-white/50 mb-1 block font-mono">Section Headline / Title</label>
+                    <input
+                      type="text"
+                      value={siteSettings.about_title || "WHO WE ARE"}
+                      onChange={(e) => setSiteSettings({ ...siteSettings, about_title: e.target.value })}
+                      placeholder="e.g. WHO WE ARE"
+                      className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase text-white/50 mb-1 block font-mono">Subtitle / Tagline Bar</label>
+                    <input
+                      type="text"
+                      value={siteSettings.about_subtitle || "THE OFFICIAL STUDENT FORMULA RACING CLUB"}
+                      onChange={(e) => setSiteSettings({ ...siteSettings, about_subtitle: e.target.value })}
+                      placeholder="e.g. THE OFFICIAL STUDENT FORMULA RACING CLUB"
+                      className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs uppercase text-white/50 mb-1 block font-mono">About Narrative Description</label>
+                  <textarea
+                    rows={4}
+                    value={siteSettings.about_description || ""}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, about_description: e.target.value })}
+                    placeholder="Describe the club mission, electric car fabrication, and engineering achievements..."
+                    className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs uppercase text-white/50 mb-2 block font-mono">Team Photo</label>
+                  <div className="flex flex-col sm:flex-row gap-4 items-start">
+                    <div className="relative w-36 aspect-[3/4] bg-black/60 border border-white/20 shrink-0 overflow-hidden flex items-center justify-center">
+                      {siteSettings.about_image_url ? (
+                        <img
+                          src={siteSettings.about_image_url}
+                          alt="Who We Are Preview"
+                          className="w-full h-full object-cover object-bottom"
+                        />
+                      ) : (
+                        <span className="text-[10px] text-white/40 font-mono text-center p-2">No photo assigned</span>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-3 w-full">
+                      <div>
+                        <span className="text-[11px] text-white/60 block mb-1 font-mono">Option A: Upload New Image</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingAboutImg}
+                          onChange={handleAboutImageUpload}
+                          className="text-xs text-white/70 file:mr-3 file:py-1.5 file:px-3 file:border-0 file:text-xs file:font-mono file:bg-white/10 file:text-white hover:file:bg-white/20 cursor-pointer"
+                        />
+                        {uploadingAboutImg && (
+                          <span className="text-xs text-racing-red font-mono block mt-1 animate-pulse">Uploading photo to storage...</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-[11px] text-white/60 block mb-1 font-mono">Option B: Direct Image URL or Relative Path</span>
+                        <input
+                          type="text"
+                          value={siteSettings.about_image_url || ""}
+                          onChange={(e) => setSiteSettings({ ...siteSettings, about_image_url: e.target.value })}
+                          placeholder="e.g. /team/who-we-are.jpg or https://..."
+                          className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Homepage Dynamic Telemetry Ticker (5 Metrics) */}
+              <div className="bg-black/40 border border-white/10 p-4 sm:p-5 space-y-4">
+                <div className="border-b border-white/10 pb-3 flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-bold uppercase text-white tracking-wider block">
+                      Homepage Dynamic Telemetry Ticker (5 Benchmarks)
+                    </label>
+                    <span className="text-[11px] text-white/50">
+                      These 5 cards form the signature telemetry strip beneath the hero section. Update any benchmark in real-time.
+                    </span>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-racing-red border border-racing-red/30 px-2.5 py-1 bg-racing-red/10">
+                    5 Active Cards
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {(siteSettings.telemetry_stats || DEFAULT_SITE_SETTINGS.telemetry_stats || []).map((card, idx) => (
+                    <div key={idx} className="bg-[#111115] border border-white/10 p-3 sm:p-4 relative">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-mono font-bold text-racing-red uppercase tracking-wider">
+                          Metric #{idx + 1}
+                        </span>
+                        <div className="text-[10px] font-mono text-white/40">
+                          Preview: <span className="text-white font-bold">{card.stat} {card.unit}</span> • {card.label}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                        <div>
+                          <label className="text-[10px] uppercase text-white/50 mb-1 block font-mono">Value (e.g. P3, AIR 1, 55+)</label>
+                          <input
+                            type="text"
+                            value={card.stat}
+                            onChange={(e) => handleUpdateTelemetryCard(idx, "stat", e.target.value)}
+                            className="w-full bg-black/60 border border-white/10 px-2.5 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] uppercase text-white/50 mb-1 block font-mono">Unit / Badge (e.g. OVERALL, TROPHY)</label>
+                          <input
+                            type="text"
+                            value={card.unit}
+                            onChange={(e) => handleUpdateTelemetryCard(idx, "unit", e.target.value)}
+                            className="w-full bg-black/60 border border-white/10 px-2.5 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] uppercase text-white/50 mb-1 block font-mono">Headline / Metric Name</label>
+                          <input
+                            type="text"
+                            value={card.label}
+                            onChange={(e) => handleUpdateTelemetryCard(idx, "label", e.target.value)}
+                            className="w-full bg-black/60 border border-white/10 px-2.5 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] uppercase text-white/50 mb-1 block font-mono">Sub-detail / Citation</label>
+                        <input
+                          type="text"
+                          value={card.detail}
+                          onChange={(e) => handleUpdateTelemetryCard(idx, "detail", e.target.value)}
+                          placeholder="e.g. Formula Imperial EV at Buddh International Circuit"
+                          className="w-full bg-black/60 border border-white/10 px-2.5 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <button
@@ -1333,6 +1978,44 @@ export default function AdminDashboard() {
                       className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white"
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* 3D CAD Model GLB Settings (F08 / D-06) */}
+              <div className="bg-black/40 border border-white/10 p-4 sm:p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-xs uppercase text-white/70 font-mono font-bold block">
+                      3D CAD Model GLB URL / Path
+                    </label>
+                    <span className="text-[11px] text-white/50">
+                      Streams the interactive 3D digital twin rendered on the Hero and Fleet viewports.
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-racing-red uppercase font-bold border border-racing-red/30 px-2 py-0.5 bg-racing-red/10">
+                    WebGL 3D Engine
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={machine.cad_model_url || ""}
+                  onChange={(e) => setMachine({ ...machine, cad_model_url: e.target.value })}
+                  placeholder="e.g. /car-raw.glb or https://..."
+                  className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                />
+                <div className="pt-1">
+                  <label className="text-[11px] uppercase text-white/40 mb-1 block font-mono">
+                    Upload New 3D CAD File (.glb)
+                  </label>
+                  <input
+                    type="file"
+                    accept=".glb,.gltf"
+                    onChange={(e) => setCadModelFile(e.target.files?.[0] || null)}
+                    className="text-xs text-white/60 file:mr-2 file:py-1.5 file:px-3 file:border-0 file:bg-white/10 file:text-white file:text-xs file:font-mono file:cursor-pointer"
+                  />
+                  {cadModelFile && (
+                    <span className="text-[11px] text-emerald-400 block mt-1">Ready: {cadModelFile.name}</span>
+                  )}
                 </div>
               </div>
 
@@ -1465,415 +2148,571 @@ export default function AdminDashboard() {
         {/* =========================================================================
             TAB 3: TRACK MOMENTS & GALLERY (ADD / EDIT / REMOVE BUTTONS)
         ========================================================================= */}
+        {/* =========================================================================
+            TAB 3: TRACK MOMENTS & GALLERY (ADD / EDIT / REMOVE MODALS & CONFIRMATIONS)
+        ========================================================================= */}
         {activeTab === "media" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Form Column */}
-            <div className="lg:col-span-1">
-              <div className="bg-[#0b0c10] border border-white/10 p-6 sticky top-24">
-                <h2 className="text-base font-bold uppercase mb-4 flex items-center gap-2 font-display text-white">
-                  <Plus className="w-4 h-4 text-racing-red" />
-                  <span>{editingMedia ? "Edit Media Item" : "Add Track Moment"}</span>
-                </h2>
+          <div className="bg-[#0b0c10] border border-white/10 p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-white/10">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold uppercase font-display text-white flex items-center gap-2">
+                  <Film className="w-4 h-4 text-racing-red" />
+                  <span>Track Footage & Gallery ({mediaList.length})</span>
+                </h3>
+                <p className="text-white/50 text-xs mt-1 font-light">
+                  Homepage Reel & Yearwise Archive • Photos, dynamic loop clips, and track milestones.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleOpenAddMedia}
+                className="shrink-0 bg-racing-red hover:bg-white hover:text-black text-white px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-[0_0_15px_rgba(210,39,48,0.35)]"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Track Moment</span>
+              </button>
+            </div>
 
-                <form onSubmit={editingMedia ? handleUpdateMedia : handleAddMedia} className="space-y-4">
-                  <div>
-                    <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Title / Caption</label>
-                    <input
-                      type="text"
-                      required
-                      value={editingMedia ? editingMedia.title : mediaTitle}
-                      onChange={(e) =>
-                        editingMedia
-                          ? setEditingMedia({ ...editingMedia, title: e.target.value })
-                          : setMediaTitle(e.target.value)
-                      }
-                      placeholder="e.g. AETHER Dyno Run"
-                      className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                    />
-                  </div>
-
-                  {!editingMedia && (
-                    <div>
-                      <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Media Type</label>
-                      <select
-                        value={mediaType}
-                        onChange={(e) => setMediaType(e.target.value as any)}
-                        className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                      >
-                        <option value="image">Photo (.jpg, .png, .webp)</option>
-                        <option value="video">Short Video Loop (.mp4, .webm)</option>
-                      </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {mediaList.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-black/50 border border-white/10 overflow-hidden flex flex-col justify-between group"
+                >
+                  <div className="relative aspect-[16/10] bg-black">
+                    {item.media_type === "video" ? (
+                      <video src={item.media_url} muted className="w-full h-full object-cover" />
+                    ) : (
+                      <img src={item.media_url} alt={item.title} className="w-full h-full object-cover" />
+                    )}
+                    <div className="absolute top-2 left-2 bg-black/80 px-2 py-0.5 text-[9px] font-mono text-white">
+                      {item.year}
                     </div>
-                  )}
+                    {item.featured_on_home && (
+                      <div className="absolute top-2 right-2 bg-racing-red px-2 py-0.5 text-[9px] font-mono text-white font-bold">
+                        ON HOME REEL
+                      </div>
+                    )}
+                  </div>
 
+                  <div className="p-3 bg-[#0c0d11] flex items-center justify-between gap-2 border-t border-white/5">
+                    <div className="truncate">
+                      <p className="text-xs font-sans font-bold text-white truncate">{item.title}</p>
+                      <span className="text-[10px] font-mono text-white/40 uppercase">{item.media_type}</span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => handleOpenEditMedia(item)}
+                        className="p-1.5 bg-white/5 hover:bg-white/20 text-white/70 hover:text-white transition-colors"
+                        title="Edit Item"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMedia(item)}
+                        className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors"
+                        title="Delete Item"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            TAB 4: ALUMNI NETWORK (ADD / EDIT / REMOVE MODALS & CONFIRMATIONS)
+        ========================================================================= */}
+        {activeTab === "alumni" && (
+          <div className="bg-[#0b0c10] border border-white/10 p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-white/10">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold uppercase font-display text-white flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-racing-red" />
+                  <span>Alumni Profiles ({alumniList.length})</span>
+                </h3>
+                <p className="text-white/50 text-xs mt-1 font-light">
+                  Graduated engineers, mentorship domains, and current industry engineering placements.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/alumni"
+                  target="_blank"
+                  className="text-[11px] font-mono text-racing-red hover:underline uppercase flex items-center gap-1"
+                >
+                  <span>View Public Page</span>
+                  <ExternalLink className="w-3 h-3" />
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleOpenAddAlumni}
+                  className="bg-racing-red hover:bg-white hover:text-black text-white px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-[0_0_15px_rgba(210,39,48,0.35)]"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Alumnus</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {alumniList.map((alumnus) => (
+                <div
+                  key={alumnus.id}
+                  className="bg-black/50 border border-white/10 p-4 flex gap-3 items-start justify-between group"
+                >
+                  <div className="flex gap-3">
+                    <img
+                      src={alumnus.image_url}
+                      alt={alumnus.name}
+                      className="w-14 h-14 object-cover object-top border border-white/20 shrink-0"
+                    />
+                    <div>
+                      <h4 className="font-bold text-sm text-white">{alumnus.name}</h4>
+                      <p className="text-[11px] text-racing-red font-mono font-bold">@ {alumnus.current_company}</p>
+                      <p className="text-[10px] text-white/50 font-mono">{alumnus.role_name || alumnus.current_role}</p>
+                      <span className="text-[9px] bg-white/10 px-1.5 py-0.5 mt-1 inline-block text-white/70 font-mono">
+                        {alumnus.batch}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => handleOpenEditAlumni(alumnus)}
+                      className="p-1.5 bg-white/5 hover:bg-white/20 text-white/70 hover:text-white transition-colors"
+                      title="Edit Alumnus"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteAlumni(alumnus)}
+                      className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors"
+                      title="Delete Alumnus"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            ADD / EDIT MEDIA MODAL (F09)
+        ========================================================================= */}
+        {showMediaModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-[#0e0f15] border border-white/15 w-full max-w-lg p-6 sm:p-7 relative shadow-2xl">
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
+                <h3 className="text-base font-bold uppercase font-display text-white flex items-center gap-2">
+                  <Film className="w-4 h-4 text-racing-red" />
+                  <span>{editingMedia ? "Edit Track Moment" : "Add Track Moment"}</span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMediaModal(false);
+                    setEditingMedia(null);
+                  }}
+                  className="text-white/40 hover:text-white p-1 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveMediaSubmit} className="space-y-4">
+                <div>
+                  <label className="text-xs uppercase text-white/50 mb-1 block font-mono">Title / Caption</label>
+                  <input
+                    type="text"
+                    required
+                    value={mediaTitle}
+                    onChange={(e) => setMediaTitle(e.target.value)}
+                    placeholder="e.g. AETHER Track Run at Formula Imperial"
+                    className="w-full bg-[#15161c] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Year</label>
+                    <label className="text-xs uppercase text-white/50 mb-1 block font-mono">Media Type</label>
+                    <select
+                      value={mediaType}
+                      onChange={(e) => setMediaType(e.target.value as any)}
+                      className="w-full bg-[#15161c] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                    >
+                      <option value="image">Photo (.jpg, .png, .webp)</option>
+                      <option value="video">Short Video (.mp4, .webm)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase text-white/50 mb-1 block font-mono">Year Tag</label>
                     <input
                       type="text"
                       required
-                      value={editingMedia ? editingMedia.year : mediaYear}
-                      onChange={(e) =>
-                        editingMedia
-                          ? setEditingMedia({ ...editingMedia, year: e.target.value })
-                          : setMediaYear(e.target.value)
-                      }
+                      value={mediaYear}
+                      onChange={(e) => setMediaYear(e.target.value)}
                       placeholder="e.g. 2025"
-                      className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                      className="w-full bg-[#15161c] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
                     />
                   </div>
+                </div>
 
-                  <div className="flex items-center gap-2 pt-1">
-                    <input
-                      type="checkbox"
-                      id="featHome"
-                      checked={editingMedia ? editingMedia.featured_on_home : mediaFeatured}
-                      onChange={(e) =>
-                        editingMedia
-                          ? setEditingMedia({ ...editingMedia, featured_on_home: e.target.checked })
-                          : setMediaFeatured(e.target.checked)
-                      }
-                      className="w-4 h-4 accent-racing-red cursor-pointer"
-                    />
-                    <label htmlFor="featHome" className="text-xs font-mono text-white/70 cursor-pointer">
-                      Feature on Homepage Reel
-                    </label>
+                {/* Source Selection: Direct URL vs File Upload (D-09) */}
+                <div>
+                  <label className="text-xs uppercase text-white/50 mb-1.5 block font-mono">Media Source</label>
+                  <div className="flex gap-2 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setMediaSourceType("upload")}
+                      className={`flex-1 py-1.5 text-xs font-mono uppercase border transition-all ${
+                        mediaSourceType === "upload"
+                          ? "bg-racing-red text-white border-racing-red font-bold"
+                          : "bg-white/5 text-white/50 border-white/10 hover:text-white"
+                      }`}
+                    >
+                      Upload File
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMediaSourceType("url")}
+                      className={`flex-1 py-1.5 text-xs font-mono uppercase border transition-all ${
+                        mediaSourceType === "url"
+                          ? "bg-racing-red text-white border-racing-red font-bold"
+                          : "bg-white/5 text-white/50 border-white/10 hover:text-white"
+                      }`}
+                    >
+                      Direct URL / CDN Link
+                    </button>
                   </div>
 
-                  {!editingMedia && (
+                  {mediaSourceType === "upload" ? (
                     <div>
-                      <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Upload File</label>
                       <input
                         type="file"
-                        required
                         accept={mediaType === "video" ? "video/*" : "image/*"}
                         onChange={(e) => setMediaFile(e.target.files?.[0] || null)}
                         className="w-full text-xs text-white/60 file:mr-2 file:py-1.5 file:px-3 file:border-0 file:bg-white/10 file:text-white file:text-xs file:font-mono file:cursor-pointer"
                       />
+                      {mediaFile && (
+                        <span className="text-[11px] text-emerald-400 block mt-1">Ready: {mediaFile.name}</span>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <input
+                        type="text"
+                        value={mediaDirectUrl}
+                        onChange={(e) => setMediaDirectUrl(e.target.value)}
+                        placeholder="e.g. /cars/aether.jpg or https://..."
+                        className="w-full bg-[#15161c] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                      />
                     </div>
                   )}
+                </div>
 
-                  <div className="flex gap-2 pt-2">
-                    <button
-                      type="submit"
-                      disabled={uploading}
-                      className="flex-1 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase py-2.5 transition-all disabled:opacity-50"
-                    >
-                      {uploading ? "Processing..." : editingMedia ? "Update Item" : "Add to Gallery"}
-                    </button>
-                    {editingMedia && (
-                      <button
-                        type="button"
-                        onClick={() => setEditingMedia(null)}
-                        className="bg-white/10 text-white text-xs font-mono uppercase px-3 py-2 hover:bg-white/20"
-                      >
-                        Cancel
-                      </button>
-                    )}
-                  </div>
-                </form>
-              </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="featHomeModal"
+                    checked={mediaFeatured}
+                    onChange={(e) => setMediaFeatured(e.target.checked)}
+                    className="w-4 h-4 accent-racing-red cursor-pointer"
+                  />
+                  <label htmlFor="featHomeModal" className="text-xs font-mono text-white/70 cursor-pointer">
+                    Feature on Homepage Reel
+                  </label>
+                </div>
+
+                <div className="flex gap-2 pt-4 border-t border-white/10">
+                  <button
+                    type="submit"
+                    disabled={uploading}
+                    className="flex-1 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase py-2.5 transition-all disabled:opacity-50"
+                  >
+                    {uploading ? "Saving Media..." : editingMedia ? "Update Track Moment" : "Add Track Moment"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMediaModal(false);
+                      setEditingMedia(null);
+                    }}
+                    className="bg-white/10 text-white text-xs font-mono uppercase px-4 py-2 hover:bg-white/20 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
             </div>
+          </div>
+        )}
 
-            {/* List Column */}
-            <div className="lg:col-span-2">
-              <div className="bg-[#0b0c10] border border-white/10 p-6">
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
-                  <h3 className="text-base font-bold uppercase font-display text-white">
-                    Track Footage & Gallery ({mediaList.length})
-                  </h3>
-                  <span className="text-[10px] font-mono text-white/40 uppercase">
-                    Homepage Reel & Yearwise Archive
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {mediaList.map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-black/50 border border-white/10 overflow-hidden flex flex-col justify-between group"
-                    >
-                      <div className="relative aspect-[16/10] bg-black">
-                        {item.media_type === "video" ? (
-                          <video src={item.media_url} muted className="w-full h-full object-cover" />
-                        ) : (
-                          <img src={item.media_url} alt={item.title} className="w-full h-full object-cover" />
-                        )}
-                        <div className="absolute top-2 left-2 bg-black/80 px-2 py-0.5 text-[9px] font-mono text-white">
-                          {item.year}
-                        </div>
-                        {item.featured_on_home && (
-                          <div className="absolute top-2 right-2 bg-racing-red px-2 py-0.5 text-[9px] font-mono text-white font-bold">
-                            ON HOME REEL
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="p-3 bg-[#0c0d11] flex items-center justify-between gap-2 border-t border-white/5">
-                        <div className="truncate">
-                          <p className="text-xs font-sans font-bold text-white truncate">{item.title}</p>
-                          <span className="text-[10px] font-mono text-white/40 uppercase">{item.media_type}</span>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            onClick={() => setEditingMedia(item)}
-                            className="p-1.5 bg-white/5 hover:bg-white/20 text-white/70 hover:text-white transition-colors"
-                            title="Edit Item"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteMedia(item)}
-                            className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors"
-                            title="Delete Item"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+        {/* =========================================================================
+            DELETE MEDIA CONFIRMATION DIALOG (D-10)
+        ========================================================================= */}
+        {deleteConfirmMedia && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-[#120d0e] border border-red-500/40 w-full max-w-md p-6 relative shadow-2xl">
+              <div className="flex items-center gap-3 mb-4 text-red-400">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <h3 className="text-base font-bold uppercase font-display text-white">Confirm Media Deletion</h3>
+              </div>
+              <p className="text-white/70 text-xs font-sans leading-relaxed mb-6">
+                Are you sure you want to delete track moment: <strong className="text-white font-bold">&quot;{deleteConfirmMedia.title}&quot;</strong> ({deleteConfirmMedia.year})?
+                This will immediately remove it from both the gallery and homepage reel.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmMedia(null)}
+                  className="px-4 py-2 text-xs font-mono uppercase bg-white/10 hover:bg-white/20 text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDeleteMedia}
+                  className="px-4 py-2 text-xs font-mono font-bold uppercase bg-red-600 hover:bg-red-500 text-white transition-colors"
+                >
+                  Delete Moment
+                </button>
               </div>
             </div>
           </div>
         )}
 
         {/* =========================================================================
-            TAB 4: ALUMNI NETWORK (ADD / EDIT / REMOVE BUTTONS)
+            ADD / EDIT ALUMNI MODAL (F10)
         ========================================================================= */}
-        {activeTab === "alumni" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Form Column */}
-            <div className="lg:col-span-1">
-              <div className="bg-[#0b0c10] border border-white/10 p-6 sticky top-24">
-                <h2 className="text-base font-bold uppercase mb-4 flex items-center gap-2 font-display text-white">
-                  <Plus className="w-4 h-4 text-racing-red" />
-                  <span>{editingAlumni ? "Edit Alumnus" : "Add Alumnus Profile"}</span>
-                </h2>
+        {showAlumniModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
+            <div className="bg-[#0e0f15] border border-white/15 w-full max-w-xl p-6 sm:p-7 relative shadow-2xl my-8">
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
+                <h3 className="text-base font-bold uppercase font-display text-white flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-racing-red" />
+                  <span>{editingAlumni ? "Edit Alumnus Profile" : "Add Alumnus Profile"}</span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAlumniModal(false);
+                    setEditingAlumni(null);
+                  }}
+                  className="text-white/40 hover:text-white p-1 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-                <form onSubmit={editingAlumni ? handleUpdateAlumni : handleAddAlumni} className="space-y-3.5">
+              <form onSubmit={handleSaveAlumniSubmit} className="space-y-3.5">
+                <div>
+                  <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={alumniName}
+                    onChange={(e) => setAlumniName(e.target.value)}
+                    placeholder="e.g. Siddhartha Senapati"
+                    className="w-full bg-[#15161c] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Full Name</label>
+                    <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Batch</label>
                     <input
                       type="text"
                       required
-                      value={editingAlumni ? editingAlumni.name : alumniName}
-                      onChange={(e) =>
-                        editingAlumni
-                          ? setEditingAlumni({ ...editingAlumni, name: e.target.value })
-                          : setAlumniName(e.target.value)
-                      }
-                      className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                      value={alumniBatch}
+                      onChange={(e) => setAlumniBatch(e.target.value)}
+                      placeholder="e.g. Batch 2023"
+                      className="w-full bg-[#15161c] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
                     />
                   </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Batch</label>
-                      <input
-                        type="text"
-                        required
-                        value={editingAlumni ? editingAlumni.batch : alumniBatch}
-                        onChange={(e) =>
-                          editingAlumni
-                            ? setEditingAlumni({ ...editingAlumni, batch: e.target.value })
-                            : setAlumniBatch(e.target.value)
-                        }
-                        placeholder="Batch 2023"
-                        className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Company</label>
-                      <input
-                        type="text"
-                        required
-                        value={editingAlumni ? editingAlumni.current_company : alumniCompany}
-                        onChange={(e) =>
-                          editingAlumni
-                            ? setEditingAlumni({ ...editingAlumni, current_company: e.target.value })
-                            : setAlumniCompany(e.target.value)
-                        }
-                        placeholder="e.g. Ather Energy"
-                        className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
-                      />
-                    </div>
+                  <div>
+                    <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Company / Organization</label>
+                    <input
+                      type="text"
+                      required
+                      value={alumniCompany}
+                      onChange={(e) => setAlumniCompany(e.target.value)}
+                      placeholder="e.g. Ather Energy"
+                      className="w-full bg-[#15161c] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                    />
                   </div>
+                </div>
 
+                <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Current Industry Role</label>
                     <input
                       type="text"
                       required
-                      value={editingAlumni ? (editingAlumni.role_name || editingAlumni.current_role || "") : alumniCurrentRole}
-                      onChange={(e) =>
-                        editingAlumni
-                          ? setEditingAlumni({
-                              ...editingAlumni,
-                              role_name: e.target.value,
-                              current_role: e.target.value,
-                            })
-                          : setAlumniCurrentRole(e.target.value)
-                      }
+                      value={alumniCurrentRole}
+                      onChange={(e) => setAlumniCurrentRole(e.target.value)}
                       placeholder="e.g. Battery Systems Engineer"
-                      className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                      className="w-full bg-[#15161c] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
                     />
                   </div>
-
                   <div>
                     <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Former Club Role</label>
                     <input
                       type="text"
                       required
-                      value={editingAlumni ? editingAlumni.former_role : alumniFormerRole}
-                      onChange={(e) =>
-                        editingAlumni
-                          ? setEditingAlumni({ ...editingAlumni, former_role: e.target.value })
-                          : setAlumniFormerRole(e.target.value)
-                      }
+                      value={alumniFormerRole}
+                      onChange={(e) => setAlumniFormerRole(e.target.value)}
                       placeholder="e.g. Former Powertrain Lead"
-                      className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                      className="w-full bg-[#15161c] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
                     />
                   </div>
+                </div>
 
-                  <div>
-                    <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Mentorship Domain</label>
-                    <input
-                      type="text"
-                      required
-                      value={editingAlumni ? editingAlumni.mentorship_domain : alumniMentorshipDomain}
-                      onChange={(e) =>
-                        editingAlumni
-                          ? setEditingAlumni({ ...editingAlumni, mentorship_domain: e.target.value })
-                          : setAlumniMentorshipDomain(e.target.value)
-                      }
-                      placeholder="e.g. Li-Ion Architecture & BMS"
-                      className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
-                    />
+                <div>
+                  <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Mentorship Domain</label>
+                  <input
+                    type="text"
+                    required
+                    value={alumniMentorshipDomain}
+                    onChange={(e) => setAlumniMentorshipDomain(e.target.value)}
+                    placeholder="e.g. Li-Ion Architecture & BMS"
+                    className="w-full bg-[#15161c] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">LinkedIn Profile URL</label>
+                  <input
+                    type="url"
+                    value={alumniLinkedin}
+                    onChange={(e) => setAlumniLinkedin(e.target.value)}
+                    placeholder="https://www.linkedin.com/in/..."
+                    className="w-full bg-[#15161c] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Bio / Impact Narrative</label>
+                  <textarea
+                    rows={2}
+                    value={alumniBio}
+                    onChange={(e) => setAlumniBio(e.target.value)}
+                    placeholder="Brief career summary and club contribution..."
+                    className="w-full bg-[#15161c] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
+                  />
+                </div>
+
+                {/* Photo Source Selection: Upload vs URL */}
+                <div>
+                  <label className="text-[11px] uppercase text-white/50 mb-1.5 block font-mono">Profile Headshot Photo</label>
+                  <div className="flex gap-2 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setAlumniPhotoSource("upload")}
+                      className={`flex-1 py-1 text-xs font-mono uppercase border transition-all ${
+                        alumniPhotoSource === "upload"
+                          ? "bg-racing-red text-white border-racing-red font-bold"
+                          : "bg-white/5 text-white/50 border-white/10 hover:text-white"
+                      }`}
+                    >
+                      Upload File
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAlumniPhotoSource("url")}
+                      className={`flex-1 py-1 text-xs font-mono uppercase border transition-all ${
+                        alumniPhotoSource === "url"
+                          ? "bg-racing-red text-white border-racing-red font-bold"
+                          : "bg-white/5 text-white/50 border-white/10 hover:text-white"
+                      }`}
+                    >
+                      Direct Image URL
+                    </button>
                   </div>
 
-                  <div>
-                    <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">LinkedIn URL</label>
-                    <input
-                      type="url"
-                      value={editingAlumni ? editingAlumni.linkedin_url : alumniLinkedin}
-                      onChange={(e) =>
-                        editingAlumni
-                          ? setEditingAlumni({ ...editingAlumni, linkedin_url: e.target.value })
-                          : setAlumniLinkedin(e.target.value)
-                      }
-                      className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Bio / Impact Summary</label>
-                    <textarea
-                      rows={2}
-                      value={editingAlumni ? editingAlumni.bio || "" : alumniBio}
-                      onChange={(e) =>
-                        editingAlumni
-                          ? setEditingAlumni({ ...editingAlumni, bio: e.target.value })
-                          : setAlumniBio(e.target.value)
-                      }
-                      placeholder="Short career summary"
-                      className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
-                    />
-                  </div>
-
-                  {!editingAlumni && (
+                  {alumniPhotoSource === "upload" ? (
                     <div>
-                      <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Headshot Photo</label>
                       <input
                         type="file"
-                        required
                         accept="image/*"
                         onChange={(e) => setAlumniFile(e.target.files?.[0] || null)}
                         className="w-full text-xs text-white/60 file:mr-2 file:py-1.5 file:px-3 file:border-0 file:bg-white/10 file:text-white file:text-xs file:font-mono file:cursor-pointer"
                       />
+                      {alumniFile && (
+                        <span className="text-[11px] text-emerald-400 block mt-1">Ready: {alumniFile.name}</span>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <input
+                        type="text"
+                        value={alumniDirectUrl}
+                        onChange={(e) => setAlumniDirectUrl(e.target.value)}
+                        placeholder="e.g. /alumni/photo.jpg or https://..."
+                        className="w-full bg-[#15161c] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                      />
                     </div>
                   )}
+                </div>
 
-                  <div className="flex gap-2 pt-2">
-                    <button
-                      type="submit"
-                      disabled={uploading}
-                      className="flex-1 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase py-2.5 transition-all disabled:opacity-50"
-                    >
-                      {uploading ? "Saving..." : editingAlumni ? "Update Alumnus" : "Add Alumnus"}
-                    </button>
-                    {editingAlumni && (
-                      <button
-                        type="button"
-                        onClick={() => setEditingAlumni(null)}
-                        className="bg-white/10 text-white text-xs font-mono uppercase px-3 py-2 hover:bg-white/20"
-                      >
-                        Cancel
-                      </button>
-                    )}
-                  </div>
-                </form>
-              </div>
-            </div>
-
-            {/* List Column */}
-            <div className="lg:col-span-2">
-              <div className="bg-[#0b0c10] border border-white/10 p-6">
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
-                  <h3 className="text-base font-bold uppercase font-display text-white">
-                    Alumni Profiles ({alumniList.length})
-                  </h3>
-                  <Link
-                    href="/alumni"
-                    target="_blank"
-                    className="text-[11px] font-mono text-racing-red hover:underline uppercase flex items-center gap-1"
+                <div className="flex gap-2 pt-3 border-t border-white/10">
+                  <button
+                    type="submit"
+                    disabled={uploading}
+                    className="flex-1 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase py-2.5 transition-all disabled:opacity-50"
                   >
-                    <span>View Public /alumni Page</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </Link>
+                    {uploading ? "Saving Profile..." : editingAlumni ? "Update Alumnus" : "Add Alumnus"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAlumniModal(false);
+                      setEditingAlumni(null);
+                    }}
+                    className="bg-white/10 text-white text-xs font-mono uppercase px-4 py-2 hover:bg-white/20 transition-colors"
+                  >
+                    Cancel
+                  </button>
                 </div>
+              </form>
+            </div>
+          </div>
+        )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {alumniList.map((alumnus) => (
-                    <div
-                      key={alumnus.id}
-                      className="bg-black/50 border border-white/10 p-4 flex gap-3 items-start justify-between group"
-                    >
-                      <div className="flex gap-3">
-                        <img
-                          src={alumnus.image_url}
-                          alt={alumnus.name}
-                          className="w-14 h-14 object-cover object-top border border-white/20 shrink-0"
-                        />
-                        <div>
-                          <h4 className="font-bold text-sm text-white">{alumnus.name}</h4>
-                          <p className="text-[11px] text-racing-red font-mono font-bold">@ {alumnus.current_company}</p>
-                          <p className="text-[10px] text-white/50 font-mono">{alumnus.role_name || alumnus.current_role}</p>
-                          <span className="text-[9px] bg-white/10 px-1.5 py-0.5 mt-1 inline-block text-white/70 font-mono">
-                            {alumnus.batch}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          onClick={() => setEditingAlumni(alumnus)}
-                          className="p-1.5 bg-white/5 hover:bg-white/20 text-white/70 hover:text-white transition-colors"
-                          title="Edit Alumnus"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteAlumni(alumnus)}
-                          className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors"
-                          title="Delete Alumnus"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+        {/* =========================================================================
+            DELETE ALUMNI CONFIRMATION DIALOG (D-10)
+        ========================================================================= */}
+        {deleteConfirmAlumni && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-[#120d0e] border border-red-500/40 w-full max-w-md p-6 relative shadow-2xl">
+              <div className="flex items-center gap-3 mb-4 text-red-400">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <h3 className="text-base font-bold uppercase font-display text-white">Confirm Alumni Deletion</h3>
+              </div>
+              <p className="text-white/70 text-xs font-sans leading-relaxed mb-6">
+                Are you sure you want to delete alumni profile: <strong className="text-white font-bold">&quot;{deleteConfirmAlumni.name}&quot;</strong> ({deleteConfirmAlumni.batch})?
+                This action will permanently remove the record from the database and public directory.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmAlumni(null)}
+                  className="px-4 py-2 text-xs font-mono uppercase bg-white/10 hover:bg-white/20 text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDeleteAlumni}
+                  className="px-4 py-2 text-xs font-mono font-bold uppercase bg-red-600 hover:bg-red-500 text-white transition-colors"
+                >
+                  Delete Profile
+                </button>
               </div>
             </div>
           </div>
@@ -2012,6 +2851,17 @@ export default function AdminDashboard() {
                     </div>
 
                     <div>
+                      <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">WhatsApp / Phone Number</label>
+                      <input
+                        type="tel"
+                        value={memberPhone}
+                        onChange={(e) => setMemberPhone(e.target.value)}
+                        placeholder="e.g. +91 98765 43210"
+                        className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                      />
+                    </div>
+
+                    <div>
                       <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Profile Picture</label>
                       <input
                         type="file"
@@ -2121,7 +2971,7 @@ export default function AdminDashboard() {
                               <span>Datasheet</span>
                             </button>
                             <button
-                              onClick={() => deleteMember(member.id, member.name)}
+                              onClick={() => handleDeleteMember(member)}
                               className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
                               title="Delete Member"
                             >
@@ -2132,6 +2982,40 @@ export default function AdminDashboard() {
                       ))}
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            DELETE MEMBER CONFIRMATION DIALOG (Soft Check Mistake Prevention)
+        ========================================================================= */}
+        {deleteConfirmMember && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-[#120d0e] border border-red-500/40 w-full max-w-md p-6 relative shadow-2xl">
+              <div className="flex items-center gap-3 mb-4 text-red-400">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <h3 className="text-base font-bold uppercase font-display text-white">Confirm Member Deletion</h3>
+              </div>
+              <p className="text-white/70 text-xs font-sans leading-relaxed mb-6">
+                Are you sure you want to remove active member <strong className="text-white font-bold">&quot;{deleteConfirmMember.name}&quot;</strong> ({deleteConfirmMember.role} • {deleteConfirmMember.department}) from the active roster?
+                This action is permanent and will remove them from the squad roster and public site.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmMember(null)}
+                  className="px-4 py-2 text-xs font-mono uppercase bg-white/10 hover:bg-white/20 text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDeleteMember}
+                  className="px-4 py-2 text-xs font-mono font-bold uppercase bg-red-600 hover:bg-red-500 text-white transition-colors"
+                >
+                  Remove Member
+                </button>
               </div>
             </div>
           </div>
@@ -2173,6 +3057,7 @@ export default function AdminDashboard() {
             onDeleteDatabase={handleDeleteDatabase}
             onAddRecord={handleAddCustomDbRecord}
             onDeleteRecord={handleDeleteCustomDbRecord}
+            onUpdateRecord={handleUpdateCustomDbRecord}
           />
         )}
 

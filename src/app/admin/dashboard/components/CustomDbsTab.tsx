@@ -22,6 +22,7 @@ interface CustomDbsTabProps {
   onDeleteDatabase: (id: string, name: string) => Promise<void>;
   onAddRecord: (dbId: string, record: Record<string, any>) => Promise<void>;
   onDeleteRecord: (dbId: string, recordId: string) => Promise<void>;
+  onUpdateRecord?: (dbId: string, recordId: string, updatedRecord: Record<string, any>) => Promise<void>;
 }
 
 export function CustomDbsTab({
@@ -30,10 +31,13 @@ export function CustomDbsTab({
   onDeleteDatabase,
   onAddRecord,
   onDeleteRecord,
+  onUpdateRecord,
 }: CustomDbsTabProps) {
   const [activeDbId, setActiveDbId] = useState<string>(databases[0]?.id || "");
   const [showCreateDbModal, setShowCreateDbModal] = useState(false);
   const [showAddRecordModal, setShowAddRecordModal] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<Record<string, any> | null>(null);
+  const [editRecordData, setEditRecordData] = useState<Record<string, any>>({});
 
   // New DB Form State
   const [dbName, setDbName] = useState("");
@@ -91,6 +95,22 @@ export function CustomDbsTab({
     await onAddRecord(activeDb.id, newRecord);
     setShowAddRecordModal(false);
     setRecordData({});
+  };
+
+  const handleOpenEditRecord = (row: Record<string, any>) => {
+    setEditingRecord(row);
+    setEditRecordData({ ...row });
+  };
+
+  const handleEditRecordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeDb || !editingRecord) return;
+
+    if (onUpdateRecord) {
+      await onUpdateRecord(activeDb.id, editingRecord.id, editRecordData);
+    }
+    setEditingRecord(null);
+    setEditRecordData({});
   };
 
   const handleExportActiveDb = () => {
@@ -228,13 +248,22 @@ export function CustomDbsTab({
                         </td>
                       ))}
                       <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => onDeleteRecord(activeDb.id, row.id)}
-                          className="p-1 text-red-400 hover:text-red-300"
-                          title="Delete entry"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleOpenEditRecord(row)}
+                            className="p-1 text-white/60 hover:text-white transition-colors"
+                            title="Edit entry"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => onDeleteRecord(activeDb.id, row.id)}
+                            className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                            title="Delete entry"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -412,6 +441,69 @@ export function CustomDbsTab({
                   className="px-6 py-2 bg-racing-red text-white text-xs font-mono font-bold uppercase hover:bg-white hover:text-black transition-all"
                 >
                   Save Entry
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Record in Active Database */}
+      {editingRecord && activeDb && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#0b0c10] border border-white/20 w-full max-w-lg p-6 sm:p-8 shadow-2xl relative animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+              <h3 className="text-base font-display font-black uppercase text-white flex items-center gap-2">
+                <Edit2 className="w-4 h-4 text-racing-red" />
+                <span>Edit Entry: {activeDb.db_name}</span>
+              </h3>
+              <button
+                onClick={() => {
+                  setEditingRecord(null);
+                  setEditRecordData({});
+                }}
+                className="text-white/50 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditRecordSubmit} className="space-y-3.5">
+              {activeDb.schema_definition.map((col) => (
+                <div key={col.key}>
+                  <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
+                    {col.label}
+                  </label>
+                  <input
+                    type={col.type === "number" ? "number" : col.type === "date" ? "date" : "text"}
+                    value={editRecordData[col.key] !== undefined && editRecordData[col.key] !== null ? editRecordData[col.key] : ""}
+                    onChange={(e) =>
+                      setEditRecordData({
+                        ...editRecordData,
+                        [col.key]: col.type === "number" ? parseFloat(e.target.value) || 0 : e.target.value,
+                      })
+                    }
+                    className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                  />
+                </div>
+              ))}
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingRecord(null);
+                    setEditRecordData({});
+                  }}
+                  className="px-4 py-2 bg-white/10 text-white text-xs font-mono uppercase"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-racing-red text-white text-xs font-mono font-bold uppercase hover:bg-white hover:text-black transition-all"
+                >
+                  Update Entry
                 </button>
               </div>
             </form>

@@ -184,16 +184,15 @@ export function MembersView() {
             is_council: m.is_council
           }));
           
-          const combined = [...formatted];
-          initialMembers.forEach(im => {
-            if (!combined.some(c => c.name.toLowerCase() === im.name.toLowerCase())) {
-              combined.push(im);
-            }
-          });
-          setMembers(combined);
+          // Only set active Supabase members when records exist, without re-merging initialMembers
+          setMembers(formatted);
+        } else if (!error && data && data.length === 0) {
+          // Fall back to initialMembers only when the Supabase dataset is completely empty
+          setMembers(initialMembers);
         }
       } catch (err) {
         console.warn("Supabase fetch fallback to static data:", err);
+        setMembers(initialMembers);
       }
     }
     loadMembersFromSupabase();
