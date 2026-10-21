@@ -472,7 +472,15 @@ VSSUT Burla`;
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Master Form Toggle */}
           <button
-            onClick={() => onUpdateSettings({ recruitment_form_enabled: !formActive, recruitment_open: !formActive })}
+            onClick={() =>
+              onUpdateSettings({
+                recruitment_form_enabled: !formActive,
+                recruitment_open: !formActive,
+                recruitment_cta_enabled: true,
+                recruitment_cta_url: "/recruitment",
+                recruitment_cta_label: "RECRUITMENT 2026",
+              })
+            }
             className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 border transition-all ${
               formActive
                 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"

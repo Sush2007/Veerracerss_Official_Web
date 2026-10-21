@@ -244,16 +244,16 @@ export function Hero({ title, subtitle, modelUrl, initialSettings }: HeroProps =
               <div className="absolute inset-0 bg-white transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out z-0"></div>
             </a>
             
-            {/* Secondary Dynamic CTA: Completely suppressed if recruitment_cta_enabled === false */}
-            {!settings.recruitment_cta_enabled ? null : isRecruitmentOpen ? (
+            {/* Secondary Dynamic CTA */}
+            {isRecruitmentOpen ? (
               <Link 
                 href="/recruitment"
                 className="flex-1 sm:flex-none bg-black/70 backdrop-blur-md border border-white/20 text-white px-6 py-3.5 sm:px-8 sm:py-4 font-sans font-bold text-xs sm:text-[13px] uppercase tracking-[0.18em] hover:border-racing-red hover:text-racing-red hover:bg-racing-red/10 transition-all duration-300 text-center relative overflow-hidden group flex items-center justify-center gap-1.5"
               >
-                <span className="relative z-10">{settings.recruitment_cta_label || "RECRUITMENT 2026"}</span>
+                <span className="relative z-10">RECRUITMENT 2026</span>
                 <ArrowUpRight className="w-3.5 h-3.5 relative z-10 opacity-70 group-hover:opacity-100 transition-opacity" />
               </Link>
-            ) : settings.recruitment_cta_url && settings.recruitment_cta_url !== "/recruitment" && settings.recruitment_cta_url !== "recruitment" ? (
+            ) : settings.recruitment_cta_enabled && settings.recruitment_cta_url && settings.recruitment_cta_url !== "/recruitment" && settings.recruitment_cta_url !== "recruitment" ? (
               settings.recruitment_cta_url.startsWith("http") ? (
                 <a
                   href={settings.recruitment_cta_url}
