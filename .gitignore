@@ -5,7 +5,6 @@ coverage/
 .DS_Store
 *.log
 .env.local
-!.env.example
 .next/
 raw_member_photos/
 /members/

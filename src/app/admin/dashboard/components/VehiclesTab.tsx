@@ -74,10 +74,13 @@ export function VehiclesTab({
   // Lock background scroll when modals are open
   useEffect(() => {
     if (modalOpen || deleteConfirmVehicle) {
-      const prevOverflow = document.body.style.overflow;
+      const prevBodyOverflow = document.body.style.overflow;
+      const prevHtmlOverflow = document.documentElement.style.overflow;
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
       return () => {
-        document.body.style.overflow = prevOverflow;
+        document.body.style.overflow = prevBodyOverflow;
+        document.documentElement.style.overflow = prevHtmlOverflow;
       };
     }
   }, [modalOpen, deleteConfirmVehicle]);
@@ -460,22 +463,26 @@ export function VehiclesTab({
       ========================================================================= */}
       {modalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto overscroll-contain"
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 md:p-6"
           onClick={() => setModalOpen(false)}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
         >
           <div
-            className="bg-[#0b0c10] border border-white/20 p-6 sm:p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto overscroll-contain relative shadow-2xl space-y-6"
+            className="bg-[#0b0c10] border border-white/20 w-full max-w-3xl max-h-[88vh] flex flex-col shadow-2xl relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-white/10 pb-4 sticky -top-6 bg-[#0b0c10] z-20 pt-2">
+            {/* Modal Header (Fixed, Always Visible) */}
+            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 shrink-0 bg-[#0b0c10] z-20">
               <div className="flex items-center gap-2.5">
                 <Car className="w-5 h-5 text-racing-red" />
-                <h3 className="text-lg font-bold font-display uppercase tracking-wider text-white">
+                <h3 className="text-base sm:text-lg font-bold font-display uppercase tracking-wider text-white">
                   {editingVehicle ? `Edit Vehicle: ${editingVehicle.name}` : "Add New Fleet Vehicle"}
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setModalOpen(false)}
                 className="text-white/50 hover:text-white p-1 hover:bg-white/10 transition-colors"
               >
@@ -483,7 +490,12 @@ export function VehiclesTab({
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="space-y-6">
+            {/* Dedicated Scrollable Form Body */}
+            <div
+              className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-6"
+              onWheel={(e) => e.stopPropagation()}
+            >
+              <form id="vehicle-editor-form" onSubmit={handleSave} className="space-y-6">
               {/* Basic Details */}
               <div className="space-y-4">
                 <h4 className="text-xs font-mono font-bold uppercase tracking-widest text-racing-red">
@@ -849,24 +861,27 @@ export function VehiclesTab({
                 </div>
               </div>
 
-              {/* Submit Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10 sticky -bottom-6 bg-[#0b0c10] py-3 z-20">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 text-xs font-mono uppercase tracking-wider text-white/70 hover:text-white border border-white/10 hover:bg-white/5 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving || uploadingImg}
-                  className="px-6 py-2 text-xs font-mono uppercase tracking-wider font-bold bg-racing-red hover:bg-racing-red/80 text-white transition-colors disabled:opacity-50 shadow-lg shadow-racing-red/20"
-                >
-                  {saving ? "Saving Vehicle..." : editingVehicle ? "Save Changes" : "Add Vehicle to Fleet"}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
+
+            {/* Modal Footer (Fixed, Always Visible) */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10 shrink-0 bg-[#0b0c10] z-20">
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                className="px-4 py-2 text-xs font-mono uppercase tracking-wider text-white/70 hover:text-white border border-white/10 hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="vehicle-editor-form"
+                disabled={saving || uploadingImg}
+                className="px-6 py-2 text-xs font-mono uppercase tracking-wider font-bold bg-racing-red hover:bg-racing-red/80 text-white transition-colors disabled:opacity-50 shadow-lg shadow-racing-red/20"
+              >
+                {saving ? "Saving Vehicle..." : editingVehicle ? "Save Changes" : "Add Vehicle to Fleet"}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -876,12 +891,15 @@ export function VehiclesTab({
       ========================================================================= */}
       {deleteConfirmVehicle && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto overscroll-contain"
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
           onClick={() => setDeleteConfirmVehicle(null)}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
         >
           <div
             className="bg-[#0b0c10] border border-red-500/40 p-6 sm:p-8 max-w-md w-full relative shadow-2xl space-y-5"
             onClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 text-red-400">
               <AlertTriangle className="w-6 h-6 shrink-0" />

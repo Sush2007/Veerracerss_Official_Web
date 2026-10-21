@@ -169,10 +169,13 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (isAnyDashboardModalOpen) {
-      const prevOverflow = document.body.style.overflow;
+      const prevBodyOverflow = document.body.style.overflow;
+      const prevHtmlOverflow = document.documentElement.style.overflow;
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
       return () => {
-        document.body.style.overflow = prevOverflow;
+        document.body.style.overflow = prevBodyOverflow;
+        document.documentElement.style.overflow = prevHtmlOverflow;
       };
     }
   }, [isAnyDashboardModalOpen]);
@@ -2381,8 +2384,20 @@ export default function AdminDashboard() {
             ADD / EDIT MEDIA MODAL (F09)
         ========================================================================= */}
         {showMediaModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain animate-in fade-in duration-200">
-            <div className="bg-[#0e0f15] border border-white/15 w-full max-w-lg max-h-[90vh] flex flex-col my-auto relative shadow-2xl overscroll-contain">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+            onClick={() => {
+              setShowMediaModal(false);
+              setEditingMedia(null);
+            }}
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+          >
+            <div
+              className="bg-[#0e0f15] border border-white/15 w-full max-w-lg max-h-[88vh] flex flex-col relative shadow-2xl overflow-hidden rounded-none"
+              onClick={(e) => e.stopPropagation()}
+              onWheel={(e) => e.stopPropagation()}
+            >
               <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
                 <h3 className="text-base font-bold uppercase font-display text-white flex items-center gap-2">
                   <Film className="w-4 h-4 text-racing-red" />
@@ -2535,8 +2550,17 @@ export default function AdminDashboard() {
             DELETE MEDIA CONFIRMATION DIALOG (D-10)
         ========================================================================= */}
         {deleteConfirmMedia && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain animate-in fade-in duration-200">
-            <div className="bg-[#120d0e] border border-red-500/40 w-full max-w-md p-6 my-auto relative shadow-2xl overscroll-contain">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+            onClick={() => setDeleteConfirmMedia(null)}
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+          >
+            <div
+              className="bg-[#120d0e] border border-red-500/40 w-full max-w-md p-6 relative shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+              onWheel={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center gap-3 mb-4 text-red-400">
                 <AlertCircle className="w-5 h-5 shrink-0" />
                 <h3 className="text-base font-bold uppercase font-display text-white">Confirm Media Deletion</h3>
@@ -2569,8 +2593,20 @@ export default function AdminDashboard() {
             ADD / EDIT ALUMNI MODAL (F10)
         ========================================================================= */}
         {showAlumniModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain animate-in fade-in duration-200">
-            <div className="bg-[#0e0f15] border border-white/15 w-full max-w-xl max-h-[90vh] flex flex-col my-auto relative shadow-2xl overscroll-contain">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+            onClick={() => {
+              setShowAlumniModal(false);
+              setEditingAlumni(null);
+            }}
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+          >
+            <div
+              className="bg-[#0e0f15] border border-white/15 w-full max-w-xl max-h-[88vh] flex flex-col relative shadow-2xl overflow-hidden rounded-none"
+              onClick={(e) => e.stopPropagation()}
+              onWheel={(e) => e.stopPropagation()}
+            >
               <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
                 <h3 className="text-base font-bold uppercase font-display text-white flex items-center gap-2">
                   <GraduationCap className="w-4 h-4 text-racing-red" />
@@ -2769,8 +2805,17 @@ export default function AdminDashboard() {
             DELETE ALUMNI CONFIRMATION DIALOG (D-10)
         ========================================================================= */}
         {deleteConfirmAlumni && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain animate-in fade-in duration-200">
-            <div className="bg-[#120d0e] border border-red-500/40 w-full max-w-md p-6 my-auto relative shadow-2xl overscroll-contain">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+            onClick={() => setDeleteConfirmAlumni(null)}
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+          >
+            <div
+              className="bg-[#120d0e] border border-red-500/40 w-full max-w-md p-6 relative shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+              onWheel={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center gap-3 mb-4 text-red-400">
                 <AlertCircle className="w-5 h-5 shrink-0" />
                 <h3 className="text-base font-bold uppercase font-display text-white">Confirm Alumni Deletion</h3>
@@ -3101,8 +3146,17 @@ export default function AdminDashboard() {
             DELETE MEMBER CONFIRMATION DIALOG (Soft Check Mistake Prevention)
         ========================================================================= */}
         {deleteConfirmMember && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain animate-in fade-in duration-200">
-            <div className="bg-[#120d0e] border border-red-500/40 w-full max-w-md p-6 my-auto relative shadow-2xl overscroll-contain">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+            onClick={() => setDeleteConfirmMember(null)}
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+          >
+            <div
+              className="bg-[#120d0e] border border-red-500/40 w-full max-w-md p-6 relative shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+              onWheel={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center gap-3 mb-4 text-red-400">
                 <AlertCircle className="w-5 h-5 shrink-0" />
                 <h3 className="text-base font-bold uppercase font-display text-white">Confirm Member Deletion</h3>

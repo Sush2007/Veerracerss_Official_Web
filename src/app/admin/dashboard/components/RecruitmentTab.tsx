@@ -128,10 +128,13 @@ VSSUT Burla`
     );
 
     if (isAnyModalOpen) {
-      const prevOverflow = document.body.style.overflow;
+      const prevBodyOverflow = document.body.style.overflow;
+      const prevHtmlOverflow = document.documentElement.style.overflow;
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
       return () => {
-        document.body.style.overflow = prevOverflow;
+        document.body.style.overflow = prevBodyOverflow;
+        document.documentElement.style.overflow = prevHtmlOverflow;
       };
     }
   }, [emailModalCandidate, showStatusExportModal, showQuestionsModal, showEmailTemplateModal]);
@@ -831,8 +834,17 @@ VSSUT Burla`;
           MODAL 1: ONBOARDING EMAIL COMPOSER (With 1-Click Gmail & Resend Handling)
       ========================================================================= */}
       {emailModalCandidate && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
-          <div className="bg-[#0b0c10] border border-racing-red/50 w-full max-w-2xl max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in"
+          onClick={() => setEmailModalCandidate(null)}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
+          <div
+            className="bg-[#0b0c10] border border-racing-red/50 w-full max-w-2xl max-h-[88vh] flex flex-col shadow-2xl relative overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -1000,8 +1012,17 @@ VSSUT Burla`;
           MODAL 2: SET APPLICATION QUESTIONS
       ========================================================================= */}
       {showQuestionsModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
-          <div className="bg-[#0b0c10] border border-white/15 w-full max-w-xl max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in"
+          onClick={() => setShowQuestionsModal(false)}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
+          <div
+            className="bg-[#0b0c10] border border-white/15 w-full max-w-xl max-h-[88vh] flex flex-col shadow-2xl relative overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -1106,8 +1127,17 @@ VSSUT Burla`;
           MODAL 3: EDIT CONFIRMATION EMAIL TEMPLATE
       ========================================================================= */}
       {showEmailTemplateModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
-          <div className="bg-[#0b0c10] border border-white/15 w-full max-w-2xl max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in"
+          onClick={() => setShowEmailTemplateModal(false)}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
+          <div
+            className="bg-[#0b0c10] border border-white/15 w-full max-w-2xl max-h-[88vh] flex flex-col shadow-2xl relative overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -1220,8 +1250,17 @@ VSSUT Burla`;
           MODAL 4: STATUS SELECTION MODAL FOR EXCEL EXPORT
       ========================================================================= */}
       {showStatusExportModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
-          <div className="bg-[#0b0c10] border border-white/15 w-full max-w-md max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in"
+          onClick={() => setShowStatusExportModal(false)}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
+          <div
+            className="bg-[#0b0c10] border border-white/15 w-full max-w-md max-h-[88vh] flex flex-col shadow-2xl relative overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="shrink-0 p-5 pb-3 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2">

@@ -47,10 +47,13 @@ export function SponsorsTab({
   // Lock background scroll when modals are open
   useEffect(() => {
     if (modalOpen || deleteConfirmSponsor) {
-      const prevOverflow = document.body.style.overflow;
+      const prevBodyOverflow = document.body.style.overflow;
+      const prevHtmlOverflow = document.documentElement.style.overflow;
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
       return () => {
-        document.body.style.overflow = prevOverflow;
+        document.body.style.overflow = prevBodyOverflow;
+        document.documentElement.style.overflow = prevHtmlOverflow;
       };
     }
   }, [modalOpen, deleteConfirmSponsor]);
@@ -340,15 +343,18 @@ export function SponsorsTab({
       ========================================================================= */}
       {modalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto overscroll-contain"
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 md:p-6"
           onClick={() => setModalOpen(false)}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
         >
           <div
-            className="bg-[#0b0c10] border border-white/20 p-6 sm:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto overscroll-contain relative shadow-2xl space-y-6"
+            className="bg-[#0b0c10] border border-white/20 w-full max-w-lg max-h-[88vh] flex flex-col shadow-2xl relative overflow-hidden rounded-none"
             onClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-white/10 pb-4 sticky -top-6 bg-[#0b0c10] z-20 pt-2">
+            {/* Modal Header (Fixed) */}
+            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 shrink-0 bg-[#0b0c10] z-20">
               <div className="flex items-center gap-2">
                 <Award className="w-5 h-5 text-racing-red" />
                 <h3 className="text-base font-bold font-display uppercase tracking-wider text-white">
@@ -356,6 +362,7 @@ export function SponsorsTab({
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setModalOpen(false)}
                 className="text-white/50 hover:text-white p-1 hover:bg-white/10 transition-colors"
               >
@@ -363,117 +370,124 @@ export function SponsorsTab({
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-white/60 mb-1">
-                  Sponsor / Organization Name *
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. SolidWorks / Ansys / KTM"
-                  required
-                  className="w-full bg-[#111111] border border-white/10 px-3 py-2 text-sm text-white font-mono focus:border-racing-red focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-white/60 mb-1">
-                  Partnership Category / Role *
-                </label>
-                <input
-                  type="text"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  placeholder="e.g. 3D CAD & Digital Twin / Title Sponsor & Powertrain"
-                  required
-                  className="w-full bg-[#111111] border border-white/10 px-3 py-2 text-sm text-white font-mono focus:border-racing-red focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-white/60 mb-1">
-                  Sponsorship Tier *
-                </label>
-                <select
-                  value={tier}
-                  onChange={(e) => setTier(e.target.value as "title" | "partner")}
-                  className="w-full bg-[#111111] border border-white/10 px-3 py-2 text-sm text-white font-mono focus:border-racing-red focus:outline-none"
-                >
-                  <option value="partner">Technical & Corporate Partner (Grid Display)</option>
-                  <option value="title">Title Sponsor (Prominent Top Banner Card)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-white/60 mb-1">
-                  Logo PNG / SVG File or Path *
-                </label>
-                <div className="flex gap-2">
+            {/* Scrollable Body */}
+            <div
+              className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-4"
+              onWheel={(e) => e.stopPropagation()}
+            >
+              <form id="sponsor-editor-form" onSubmit={handleSave} className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-white/60 mb-1">
+                    Sponsor / Organization Name *
+                  </label>
                   <input
                     type="text"
-                    value={logo}
-                    onChange={(e) => setLogo(e.target.value)}
-                    placeholder="/sponsors/company.svg or https://..."
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. SolidWorks / Ansys / KTM"
                     required
-                    className="flex-1 bg-[#111111] border border-white/10 px-3 py-2 text-xs text-white font-mono focus:border-racing-red focus:outline-none"
+                    className="w-full bg-[#111111] border border-white/10 px-3 py-2 text-sm text-white font-mono focus:border-racing-red focus:outline-none"
                   />
-                  <label className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 text-xs font-mono font-bold uppercase cursor-pointer flex items-center gap-1">
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Upload</span>
-                    <input
-                      type="file"
-                      accept="image/png,image/svg+xml,image/webp"
-                      className="hidden"
-                      onChange={handleFileUpload}
-                      disabled={uploadingLogo}
-                    />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-white/60 mb-1">
+                    Partnership Category / Role *
                   </label>
+                  <input
+                    type="text"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    placeholder="e.g. 3D CAD & Digital Twin / Title Sponsor & Powertrain"
+                    required
+                    className="w-full bg-[#111111] border border-white/10 px-3 py-2 text-sm text-white font-mono focus:border-racing-red focus:outline-none"
+                  />
                 </div>
-                <p className="text-[10px] text-white/40 mt-1 font-mono">
-                  Transparent PNG or SVG recommended for best presentation on dark backgrounds.
-                </p>
-              </div>
 
-              {/* Logo Preview */}
-              {logo && (
-                <div className="bg-black/50 border border-white/10 p-3 flex items-center justify-center h-20">
-                  <img src={logo} alt="Preview" className="max-h-full max-w-[80%] object-contain" />
+                <div>
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-white/60 mb-1">
+                    Sponsorship Tier *
+                  </label>
+                  <select
+                    value={tier}
+                    onChange={(e) => setTier(e.target.value as "title" | "partner")}
+                    className="w-full bg-[#111111] border border-white/10 px-3 py-2 text-sm text-white font-mono focus:border-racing-red focus:outline-none"
+                  >
+                    <option value="partner">Technical & Corporate Partner (Grid Display)</option>
+                    <option value="title">Title Sponsor (Prominent Top Banner Card)</option>
+                  </select>
                 </div>
-              )}
 
-              <div>
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-white/60 mb-1">
-                  Website / Social URL
-                </label>
-                <input
-                  type="url"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://www.example.com"
-                  className="w-full bg-[#111111] border border-white/10 px-3 py-2 text-xs text-white font-mono focus:border-racing-red focus:outline-none"
-                />
-              </div>
+                <div>
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-white/60 mb-1">
+                    Logo PNG / SVG File or Path *
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={logo}
+                      onChange={(e) => setLogo(e.target.value)}
+                      placeholder="/sponsors/company.svg or https://..."
+                      required
+                      className="flex-1 bg-[#111111] border border-white/10 px-3 py-2 text-xs text-white font-mono focus:border-racing-red focus:outline-none"
+                    />
+                    <label className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 text-xs font-mono font-bold uppercase cursor-pointer flex items-center gap-1">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload</span>
+                      <input
+                        type="file"
+                        accept="image/png,image/svg+xml,image/webp"
+                        className="hidden"
+                        onChange={handleFileUpload}
+                        disabled={uploadingLogo}
+                      />
+                    </label>
+                  </div>
+                  <p className="text-[10px] text-white/40 mt-1 font-mono">
+                    Transparent PNG or SVG recommended for best presentation on dark backgrounds.
+                  </p>
+                </div>
 
-              {/* Submit Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 text-xs font-mono uppercase tracking-wider text-white/70 hover:text-white border border-white/10 hover:bg-white/5 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving || uploadingLogo}
-                  className="px-5 py-2 text-xs font-mono uppercase tracking-wider font-bold bg-racing-red hover:bg-racing-red/80 text-white transition-colors disabled:opacity-50 shadow-lg shadow-racing-red/20"
-                >
-                  {saving ? "Saving..." : editingSponsor ? "Save Changes" : "Add Sponsor"}
-                </button>
-              </div>
-            </form>
+                {/* Logo Preview */}
+                {logo && (
+                  <div className="bg-black/50 border border-white/10 p-3 flex items-center justify-center h-20">
+                    <img src={logo} alt="Preview" className="max-h-full max-w-[80%] object-contain" />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-white/60 mb-1">
+                    Website / Social URL
+                  </label>
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://www.example.com"
+                    className="w-full bg-[#111111] border border-white/10 px-3 py-2 text-xs text-white font-mono focus:border-racing-red focus:outline-none"
+                  />
+                </div>
+              </form>
+            </div>
+
+            {/* Modal Footer (Fixed) */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10 shrink-0 bg-[#0b0c10] z-20">
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                className="px-4 py-2 text-xs font-mono uppercase tracking-wider text-white/70 hover:text-white border border-white/10 hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="sponsor-editor-form"
+                disabled={saving || uploadingLogo}
+                className="px-5 py-2 text-xs font-mono uppercase tracking-wider font-bold bg-racing-red hover:bg-racing-red/80 text-white transition-colors disabled:opacity-50 shadow-lg shadow-racing-red/20"
+              >
+                {saving ? "Saving..." : editingSponsor ? "Save Changes" : "Add Sponsor"}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -483,12 +497,15 @@ export function SponsorsTab({
       ========================================================================= */}
       {deleteConfirmSponsor && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto overscroll-contain"
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
           onClick={() => setDeleteConfirmSponsor(null)}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
         >
           <div
             className="bg-[#0b0c10] border border-red-500/40 p-6 max-w-sm w-full relative shadow-2xl space-y-4"
             onClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-2.5 text-red-400">
               <AlertTriangle className="w-5 h-5 shrink-0" />
