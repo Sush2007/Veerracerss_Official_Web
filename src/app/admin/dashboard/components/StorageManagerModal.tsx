@@ -294,7 +294,7 @@ export function StorageManagerModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-[#0b0c10] border border-white/15 w-full max-w-4xl max-h-[92vh] overflow-y-auto overscroll-contain my-auto p-5 sm:p-8 shadow-2xl relative flex flex-col">
+      <div className="bg-[#0b0c10] border border-white/15 w-full max-w-4xl max-h-[92vh] my-auto p-5 sm:p-8 shadow-2xl relative flex flex-col overscroll-contain">
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
           <div className="flex items-center gap-3">

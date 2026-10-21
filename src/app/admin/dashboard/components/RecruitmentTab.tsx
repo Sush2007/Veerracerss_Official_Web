@@ -9,21 +9,22 @@ import {
   AlertCircle,
   RotateCcw,
   Trash2,
-  Clock,
   Mail,
   Send,
   FileSpreadsheet,
   ExternalLink,
-  Edit3,
   ToggleLeft,
   ToggleRight,
   Sparkles,
   Phone,
-  BookOpen,
   X,
   MessageSquare,
-  HelpCircle,
   Copy,
+  Inbox,
+  Check,
+  UserCheck,
+  UserX,
+  ListFilter,
 } from "lucide-react";
 import { RecruitmentApplication, SiteSettings } from "@/src/data/cms_defaults";
 import { exportTableToExcel } from "@/src/lib/exportToExcel";
@@ -37,7 +38,7 @@ interface RecruitmentTabProps {
     status: "Pending" | "Shortlisted" | "Accepted" | "Declined",
     onboardingEmailSent?: boolean
   ) => Promise<void>;
-  onUpdateScore: (id: string, score: string) => Promise<void>;
+  onUpdateScore?: (id: string, score: string) => Promise<void>;
   onDeleteApplication: (id: string, name: string) => Promise<void>;
 }
 
@@ -46,18 +47,14 @@ export function RecruitmentTab({
   siteSettings,
   onUpdateSettings,
   onUpdateStatus,
-  onUpdateScore,
   onDeleteApplication,
 }: RecruitmentTabProps) {
+  // Workflow Tab: "inbox" (Awaiting Decision), "accepted", "declined", "all"
+  const [workflowTab, setWorkflowTab] = useState<"inbox" | "accepted" | "declined" | "all">("inbox");
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [yearFilter, setYearFilter] = useState<string>("ALL");
   const [domainFilter, setDomainFilter] = useState<string>("ALL");
-
-  // Controlled score inputs and error feedback
-  const [scoreDrafts, setScoreDrafts] = useState<Record<string, string>>({});
-  const [scoreErrors, setScoreErrors] = useState<Record<string, string>>({});
-  const [savingScoreId, setSavingScoreId] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   // Onboarding Email Modal State
   const [emailModalCandidate, setEmailModalCandidate] = useState<RecruitmentApplication | null>(null);
@@ -115,7 +112,13 @@ VSSUT Burla`
   );
   const [savingEmailTemplate, setSavingEmailTemplate] = useState(false);
 
-  // Fix dialog scrolling: lock body scroll whenever any modal is open
+  // Candidate Counts
+  const inboxCount = recruits.filter((r) => r.status !== "Accepted" && r.status !== "Declined").length;
+  const acceptedCount = recruits.filter((r) => r.status === "Accepted").length;
+  const declinedCount = recruits.filter((r) => r.status === "Declined").length;
+  const totalCount = recruits.length;
+
+  // Strict modal body scroll-locking: Prevents background scrolling 100% of the time
   useEffect(() => {
     const isAnyModalOpen = Boolean(
       emailModalCandidate ||
@@ -125,67 +128,89 @@ VSSUT Burla`
     );
 
     if (isAnyModalOpen) {
+      const prevOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
     }
-
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [emailModalCandidate, showStatusExportModal, showQuestionsModal, showEmailTemplateModal]);
 
-  // Filter calculations
-  const filteredRecruits = recruits.filter((r) => {
-    const matchesStatus = statusFilter === "ALL" || r.status === statusFilter;
-    const matchesYear = yearFilter === "ALL" || r.year_of_study === yearFilter;
+  // Filter & Smart Sorting Calculations
+  const filteredRecruits = recruits
+    .filter((r) => {
+      // Workflow stage filter
+      if (workflowTab === "inbox") {
+        if (r.status === "Accepted" || r.status === "Declined") return false;
+      } else if (workflowTab === "accepted") {
+        if (r.status !== "Accepted") return false;
+      } else if (workflowTab === "declined") {
+        if (r.status !== "Declined") return false;
+      }
 
-    const filterLower = domainFilter.toLowerCase().trim();
-    const primaryLower = (r.primary_domain || "").toLowerCase();
-    const secondaryLower = (r.secondary_domain || "").toLowerCase();
+      // Year Filter
+      const matchesYear = yearFilter === "ALL" || r.year_of_study === yearFilter;
 
-    const matchesDomain =
-      domainFilter === "ALL" ||
-      (primaryLower && (primaryLower.includes(filterLower) || filterLower.includes(primaryLower))) ||
-      (secondaryLower && (secondaryLower.includes(filterLower) || filterLower.includes(secondaryLower))) ||
-      [
-        "powertrain",
-        "chassis",
-        "suspension",
-        "dynamics",
-        "brakes",
-        "web",
-        "graphic",
-        "video",
-        "pr",
-        "sponsorship",
-        "media",
-      ].some((kw) => {
-        if (kw === "dynamics") {
-          const filterHasDynamics = filterLower.replace(/aerodynamics/g, "").includes("dynamics");
-          const primaryHasDynamics = primaryLower.replace(/aerodynamics/g, "").includes("dynamics");
-          const secondaryHasDynamics = secondaryLower ? secondaryLower.replace(/aerodynamics/g, "").includes("dynamics") : false;
-          return filterHasDynamics && (primaryHasDynamics || secondaryHasDynamics);
-        }
-        return (
-          filterLower.includes(kw) &&
-          ((primaryLower && primaryLower.includes(kw)) || (secondaryLower && secondaryLower.includes(kw)))
-        );
-      });
+      // Domain Filter
+      const filterLower = domainFilter.toLowerCase().trim();
+      const primaryLower = (r.primary_domain || "").toLowerCase();
+      const secondaryLower = (r.secondary_domain || "").toLowerCase();
 
-    const query = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !query ||
-      (r.full_name || "").toLowerCase().includes(query) ||
-      (r.email || "").toLowerCase().includes(query) ||
-      (r.roll_no || "").toLowerCase().includes(query) ||
-      (r.branch || "").toLowerCase().includes(query) ||
-      (r.primary_domain || "").toLowerCase().includes(query) ||
-      (r.secondary_domain && r.secondary_domain.toLowerCase().includes(query)) ||
-      (r.notes && r.notes.toLowerCase().includes(query));
+      const matchesDomain =
+        domainFilter === "ALL" ||
+        (primaryLower && (primaryLower.includes(filterLower) || filterLower.includes(primaryLower))) ||
+        (secondaryLower && (secondaryLower.includes(filterLower) || filterLower.includes(secondaryLower))) ||
+        [
+          "powertrain",
+          "chassis",
+          "suspension",
+          "dynamics",
+          "brakes",
+          "web",
+          "graphic",
+          "video",
+          "pr",
+          "sponsorship",
+          "media",
+        ].some((kw) => {
+          if (kw === "dynamics") {
+            const filterHasDynamics = filterLower.replace(/aerodynamics/g, "").includes("dynamics");
+            const primaryHasDynamics = primaryLower.replace(/aerodynamics/g, "").includes("dynamics");
+            const secondaryHasDynamics = secondaryLower ? secondaryLower.replace(/aerodynamics/g, "").includes("dynamics") : false;
+            return filterHasDynamics && (primaryHasDynamics || secondaryHasDynamics);
+          }
+          return (
+            filterLower.includes(kw) &&
+            ((primaryLower && primaryLower.includes(kw)) || (secondaryLower && secondaryLower.includes(kw)))
+          );
+        });
 
-    return matchesStatus && matchesYear && matchesDomain && matchesSearch;
-  });
+      // Search Query Filter
+      const query = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !query ||
+        (r.full_name || "").toLowerCase().includes(query) ||
+        (r.email || "").toLowerCase().includes(query) ||
+        (r.roll_no || "").toLowerCase().includes(query) ||
+        (r.branch || "").toLowerCase().includes(query) ||
+        (r.primary_domain || "").toLowerCase().includes(query) ||
+        (r.secondary_domain && r.secondary_domain.toLowerCase().includes(query)) ||
+        (r.notes && r.notes.toLowerCase().includes(query));
+
+      return matchesYear && matchesDomain && matchesSearch;
+    })
+    .sort((a, b) => {
+      // In "All" view: Unreviewed applications appear at the TOP, Accepted in middle, Declined at the BOTTOM
+      if (workflowTab === "all") {
+        const getRank = (status: string) => {
+          if (status !== "Accepted" && status !== "Declined") return 0; // Inbox / Top
+          if (status === "Accepted") return 1; // Accepted / Middle
+          return 2; // Declined / Bottom
+        };
+        return getRank(a.status) - getRank(b.status);
+      }
+      return 0;
+    });
 
   const handleOpenEmailModal = (candidate: RecruitmentApplication) => {
     setEmailModalCandidate(candidate);
@@ -230,6 +255,33 @@ VSSUT Burla`;
     setEmailFeedback(null);
   };
 
+  const handleQuickAccept = async (candidate: RecruitmentApplication) => {
+    setProcessingId(candidate.id);
+    try {
+      await onUpdateStatus(candidate.id, "Accepted");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleQuickDecline = async (candidate: RecruitmentApplication) => {
+    setProcessingId(candidate.id);
+    try {
+      await onUpdateStatus(candidate.id, "Declined");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleRestoreToInbox = async (candidate: RecruitmentApplication) => {
+    setProcessingId(candidate.id);
+    try {
+      await onUpdateStatus(candidate.id, "Pending");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const handleSendEmail = async () => {
     if (!emailModalCandidate) return;
     setSendingEmail(true);
@@ -259,69 +311,34 @@ VSSUT Burla`;
         return;
       }
 
-      if (!res.ok) throw new Error(data.error || "Failed to dispatch email.");
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to dispatch email via Resend.");
+      }
 
-      setEmailFeedback({
-        type: "success",
-        message: data.message || "Onboarding email dispatched successfully!",
-      });
-
-      // Update candidate status to Accepted and persist onboarding_email_sent: true
       await onUpdateStatus(emailModalCandidate.id, "Accepted", true);
       emailModalCandidate.onboarding_email_sent = true;
+      setEmailFeedback({
+        type: "success",
+        message: "Onboarding letter successfully delivered to candidate's inbox!",
+      });
 
       setTimeout(() => {
         setEmailModalCandidate(null);
-      }, 1800);
+      }, 1500);
     } catch (err: any) {
       setEmailFeedback({
         type: "error",
-        message: err.message || "Failed to dispatch email.",
+        message: err.message || "Failed to deliver email. Use the direct Gmail button below.",
       });
     } finally {
       setSendingEmail(false);
     }
   };
 
-  const handleExecuteExport = (targetStatus: string) => {
-    const list =
-      targetStatus === "ALL" ? recruits : recruits.filter((r) => r.status === targetStatus);
-
-    exportTableToExcel(
-      list.map((r) => ({
-        "Full Name": r.full_name,
-        Email: r.email,
-        "WhatsApp Phone": r.phone,
-        "Roll Number": r.roll_no,
-        "Academic Branch": r.branch,
-        "Year of Study": r.year_of_study,
-        "Primary Domain": r.primary_domain,
-        "Secondary Domain": r.secondary_domain || "None",
-        "PR Domain / Specialization": r.notes || "Technical Only",
-        "Application Status": r.status,
-        "Interview Score": r.interview_score || "Pending",
-        "Technical Experience": r.experience_summary || "",
-        "Onboard Email Dispatched": r.onboarding_email_sent ? "Yes" : "No",
-        "Submission Date": r.created_at || "Recent",
-      })),
-      `veerracerss-recruitment-${targetStatus.toLowerCase()}-${new Date().toISOString().split("T")[0]}`,
-      `${targetStatus} Candidates`
-    );
-    setShowStatusExportModal(false);
-  };
-
   const handleSaveQuestions = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingQuestions(true);
     try {
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem(
-            "vr_recruitment_questions",
-            JSON.stringify({ question_prompt: questionPrompt })
-          );
-        } catch {}
-      }
       await onUpdateSettings({
         recruitment_question_prompt: questionPrompt,
         recruitment_eligibility: eligibilityNote,
@@ -348,10 +365,46 @@ VSSUT Burla`;
     }
   };
 
+  const handleExecuteExport = (selectedCohort: "ALL" | "Inbox" | "Accepted" | "Declined") => {
+    let listToExport = recruits;
+    let fileName = "VeerRacerss_Recruitment_Candidates.xlsx";
+
+    if (selectedCohort === "Inbox") {
+      listToExport = recruits.filter((r) => r.status !== "Accepted" && r.status !== "Declined");
+      fileName = "VeerRacerss_Recruits_Awaiting_Decision.xlsx";
+    } else if (selectedCohort === "Accepted") {
+      listToExport = recruits.filter((r) => r.status === "Accepted");
+      fileName = "VeerRacerss_Accepted_Recruits_2026.xlsx";
+    } else if (selectedCohort === "Declined") {
+      listToExport = recruits.filter((r) => r.status === "Declined");
+      fileName = "VeerRacerss_Declined_Applications.xlsx";
+    }
+
+    const exportRows = listToExport.map((r, i) => ({
+      "S.No": i + 1,
+      "Full Name": r.full_name,
+      "Email Address": r.email,
+      "WhatsApp / Phone": r.phone,
+      "Roll Number": r.roll_no,
+      "Year of Study": r.year_of_study,
+      "Branch / Dept": r.branch,
+      "Primary Domain": r.primary_domain,
+      "Secondary Domain": r.secondary_domain || "None",
+      "PR Specialization": r.notes || "None (Technical Only)",
+      "Technical Experience / Statement": r.experience_summary || "",
+      Status: r.status === "Pending" ? "Awaiting Decision" : r.status,
+      "Onboarding Letter Sent": r.onboarding_email_sent ? "Yes" : "No",
+      "Application Date": r.created_at ? new Date(r.created_at).toLocaleDateString() : "",
+    }));
+
+    exportTableToExcel(exportRows, fileName.replace(".xlsx", ""), "Recruits");
+    setShowStatusExportModal(false);
+  };
+
   const formActive = siteSettings.recruitment_form_enabled !== false;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       {/* Master Toggle & Header Banner */}
       <div className="bg-[#0b0c10] border border-white/10 p-5 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -360,10 +413,10 @@ VSSUT Burla`;
             <span>RECRUITMENT & INDUCTION CONTROL</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-display font-black uppercase text-white">
-            Applicant Checklist & Onboarding
+            Applicant Triage & Onboarding
           </h2>
           <p className="text-xs font-mono text-white/50">
-            {recruits.length} Total Submissions • {recruits.filter((r) => r.status === "Accepted").length} Accepted
+            {totalCount} Total Applications • {inboxCount} Awaiting Decision • {acceptedCount} Accepted
           </p>
         </div>
 
@@ -412,6 +465,103 @@ VSSUT Burla`;
         </div>
       </div>
 
+      {/* Prominent Smart Workflow Tabs (Inbox vs Accepted vs Declined vs All) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <button
+          onClick={() => setWorkflowTab("inbox")}
+          className={`p-3 sm:p-4 border transition-all text-left flex flex-col justify-between ${
+            workflowTab === "inbox"
+              ? "bg-amber-500/15 border-amber-500 text-white shadow-lg"
+              : "bg-[#0b0c10] border-white/10 text-white/60 hover:text-white hover:border-white/20"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-amber-400 flex items-center gap-1.5">
+              <Inbox className="w-3.5 h-3.5" />
+              <span>To Review (Inbox)</span>
+            </span>
+            <span
+              className={`text-xs font-mono px-2 py-0.5 font-bold ${
+                inboxCount > 0
+                  ? "bg-amber-500 text-black rounded-full"
+                  : "bg-white/10 text-white/50"
+              }`}
+            >
+              {inboxCount}
+            </span>
+          </div>
+          <div className="text-sm font-display font-black uppercase text-white truncate">
+            Action Needed
+          </div>
+        </button>
+
+        <button
+          onClick={() => setWorkflowTab("accepted")}
+          className={`p-3 sm:p-4 border transition-all text-left flex flex-col justify-between ${
+            workflowTab === "accepted"
+              ? "bg-emerald-500/15 border-emerald-500 text-white shadow-lg"
+              : "bg-[#0b0c10] border-white/10 text-white/60 hover:text-white hover:border-white/20"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-emerald-400 flex items-center gap-1.5">
+              <UserCheck className="w-3.5 h-3.5" />
+              <span>Accepted Squad</span>
+            </span>
+            <span className="text-xs font-mono px-2 py-0.5 font-bold bg-emerald-500/20 text-emerald-300">
+              {acceptedCount}
+            </span>
+          </div>
+          <div className="text-sm font-display font-black uppercase text-white truncate">
+            Accepted
+          </div>
+        </button>
+
+        <button
+          onClick={() => setWorkflowTab("declined")}
+          className={`p-3 sm:p-4 border transition-all text-left flex flex-col justify-between ${
+            workflowTab === "declined"
+              ? "bg-red-500/15 border-red-500 text-white shadow-lg"
+              : "bg-[#0b0c10] border-white/10 text-white/60 hover:text-white hover:border-white/20"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-red-400 flex items-center gap-1.5">
+              <UserX className="w-3.5 h-3.5" />
+              <span>Declined List</span>
+            </span>
+            <span className="text-xs font-mono px-2 py-0.5 font-bold bg-red-500/20 text-red-300">
+              {declinedCount}
+            </span>
+          </div>
+          <div className="text-sm font-display font-black uppercase text-white truncate">
+            Declined
+          </div>
+        </button>
+
+        <button
+          onClick={() => setWorkflowTab("all")}
+          className={`p-3 sm:p-4 border transition-all text-left flex flex-col justify-between ${
+            workflowTab === "all"
+              ? "bg-white/15 border-white text-white shadow-lg"
+              : "bg-[#0b0c10] border-white/10 text-white/60 hover:text-white hover:border-white/20"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-white/70 flex items-center gap-1.5">
+              <ListFilter className="w-3.5 h-3.5" />
+              <span>Master Roster</span>
+            </span>
+            <span className="text-xs font-mono px-2 py-0.5 font-bold bg-white/10 text-white">
+              {totalCount}
+            </span>
+          </div>
+          <div className="text-sm font-display font-black uppercase text-white truncate">
+            All Applicants
+          </div>
+        </button>
+      </div>
+
       {/* Filter Toolbar */}
       <div className="bg-[#0b0c10] border border-white/10 p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <div className="relative flex-1">
@@ -426,19 +576,6 @@ VSSUT Burla`;
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#111115] border border-white/10 px-2.5 py-1.5 text-xs font-mono text-white/80 focus:border-racing-red outline-none uppercase"
-          >
-            <option value="ALL">All Status</option>
-            <option value="Pending">Pending Review</option>
-            <option value="Shortlisted">Shortlisted</option>
-            <option value="Accepted">Accepted</option>
-            <option value="Declined">Declined</option>
-          </select>
-
           {/* Year Filter */}
           <select
             value={yearFilter}
@@ -457,10 +594,10 @@ VSSUT Burla`;
             className="bg-[#111115] border border-white/10 px-2.5 py-1.5 text-xs font-mono text-white/80 focus:border-racing-red outline-none uppercase"
           >
             <option value="ALL">All Domains</option>
-            <option value="Powertrain & High Voltage (Battery & Inverters)">Powertrain & High Voltage</option>
-            <option value="Chassis & Aerodynamics (Spaceframe & Carbon Aero)">Chassis & Aerodynamics</option>
-            <option value="Suspension & Kinematics (Double-Wishbone & Steering)">Suspension & Kinematics</option>
-            <option value="Brakes & Vehicle Dynamics (Hydraulics & AP Racing)">Brakes & Vehicle Dynamics</option>
+            <option value="Powertrain & High Voltage">Powertrain & High Voltage</option>
+            <option value="Chassis & Aerodynamics">Chassis & Aerodynamics</option>
+            <option value="Suspension & Kinematics">Suspension & Kinematics</option>
+            <option value="Brakes & Vehicle Dynamics">Brakes & Vehicle Dynamics</option>
             <option value="pr">PR / Media / Sponsorship</option>
           </select>
         </div>
@@ -469,229 +606,224 @@ VSSUT Burla`;
       {/* Candidates List */}
       {filteredRecruits.length === 0 ? (
         <div className="bg-[#0b0c10] border border-white/10 p-12 text-center text-white/50 font-mono text-xs">
-          <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
-          No recruitment applications found matching the current filters.
+          {workflowTab === "inbox" ? (
+            <div className="space-y-2">
+              <CheckCircle className="w-10 h-10 mx-auto text-emerald-400 opacity-60" />
+              <p className="text-white text-sm font-display uppercase font-bold">Inbox Zero!</p>
+              <p className="text-white/40">All recruitment applications have been reviewed and processed.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Users className="w-8 h-8 mx-auto opacity-30" />
+              <p>No candidates found matching the current filters.</p>
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredRecruits.map((candidate) => (
-            <div
-              key={candidate.id}
-              className={`bg-[#0b0c10] border p-4 sm:p-5 transition-all ${
-                candidate.status === "Accepted"
-                  ? "border-emerald-500/40 bg-emerald-950/10"
-                  : candidate.status === "Declined"
-                  ? "border-red-500/30 opacity-70"
-                  : candidate.status === "Shortlisted"
-                  ? "border-blue-500/40"
-                  : "border-white/10 hover:border-white/20"
-              }`}
-            >
-              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                {/* Left: Candidate Info */}
-                <div className="space-y-1.5 flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-display font-black text-base uppercase text-white tracking-wide">
-                      {candidate.full_name}
-                    </h3>
-                    <span className="text-[10px] font-mono bg-white/10 px-2 py-0.5 text-white/70">
-                      {candidate.year_of_study} • {candidate.branch}
-                    </span>
-                    <span className="text-[10px] font-mono text-white/50">Roll: {candidate.roll_no}</span>
-                  </div>
+          {filteredRecruits.map((candidate) => {
+            const isAccepted = candidate.status === "Accepted";
+            const isDeclined = candidate.status === "Declined";
+            const isAwaiting = !isAccepted && !isDeclined;
 
-                  <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-white/60">
-                    <span className="flex items-center gap-1 text-white/80">
-                      <Mail className="w-3.5 h-3.5 text-white/40" />
-                      {candidate.email}
-                    </span>
-                    <a
-                      href={`https://wa.me/${candidate.phone.replace(/[^0-9]/g, "")}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-emerald-400 hover:underline"
-                    >
-                      <Phone className="w-3.5 h-3.5" />
-                      {candidate.phone}
-                    </a>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 text-xs font-mono pt-1">
-                    <span className="text-white/40">Technical Domains:</span>
-                    <span className="bg-[#171820] text-racing-red font-semibold px-2 py-0.5 border border-white/10">
-                      1. {candidate.primary_domain}
-                    </span>
-                    {candidate.secondary_domain && (
-                      <span className="bg-[#171820] text-white/70 px-2 py-0.5 border border-white/10">
-                        2. {candidate.secondary_domain}
+            return (
+              <div
+                key={candidate.id}
+                className={`bg-[#0b0c10] border p-4 sm:p-5 transition-all ${
+                  isAccepted
+                    ? "border-emerald-500/40 bg-emerald-950/10"
+                    : isDeclined
+                    ? "border-red-500/20 bg-red-950/5 opacity-75"
+                    : "border-white/10 hover:border-white/20"
+                }`}
+              >
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                  {/* Left: Candidate Info */}
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-display font-black text-base uppercase text-white tracking-wide">
+                        {candidate.full_name}
+                      </h3>
+                      <span className="text-[10px] font-mono bg-white/10 px-2 py-0.5 text-white/70">
+                        {candidate.year_of_study} • {candidate.branch}
                       </span>
-                    )}
-                  </div>
-
-                  {/* PR Domain Interest Tag */}
-                  {candidate.notes && candidate.notes.includes("PR") && (
-                    <div className="pt-0.5">
-                      <span className="inline-block bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 text-[10px] font-mono font-bold">
-                        {candidate.notes}
-                      </span>
+                      <span className="text-[10px] font-mono text-white/50">Roll: {candidate.roll_no}</span>
                     </div>
-                  )}
 
-                  {candidate.experience_summary && (
-                    <p className="text-xs font-sans text-white/60 font-light leading-relaxed bg-black/40 p-2.5 border border-white/5 mt-2">
-                      <span className="text-white/80 font-mono text-[10px] uppercase font-bold block mb-0.5">
-                        Technical Experience / Motivation Statement:
+                    <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-white/60">
+                      <span className="flex items-center gap-1 text-white/80">
+                        <Mail className="w-3.5 h-3.5 text-white/40" />
+                        {candidate.email}
                       </span>
-                      {candidate.experience_summary}
-                    </p>
-                  )}
-                </div>
-
-                {/* Right: Actions, Score & Status */}
-                <div className="flex flex-col sm:flex-row lg:flex-col justify-between items-start lg:items-end gap-3 shrink-0 lg:border-l lg:border-white/10 lg:pl-5">
-                  {/* Status Indicator */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono uppercase text-white/50">Status:</span>
-                    <span
-                      className={`text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 border ${
-                        candidate.status === "Accepted"
-                          ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                          : candidate.status === "Declined"
-                          ? "bg-red-500/20 text-red-400 border-red-500/40"
-                          : candidate.status === "Shortlisted"
-                          ? "bg-blue-500/20 text-blue-400 border-blue-500/40"
-                          : "bg-amber-500/20 text-amber-400 border-amber-500/40"
-                      }`}
-                    >
-                      {candidate.status}
-                    </span>
-                    {candidate.onboarding_email_sent && (
-                      <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 font-bold">
-                        MAIL DISPATCHED
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Interview Score Input */}
-                  <div className="flex flex-col items-start lg:items-end gap-1 text-xs font-mono">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-white/40 text-[10px] uppercase">Score:</span>
-                      <input
-                        type="text"
-                        value={
-                          scoreDrafts[candidate.id] !== undefined
-                            ? scoreDrafts[candidate.id]
-                            : candidate.interview_score || ""
-                        }
-                        placeholder="e.g. 8.5 / 10"
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setScoreDrafts((prev) => ({ ...prev, [candidate.id]: val }));
-                          if (scoreErrors[candidate.id]) {
-                            setScoreErrors((prev) => {
-                              const copy = { ...prev };
-                              delete copy[candidate.id];
-                              return copy;
-                            });
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            (e.target as HTMLInputElement).blur();
-                          }
-                        }}
-                        onBlur={async () => {
-                          const currentVal =
-                            scoreDrafts[candidate.id] !== undefined
-                              ? scoreDrafts[candidate.id]
-                              : candidate.interview_score || "";
-                          if (currentVal.trim() !== (candidate.interview_score || "").trim()) {
-                            setSavingScoreId(candidate.id);
-                            try {
-                              await onUpdateScore(candidate.id, currentVal.trim());
-                            } catch (err: any) {
-                              setScoreErrors((prev) => ({
-                                ...prev,
-                                [candidate.id]: err.message || "Failed to update review score",
-                              }));
-                            } finally {
-                              setSavingScoreId(null);
-                            }
-                          }
-                        }}
-                        disabled={savingScoreId === candidate.id}
-                        className={`w-28 bg-[#111115] border px-2 py-0.5 text-[11px] font-mono text-white text-center outline-none transition-colors ${
-                          scoreErrors[candidate.id]
-                            ? "border-red-500/80 text-red-300"
-                            : "border-white/10 focus:border-racing-red"
-                        } ${savingScoreId === candidate.id ? "opacity-50" : ""}`}
-                      />
+                      <a
+                        href={`https://wa.me/${candidate.phone.replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-emerald-400 hover:underline"
+                        title="Chat with candidate on WhatsApp"
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                        {candidate.phone}
+                      </a>
                     </div>
-                    {scoreErrors[candidate.id] && (
-                      <span className="text-[10px] font-mono text-red-400 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3 shrink-0" />
-                        <span>{scoreErrors[candidate.id]}</span>
+
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-mono pt-1">
+                      <span className="text-white/40">Technical Domains:</span>
+                      <span className="bg-[#171820] text-racing-red font-semibold px-2 py-0.5 border border-white/10">
+                        1. {candidate.primary_domain}
                       </span>
+                      {candidate.secondary_domain && (
+                        <span className="bg-[#171820] text-white/70 px-2 py-0.5 border border-white/10">
+                          2. {candidate.secondary_domain}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* PR Domain Interest Tag */}
+                    {candidate.notes && (
+                      <div className="pt-0.5">
+                        <span className="inline-block bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 text-[10px] font-mono font-bold">
+                          {candidate.notes}
+                        </span>
+                      </div>
+                    )}
+
+                    {candidate.experience_summary && (
+                      <p className="text-xs font-sans text-white/60 font-light leading-relaxed bg-black/40 p-2.5 border border-white/5 mt-2">
+                        <span className="text-white/80 font-mono text-[10px] uppercase font-bold block mb-0.5">
+                          Technical Experience / Motivation Statement:
+                        </span>
+                        {candidate.experience_summary}
+                      </p>
                     )}
                   </div>
 
-                  {/* Decision Action Buttons */}
-                  <div className="flex flex-wrap items-center gap-2 pt-2">
-                    {candidate.status !== "Pending" && (
-                      <button
-                        onClick={() => onUpdateStatus(candidate.id, "Pending")}
-                        className="px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-mono font-bold uppercase transition-colors flex items-center gap-1"
-                        title="Reset to Pending"
+                  {/* Right: Smart Workflow Actions */}
+                  <div className="flex flex-col sm:flex-row lg:flex-col justify-between items-start lg:items-end gap-3 shrink-0 lg:border-l lg:border-white/10 lg:pl-5">
+                    {/* Status Badge */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono uppercase text-white/50">Status:</span>
+                      <span
+                        className={`text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 border ${
+                          isAccepted
+                            ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                            : isDeclined
+                            ? "bg-red-500/20 text-red-400 border-red-500/40"
+                            : "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                        }`}
                       >
-                        <RotateCcw className="w-3 h-3" />
-                        <span>Reset</span>
-                      </button>
-                    )}
+                        {isAccepted ? "ACCEPTED" : isDeclined ? "DECLINED" : "AWAITING DECISION"}
+                      </span>
+                      {candidate.onboarding_email_sent && (
+                        <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 font-bold">
+                          MAIL SENT
+                        </span>
+                      )}
+                    </div>
 
-                    {candidate.status !== "Shortlisted" && (
+                    {/* Intelligent Action Buttons */}
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      {isAwaiting && (
+                        <>
+                          {/* 1-Click Decline */}
+                          <button
+                            onClick={() => handleQuickDecline(candidate)}
+                            disabled={processingId === candidate.id}
+                            className="px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-[11px] font-mono font-bold uppercase transition-colors flex items-center gap-1 disabled:opacity-50"
+                            title="Decline candidate and move to Declined list"
+                          >
+                            <XCircle className="w-3.5 h-3.5 text-red-400" />
+                            <span>Decline</span>
+                          </button>
+
+                          {/* Quick Accept (Without Email) */}
+                          <button
+                            onClick={() => handleQuickAccept(candidate)}
+                            disabled={processingId === candidate.id}
+                            className="px-2.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-mono font-bold uppercase transition-colors flex items-center gap-1 disabled:opacity-50"
+                            title="Accept candidate directly"
+                          >
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Accept</span>
+                          </button>
+
+                          {/* Accept & Open Email Dispatcher */}
+                          <button
+                            onClick={() => handleOpenEmailModal(candidate)}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-md"
+                            title="Accept recruit & open customized onboarding email composer"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            <span>Accept & Mail</span>
+                          </button>
+                        </>
+                      )}
+
+                      {isAccepted && (
+                        <>
+                          {/* Send / Resend Onboarding Letter */}
+                          <button
+                            onClick={() => handleOpenEmailModal(candidate)}
+                            className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+                            title="Dispatch or resend onboarding welcome letter"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            <span>{candidate.onboarding_email_sent ? "Resend Mail" : "Dispatch Mail"}</span>
+                          </button>
+
+                          {/* Direct WhatsApp Contact */}
+                          <a
+                            href={`https://wa.me/${candidate.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                              `Hello ${candidate.full_name}, this is VeerRacerss Electric regarding your induction.`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1.5 bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/10 text-[11px] font-mono uppercase flex items-center gap-1 transition-colors"
+                            title="Open WhatsApp chat with candidate"
+                          >
+                            <Phone className="w-3 h-3" />
+                            <span>WhatsApp</span>
+                          </a>
+
+                          {/* Restore to Inbox */}
+                          <button
+                            onClick={() => handleRestoreToInbox(candidate)}
+                            disabled={processingId === candidate.id}
+                            className="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10 text-[11px] font-mono uppercase flex items-center gap-1 transition-colors"
+                            title="Undo acceptance and move back to Inbox"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            <span>Move to Inbox</span>
+                          </button>
+                        </>
+                      )}
+
+                      {isDeclined && (
+                        <button
+                          onClick={() => handleRestoreToInbox(candidate)}
+                          disabled={processingId === candidate.id}
+                          className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10 text-[11px] font-mono uppercase flex items-center gap-1.5 transition-colors"
+                          title="Reconsider candidate and restore to Inbox"
+                        >
+                          <RotateCcw className="w-3 h-3 text-cyan-400" />
+                          <span>Reconsider / Restore</span>
+                        </button>
+                      )}
+
+                      {/* Delete */}
                       <button
-                        onClick={() => onUpdateStatus(candidate.id, "Shortlisted")}
-                        className="px-2.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[11px] font-mono font-bold uppercase transition-colors flex items-center gap-1"
-                        title="Shortlist for Interview"
+                        onClick={() => onDeleteApplication(candidate.id, candidate.full_name)}
+                        className="p-1.5 text-white/30 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/30 transition-colors"
+                        title={`Delete application of ${candidate.full_name}`}
                       >
-                        <Clock className="w-3 h-3" />
-                        <span>Shortlist</span>
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    )}
-
-                    {candidate.status !== "Declined" && (
-                      <button
-                        onClick={() => onUpdateStatus(candidate.id, "Declined")}
-                        className="px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-[11px] font-mono font-bold uppercase transition-colors flex items-center gap-1"
-                        title="Decline Candidate"
-                      >
-                        <XCircle className="w-3 h-3" />
-                        <span>Decline</span>
-                      </button>
-                    )}
-
-                    {/* Accept & Send Onboarding Email */}
-                    <button
-                      onClick={() => handleOpenEmailModal(candidate)}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-md"
-                      title="Accept recruit & open customized onboarding email composer"
-                    >
-                      <CheckCircle className="w-3 h-3" />
-                      <span>{candidate.status === "Accepted" ? "Email Letter" : "Accept & Mail"}</span>
-                    </button>
-
-                    <button
-                      onClick={() => onDeleteApplication(candidate.id, candidate.full_name)}
-                      className="p-1.5 text-white/30 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/30 transition-colors"
-                      title={`Delete application of ${candidate.full_name}`}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -700,8 +832,9 @@ VSSUT Burla`;
       ========================================================================= */}
       {emailModalCandidate && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
-          <div className="bg-[#0b0c10] border border-racing-red/50 w-full max-w-2xl max-h-[90vh] overflow-y-auto overscroll-contain my-auto p-6 sm:p-8 shadow-2xl relative">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+          <div className="bg-[#0b0c10] border border-racing-red/50 w-full max-w-2xl max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
+            {/* Modal Header */}
+            <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded bg-racing-red/10 border border-racing-red/40 flex items-center justify-center text-racing-red">
                   <Mail className="w-4 h-4" />
@@ -724,7 +857,8 @@ VSSUT Burla`;
               </button>
             </div>
 
-            <div className="space-y-4">
+            {/* Modal Scrollable Body */}
+            <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
               <div>
                 <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Recipient</label>
                 <input
@@ -750,10 +884,10 @@ VSSUT Burla`;
                   Email Message Body (Customize any details before sending)
                 </label>
                 <textarea
-                  rows={10}
+                  rows={8}
                   value={emailMessage}
                   onChange={(e) => setEmailMessage(e.target.value)}
-                  className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
+                  className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed font-sans"
                 />
               </div>
 
@@ -801,60 +935,61 @@ VSSUT Burla`;
                   <span>Open in Gmail</span>
                 </a>
               </div>
+            </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/10">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(`Subject: ${emailSubject}\n\n${emailMessage}`);
-                      alert("Email text copied to clipboard!");
-                    }}
-                    className="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-mono uppercase flex items-center gap-1.5 transition-colors"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Copy Text</span>
-                  </button>
+            {/* Modal Footer */}
+            <div className="shrink-0 p-5 sm:p-6 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 bg-[#0b0c10]">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`Subject: ${emailSubject}\n\n${emailMessage}`);
+                    alert("Email text copied to clipboard!");
+                  }}
+                  className="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-mono uppercase flex items-center gap-1.5 transition-colors"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy Text</span>
+                </button>
 
-                  <a
-                    href={`mailto:${encodeURIComponent(emailModalCandidate.email)}?subject=${encodeURIComponent(
-                      emailSubject
-                    )}&body=${encodeURIComponent(emailMessage)}`}
-                    onClick={async () => {
-                      await onUpdateStatus(emailModalCandidate.id, "Accepted", true);
-                      emailModalCandidate.onboarding_email_sent = true;
-                    }}
-                    className="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-mono uppercase flex items-center gap-1.5 transition-colors"
-                  >
-                    <Mail className="w-3.5 h-3.5" />
-                    <span>Mail Client</span>
-                  </a>
-                </div>
+                <a
+                  href={`mailto:${encodeURIComponent(emailModalCandidate.email)}?subject=${encodeURIComponent(
+                    emailSubject
+                  )}&body=${encodeURIComponent(emailMessage)}`}
+                  onClick={async () => {
+                    await onUpdateStatus(emailModalCandidate.id, "Accepted", true);
+                    emailModalCandidate.onboarding_email_sent = true;
+                  }}
+                  className="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-mono uppercase flex items-center gap-1.5 transition-colors"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Mail Client</span>
+                </a>
+              </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setEmailModalCandidate(null)}
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-mono uppercase tracking-wider"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={sendingEmail}
-                    onClick={handleSendEmail}
-                    className="px-6 py-2 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50"
-                  >
-                    {sendingEmail ? (
-                      <span>Dispatching...</span>
-                    ) : (
-                      <>
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Send via Resend API</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEmailModalCandidate(null)}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-mono uppercase tracking-wider"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={sendingEmail}
+                  onClick={handleSendEmail}
+                  className="px-6 py-2 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50"
+                >
+                  {sendingEmail ? (
+                    <span>Dispatching...</span>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Send via Resend API</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
@@ -866,8 +1001,9 @@ VSSUT Burla`;
       ========================================================================= */}
       {showQuestionsModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
-          <div className="bg-[#0b0c10] border border-white/15 w-full max-w-xl max-h-[90vh] overflow-y-auto overscroll-contain my-auto p-6 sm:p-8 shadow-2xl relative">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+          <div className="bg-[#0b0c10] border border-white/15 w-full max-w-xl max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
+            {/* Modal Header */}
+            <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <MessageSquare className="w-5 h-5 text-racing-red" />
                 <h3 className="font-display font-black text-xl uppercase text-white">
@@ -882,66 +1018,70 @@ VSSUT Burla`;
               </button>
             </div>
 
-            <form onSubmit={handleSaveQuestions} className="space-y-4">
-              <div>
-                <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
-                  Technical Experience Question Prompt (Shown to Students)
-                </label>
-                <textarea
-                  rows={3}
-                  required
-                  value={questionPrompt}
-                  onChange={(e) => setQuestionPrompt(e.target.value)}
-                  placeholder="e.g. Why VeerRacerss Electric & Prior Technical Experience / Hands-on Projects"
-                  className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
-                />
-                <span className="text-[10px] text-white/40 block mt-1 font-mono">
-                  This exact prompt is displayed above the main statement textarea on <code>/recruitment</code>.
-                </span>
-              </div>
+            {/* Modal Scrollable Body */}
+            <form onSubmit={handleSaveQuestions} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
+                <div>
+                  <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
+                    Technical Experience Question Prompt (Shown to Students)
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    value={questionPrompt}
+                    onChange={(e) => setQuestionPrompt(e.target.value)}
+                    placeholder="e.g. Why VeerRacerss Electric & Prior Technical Experience / Hands-on Projects"
+                    className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
+                  />
+                  <span className="text-[10px] text-white/40 block mt-1 font-mono">
+                    This exact prompt is displayed above the main statement textarea on <code>/recruitment</code>.
+                  </span>
+                </div>
 
-              <div>
-                <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
-                  Eligibility & Year Criteria Note
-                </label>
-                <textarea
-                  rows={2}
-                  required
-                  value={eligibilityNote}
-                  onChange={(e) => setEligibilityNote(e.target.value)}
-                  placeholder="e.g. Open to 1st Year (Freshers) & 2nd Year (Lateral) B.Tech students..."
-                  className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
-                />
-              </div>
+                <div>
+                  <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
+                    Eligibility & Year Criteria Note
+                  </label>
+                  <textarea
+                    rows={2}
+                    required
+                    value={eligibilityNote}
+                    onChange={(e) => setEligibilityNote(e.target.value)}
+                    placeholder="e.g. Open to 1st Year (Freshers) & 2nd Year (Lateral) B.Tech students..."
+                    className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
+                  />
+                </div>
 
-              <div>
-                <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
-                  Application Phase Tagline
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={deadlineTagline}
-                  onChange={(e) => setDeadlineTagline(e.target.value)}
-                  placeholder="e.g. Season 2026 Phase 1 Induction"
-                  className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                />
-              </div>
+                <div>
+                  <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
+                    Application Phase Tagline
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={deadlineTagline}
+                    onChange={(e) => setDeadlineTagline(e.target.value)}
+                    placeholder="e.g. Season 2026 Phase 1 Induction"
+                    className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                  />
+                </div>
 
-              {/* Live Preview Box */}
-              <div className="bg-black/50 border border-white/10 p-3.5 mt-2">
-                <span className="text-[10px] font-mono uppercase text-racing-red font-bold block mb-1.5">
-                  Live Form Preview (What Students See):
-                </span>
-                <label className="text-xs font-mono uppercase text-white/80 block font-bold mb-1">
-                  {questionPrompt} <span className="text-racing-red">*</span>
-                </label>
-                <div className="bg-[#121318] border border-white/10 p-2 text-white/30 text-xs font-mono italic">
-                  [Applicant will type their answer and technical details here...]
+                {/* Live Preview Box */}
+                <div className="bg-black/50 border border-white/10 p-3.5 mt-2">
+                  <span className="text-[10px] font-mono uppercase text-racing-red font-bold block mb-1.5">
+                    Live Form Preview (What Students See):
+                  </span>
+                  <label className="text-xs font-mono uppercase text-white/80 block font-bold mb-1">
+                    {questionPrompt} <span className="text-racing-red">*</span>
+                  </label>
+                  <div className="bg-[#121318] border border-white/10 p-2 text-white/30 text-xs font-mono italic">
+                    [Applicant will type their answer and technical details here...]
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+              {/* Modal Footer */}
+              <div className="shrink-0 p-5 sm:p-6 pt-4 border-t border-white/10 flex justify-end gap-3 bg-[#0b0c10]">
                 <button
                   type="button"
                   onClick={() => setShowQuestionsModal(false)}
@@ -967,8 +1107,9 @@ VSSUT Burla`;
       ========================================================================= */}
       {showEmailTemplateModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
-          <div className="bg-[#0b0c10] border border-white/15 w-full max-w-2xl max-h-[90vh] overflow-y-auto overscroll-contain my-auto p-6 sm:p-8 shadow-2xl relative">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+          <div className="bg-[#0b0c10] border border-white/15 w-full max-w-2xl max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
+            {/* Modal Header */}
+            <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <Mail className="w-5 h-5 text-amber-400" />
                 <h3 className="font-display font-black text-xl uppercase text-white">
@@ -983,74 +1124,78 @@ VSSUT Burla`;
               </button>
             </div>
 
-            <form onSubmit={handleSaveEmailTemplate} className="space-y-4">
-              <div>
-                <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
-                  Email Subject Line
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={templateSubject}
-                  onChange={(e) => setTemplateSubject(e.target.value)}
-                  placeholder="e.g. Welcome to VeerRacerss Electric // Application Accepted"
-                  className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-mono uppercase text-white/60 font-bold block">
-                    Email Body Content (Template)
+            {/* Modal Scrollable Body */}
+            <form onSubmit={handleSaveEmailTemplate} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
+                <div>
+                  <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
+                    Email Subject Line
                   </label>
-                  <span className="text-[10px] font-mono text-white/40">
-                    Supports: <code>{'{candidate_name}'}</code>, <code>{'{primary_domain}'}</code>, <code>{'{whatsapp_link}'}</code>
+                  <input
+                    type="text"
+                    required
+                    value={templateSubject}
+                    onChange={(e) => setTemplateSubject(e.target.value)}
+                    placeholder="e.g. Welcome to VeerRacerss Electric // Application Accepted"
+                    className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-mono uppercase text-white/60 font-bold block">
+                      Email Body Content (Template)
+                    </label>
+                    <span className="text-[10px] font-mono text-white/40">
+                      Supports: <code>{'{candidate_name}'}</code>, <code>{'{primary_domain}'}</code>, <code>{'{whatsapp_link}'}</code>
+                    </span>
+                  </div>
+                  <textarea
+                    rows={8}
+                    required
+                    value={templateBody}
+                    onChange={(e) => setTemplateBody(e.target.value)}
+                    placeholder="Enter the onboarding text received by accepted recruits..."
+                    className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
+                    Official WhatsApp Recruits Group Link
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    value={whatsappLink}
+                    onChange={(e) => setWhatsappLink(e.target.value)}
+                    placeholder="https://chat.whatsapp.com/..."
+                    className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                  />
+                  <span className="text-[10px] text-white/40 block mt-1 font-mono">
+                    This link automatically replaces <code>{'{whatsapp_link}'}</code> in the email.
                   </span>
                 </div>
-                <textarea
-                  rows={10}
-                  required
-                  value={templateBody}
-                  onChange={(e) => setTemplateBody(e.target.value)}
-                  placeholder="Enter the onboarding text received by accepted recruits..."
-                  className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed font-sans"
-                />
-              </div>
 
-              <div>
-                <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
-                  Official WhatsApp Recruits Group Link
-                </label>
-                <input
-                  type="url"
-                  required
-                  value={whatsappLink}
-                  onChange={(e) => setWhatsappLink(e.target.value)}
-                  placeholder="https://chat.whatsapp.com/..."
-                  className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                />
-                <span className="text-[10px] text-white/40 block mt-1 font-mono">
-                  This link automatically replaces <code>{'{whatsapp_link}'}</code> in the email.
-                </span>
-              </div>
-
-              {/* Live Preview */}
-              <div className="bg-black/50 border border-white/10 p-4">
-                <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block mb-2">
-                  Live Email Preview (With Sample Student Data):
-                </span>
-                <div className="bg-[#14151b] border border-white/10 p-3 text-white/80 text-xs font-sans whitespace-pre-wrap leading-relaxed">
-                  <strong className="text-white block pb-1 border-b border-white/10 mb-2">
-                    Subject: {templateSubject}
-                  </strong>
-                  {templateBody
-                    .replace(/\{candidate_name\}/g, "Rahul Sharma")
-                    .replace(/\{primary_domain\}/g, "Powertrain & High Voltage")
-                    .replace(/\{whatsapp_link\}/g, whatsappLink || "https://chat.whatsapp.com/...")}
+                {/* Live Preview */}
+                <div className="bg-black/50 border border-white/10 p-4">
+                  <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block mb-2">
+                    Live Email Preview (With Sample Student Data):
+                  </span>
+                  <div className="bg-[#14151b] border border-white/10 p-3 text-white/80 text-xs font-sans whitespace-pre-wrap leading-relaxed">
+                    <strong className="text-white block pb-1 border-b border-white/10 mb-2">
+                      Subject: {templateSubject}
+                    </strong>
+                    {templateBody
+                      .replace(/\{candidate_name\}/g, "Rahul Sharma")
+                      .replace(/\{primary_domain\}/g, "Powertrain & High Voltage")
+                      .replace(/\{whatsapp_link\}/g, whatsappLink || "https://chat.whatsapp.com/...")}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+              {/* Modal Footer */}
+              <div className="shrink-0 p-5 sm:p-6 pt-4 border-t border-white/10 flex justify-end gap-3 bg-[#0b0c10]">
                 <button
                   type="button"
                   onClick={() => setShowEmailTemplateModal(false)}
@@ -1076,8 +1221,9 @@ VSSUT Burla`;
       ========================================================================= */}
       {showStatusExportModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
-          <div className="bg-[#0b0c10] border border-white/15 w-full max-w-md max-h-[90vh] overflow-y-auto overscroll-contain my-auto p-6 shadow-2xl relative">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+          <div className="bg-[#0b0c10] border border-white/15 w-full max-w-md max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
+            {/* Modal Header */}
+            <div className="shrink-0 p-5 pb-3 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
                 <h3 className="font-display font-black text-lg uppercase text-white">Export Candidates</h3>
@@ -1090,17 +1236,26 @@ VSSUT Burla`;
               </button>
             </div>
 
-            <p className="text-xs font-mono text-white/60 mb-5 leading-relaxed">
-              Select which candidate cohort the senior council needs for this download:
-            </p>
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto overscroll-contain p-5 space-y-2.5">
+              <p className="text-xs font-mono text-white/60 mb-3 leading-relaxed">
+                Select which candidate cohort the senior council needs for this download:
+              </p>
 
-            <div className="space-y-2.5">
               <button
                 onClick={() => handleExecuteExport("ALL")}
                 className="w-full text-left px-4 py-3 bg-[#121318] hover:bg-white/10 border border-white/10 text-white font-mono text-xs flex items-center justify-between transition-colors"
               >
                 <span className="font-bold uppercase">All Candidates (Complete Database)</span>
-                <span className="bg-white/10 px-2 py-0.5 text-[10px] rounded">{recruits.length}</span>
+                <span className="bg-white/10 px-2 py-0.5 text-[10px] rounded">{totalCount}</span>
+              </button>
+
+              <button
+                onClick={() => handleExecuteExport("Inbox")}
+                className="w-full text-left px-4 py-3 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-mono text-xs flex items-center justify-between transition-colors"
+              >
+                <span className="font-bold uppercase">Awaiting Decision (Inbox Only)</span>
+                <span className="bg-amber-500/20 px-2 py-0.5 text-[10px] rounded">{inboxCount}</span>
               </button>
 
               <button
@@ -1108,29 +1263,7 @@ VSSUT Burla`;
                 className="w-full text-left px-4 py-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-mono text-xs flex items-center justify-between transition-colors"
               >
                 <span className="font-bold uppercase">Accepted Recruits Only (For Onboarding Roster)</span>
-                <span className="bg-emerald-500/20 px-2 py-0.5 text-[10px] rounded">
-                  {recruits.filter((r) => r.status === "Accepted").length}
-                </span>
-              </button>
-
-              <button
-                onClick={() => handleExecuteExport("Shortlisted")}
-                className="w-full text-left px-4 py-3 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 font-mono text-xs flex items-center justify-between transition-colors"
-              >
-                <span className="font-bold uppercase">Shortlisted Candidates (For Round 2 Interviews)</span>
-                <span className="bg-blue-500/20 px-2 py-0.5 text-[10px] rounded">
-                  {recruits.filter((r) => r.status === "Shortlisted").length}
-                </span>
-              </button>
-
-              <button
-                onClick={() => handleExecuteExport("Pending")}
-                className="w-full text-left px-4 py-3 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-mono text-xs flex items-center justify-between transition-colors"
-              >
-                <span className="font-bold uppercase">Pending Review Applications</span>
-                <span className="bg-amber-500/20 px-2 py-0.5 text-[10px] rounded">
-                  {recruits.filter((r) => r.status === "Pending").length}
-                </span>
+                <span className="bg-emerald-500/20 px-2 py-0.5 text-[10px] rounded">{acceptedCount}</span>
               </button>
 
               <button
@@ -1138,13 +1271,12 @@ VSSUT Burla`;
                 className="w-full text-left px-4 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 font-mono text-xs flex items-center justify-between transition-colors"
               >
                 <span className="font-bold uppercase">Declined Applications</span>
-                <span className="bg-red-500/20 px-2 py-0.5 text-[10px] rounded">
-                  {recruits.filter((r) => r.status === "Declined").length}
-                </span>
+                <span className="bg-red-500/20 px-2 py-0.5 text-[10px] rounded">{declinedCount}</span>
               </button>
             </div>
 
-            <div className="flex justify-end pt-4 mt-4 border-t border-white/10">
+            {/* Modal Footer */}
+            <div className="shrink-0 p-4 border-t border-white/10 flex justify-end bg-[#0b0c10]">
               <button
                 onClick={() => setShowStatusExportModal(false)}
                 className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-mono uppercase"

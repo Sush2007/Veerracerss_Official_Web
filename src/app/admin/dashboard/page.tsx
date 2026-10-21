@@ -125,6 +125,7 @@ export default function AdminDashboard() {
   const [memberLinkedin, setMemberLinkedin] = useState("");
   const [memberInstagram, setMemberInstagram] = useState("");
   const [memberYearFilter, setMemberYearFilter] = useState("ALL");
+  const [memberSearchQuery, setMemberSearchQuery] = useState("");
   const [selectedMemberForDatasheet, setSelectedMemberForDatasheet] = useState<MemberRecord | null>(null);
   const [showProgressionModal, setShowProgressionModal] = useState(false);
 
@@ -140,6 +141,29 @@ export default function AdminDashboard() {
   // 9. Utilities & Modals State
   const [showStorageModal, setShowStorageModal] = useState(false);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
+
+  // Master Dialog Scroll-Lock Effect: Prevents background scrolling whenever ANY modal is active
+  const isAnyDashboardModalOpen = Boolean(
+    showMediaModal ||
+    showAlumniModal ||
+    deleteConfirmMedia ||
+    deleteConfirmAlumni ||
+    deleteConfirmMember ||
+    selectedMemberForDatasheet ||
+    showProgressionModal ||
+    showStorageModal ||
+    showSecurityModal
+  );
+
+  useEffect(() => {
+    if (isAnyDashboardModalOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [isAnyDashboardModalOpen]);
 
   const departments = [
     "Leadership",
@@ -2475,9 +2499,9 @@ export default function AdminDashboard() {
             ADD / EDIT MEDIA MODAL (F09)
         ========================================================================= */}
         {showMediaModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-[#0e0f15] border border-white/15 w-full max-w-lg p-6 sm:p-7 relative shadow-2xl">
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain animate-in fade-in duration-200">
+            <div className="bg-[#0e0f15] border border-white/15 w-full max-w-lg max-h-[90vh] flex flex-col my-auto relative shadow-2xl overscroll-contain">
+              <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
                 <h3 className="text-base font-bold uppercase font-display text-white flex items-center gap-2">
                   <Film className="w-4 h-4 text-racing-red" />
                   <span>{editingMedia ? "Edit Track Moment" : "Add Track Moment"}</span>
@@ -2494,7 +2518,8 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              <form onSubmit={handleSaveMediaSubmit} className="space-y-4">
+              <form onSubmit={handleSaveMediaSubmit} className="flex flex-col flex-1 overflow-hidden">
+                <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
                 <div>
                   <label className="text-xs uppercase text-white/50 mb-1 block font-mono">Title / Caption</label>
                   <input
@@ -2598,7 +2623,9 @@ export default function AdminDashboard() {
                   </label>
                 </div>
 
-                <div className="flex gap-2 pt-4 border-t border-white/10">
+                </div>
+
+                <div className="shrink-0 p-5 sm:p-6 pt-4 border-t border-white/10 flex gap-2 bg-[#0e0f15]">
                   <button
                     type="submit"
                     disabled={uploading}
@@ -2626,8 +2653,8 @@ export default function AdminDashboard() {
             DELETE MEDIA CONFIRMATION DIALOG (D-10)
         ========================================================================= */}
         {deleteConfirmMedia && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-[#120d0e] border border-red-500/40 w-full max-w-md p-6 relative shadow-2xl">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain animate-in fade-in duration-200">
+            <div className="bg-[#120d0e] border border-red-500/40 w-full max-w-md p-6 my-auto relative shadow-2xl overscroll-contain">
               <div className="flex items-center gap-3 mb-4 text-red-400">
                 <AlertCircle className="w-5 h-5 shrink-0" />
                 <h3 className="text-base font-bold uppercase font-display text-white">Confirm Media Deletion</h3>
@@ -2660,9 +2687,9 @@ export default function AdminDashboard() {
             ADD / EDIT ALUMNI MODAL (F10)
         ========================================================================= */}
         {showAlumniModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
-            <div className="bg-[#0e0f15] border border-white/15 w-full max-w-xl p-6 sm:p-7 relative shadow-2xl my-8">
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain animate-in fade-in duration-200">
+            <div className="bg-[#0e0f15] border border-white/15 w-full max-w-xl max-h-[90vh] flex flex-col my-auto relative shadow-2xl overscroll-contain">
+              <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
                 <h3 className="text-base font-bold uppercase font-display text-white flex items-center gap-2">
                   <GraduationCap className="w-4 h-4 text-racing-red" />
                   <span>{editingAlumni ? "Edit Alumnus Profile" : "Add Alumnus Profile"}</span>
@@ -2679,7 +2706,8 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              <form onSubmit={handleSaveAlumniSubmit} className="space-y-3.5">
+              <form onSubmit={handleSaveAlumniSubmit} className="flex flex-col flex-1 overflow-hidden">
+                <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-3.5">
                 <div>
                   <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Full Name</label>
                   <input
@@ -2829,7 +2857,9 @@ export default function AdminDashboard() {
                   )}
                 </div>
 
-                <div className="flex gap-2 pt-3 border-t border-white/10">
+                </div>
+
+                <div className="shrink-0 p-5 sm:p-6 pt-3 border-t border-white/10 flex gap-2 bg-[#0e0f15]">
                   <button
                     type="submit"
                     disabled={uploading}
@@ -2857,8 +2887,8 @@ export default function AdminDashboard() {
             DELETE ALUMNI CONFIRMATION DIALOG (D-10)
         ========================================================================= */}
         {deleteConfirmAlumni && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-[#120d0e] border border-red-500/40 w-full max-w-md p-6 relative shadow-2xl">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain animate-in fade-in duration-200">
+            <div className="bg-[#120d0e] border border-red-500/40 w-full max-w-md p-6 my-auto relative shadow-2xl overscroll-contain">
               <div className="flex items-center gap-3 mb-4 text-red-400">
                 <AlertCircle className="w-5 h-5 shrink-0" />
                 <h3 className="text-base font-bold uppercase font-display text-white">Confirm Alumni Deletion</h3>
@@ -3078,32 +3108,61 @@ export default function AdminDashboard() {
                 <div className="bg-[#0b0c10] border border-white/10 p-6">
                   {/* Roster Header & Year Filter */}
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5 pb-4 border-b border-white/10">
-                    <h3 className="text-base font-bold uppercase font-display text-white">
-                      Active Roster ({members.length})
-                    </h3>
+                    <div>
+                      <h3 className="text-base font-bold uppercase font-display text-white">
+                        Active Roster ({members.length})
+                      </h3>
+                      <p className="text-[10px] font-mono text-white/40">
+                        Full squad roll • Scroll down freely to view all members
+                      </p>
+                    </div>
 
-                    {/* Filter Pills */}
-                    <div className="flex flex-wrap gap-1.5 text-[10px] font-mono">
-                      {["ALL", "1st Year", "2nd Year", "3rd Year", "4th Year"].map((yr) => (
-                        <button
-                          key={yr}
-                          onClick={() => setMemberYearFilter(yr)}
-                          className={`px-2.5 py-1 uppercase font-bold transition-colors ${
-                            memberYearFilter === yr
-                              ? "bg-racing-red text-white"
-                              : "bg-white/5 text-white/60 hover:text-white"
-                          }`}
-                        >
-                          {yr}
-                        </button>
-                      ))}
+                    {/* Filter Pills & Search */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={memberSearchQuery}
+                          onChange={(e) => setMemberSearchQuery(e.target.value)}
+                          placeholder="Search members..."
+                          className="bg-[#111115] border border-white/10 px-2.5 py-1 text-xs font-mono text-white placeholder:text-white/30 focus:border-racing-red outline-none w-36 sm:w-44"
+                        />
+                      </div>
+
+                      <div className="flex flex-wrap gap-1 text-[10px] font-mono">
+                        {["ALL", "1st Year", "2nd Year", "3rd Year", "4th Year"].map((yr) => (
+                          <button
+                            key={yr}
+                            onClick={() => setMemberYearFilter(yr)}
+                            className={`px-2 py-1 uppercase font-bold transition-colors ${
+                              memberYearFilter === yr
+                                ? "bg-racing-red text-white"
+                                : "bg-white/5 text-white/60 hover:text-white"
+                            }`}
+                          >
+                            {yr}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Members Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 max-h-[750px] overflow-y-auto pr-1">
+                  {/* Members Grid (Unconstrained height so entire list can be scrolled smoothly to the very end) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pb-28">
                     {members
-                      .filter((m) => memberYearFilter === "ALL" || (m.year_of_study || "").includes(memberYearFilter.replace(" Year", "")))
+                      .filter((m) => {
+                        const matchesYear =
+                          memberYearFilter === "ALL" ||
+                          (m.year_of_study || "").includes(memberYearFilter.replace(" Year", ""));
+                        const query = memberSearchQuery.toLowerCase().trim();
+                        const matchesSearch =
+                          !query ||
+                          (m.name || "").toLowerCase().includes(query) ||
+                          (m.role || "").toLowerCase().includes(query) ||
+                          (m.department || "").toLowerCase().includes(query) ||
+                          (m.academic_branch || "").toLowerCase().includes(query);
+                        return matchesYear && matchesSearch;
+                      })
                       .map((member) => (
                         <div
                           key={member.id}
@@ -3160,8 +3219,8 @@ export default function AdminDashboard() {
             DELETE MEMBER CONFIRMATION DIALOG (Soft Check Mistake Prevention)
         ========================================================================= */}
         {deleteConfirmMember && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-[#120d0e] border border-red-500/40 w-full max-w-md p-6 relative shadow-2xl">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain animate-in fade-in duration-200">
+            <div className="bg-[#120d0e] border border-red-500/40 w-full max-w-md p-6 my-auto relative shadow-2xl overscroll-contain">
               <div className="flex items-center gap-3 mb-4 text-red-400">
                 <AlertCircle className="w-5 h-5 shrink-0" />
                 <h3 className="text-base font-bold uppercase font-display text-white">Confirm Member Deletion</h3>

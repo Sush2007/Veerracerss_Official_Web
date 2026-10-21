@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   DollarSign,
   Plus,
@@ -31,6 +31,17 @@ export function ExpensesTab({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [viewingReceipt, setViewingReceipt] = useState<string | null>(null);
+
+  // Lock background body scroll when viewing receipt modal
+  useEffect(() => {
+    if (viewingReceipt) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [viewingReceipt]);
 
   // Form State
   const [title, setTitle] = useState("");
@@ -370,8 +381,8 @@ export function ExpensesTab({
 
       {/* Receipt Modal */}
       {viewingReceipt && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
-          <div className="w-full max-w-4xl max-h-[90vh] bg-[#0b0c10] border border-white/20 p-4 sm:p-6 relative flex flex-col">
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain animate-in fade-in">
+          <div className="w-full max-w-4xl max-h-[90vh] bg-[#0b0c10] border border-white/20 p-4 sm:p-6 my-auto relative flex flex-col overscroll-contain shadow-2xl">
             <div className="flex items-center justify-between mb-3 pr-8">
               <h4 className="text-xs font-mono uppercase text-white/70">Receipt / Invoice Document</h4>
               <a

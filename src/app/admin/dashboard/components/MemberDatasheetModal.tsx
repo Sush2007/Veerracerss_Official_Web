@@ -66,11 +66,11 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm overflow-y-auto p-4 sm:p-6 flex items-start sm:items-center justify-center overscroll-contain">
-      <div className="bg-[#0b0c10] border border-white/15 w-full max-w-xl my-auto p-6 sm:p-8 shadow-2xl relative animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain p-3 sm:p-6 flex items-center justify-center animate-in fade-in">
+      <div className="bg-[#0b0c10] border border-white/15 w-full max-w-xl max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+        <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
               src={formData.image_url || "/members/default-avatar.png"}
@@ -85,18 +85,17 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onClose}
-              className="p-1.5 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Full Name</label>
@@ -232,8 +231,10 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
               className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
             />
           </div>
+        </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-white/10">
+        {/* Modal Footer */}
+          <div className="shrink-0 p-5 sm:p-6 pt-4 border-t border-white/10 flex justify-end gap-3 bg-[#0b0c10]">
             <button
               type="button"
               onClick={onClose}

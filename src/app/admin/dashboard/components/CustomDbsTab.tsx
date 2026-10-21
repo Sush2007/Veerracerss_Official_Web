@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Database,
   Plus,
@@ -52,6 +52,18 @@ export function CustomDbsTab({
 
   // New Record Form State
   const [recordData, setRecordData] = useState<Record<string, any>>({});
+
+  // Lock body scroll whenever any custom database modal is open
+  useEffect(() => {
+    const isAnyOpen = Boolean(showCreateDbModal || showAddRecordModal || editingRecord);
+    if (isAnyOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [showCreateDbModal, showAddRecordModal, editingRecord]);
 
   const activeDb = databases.find((db) => db.id === activeDbId) || databases[0];
 
@@ -288,9 +300,9 @@ export function CustomDbsTab({
 
       {/* Modal: Create New Database */}
       {showCreateDbModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#0b0c10] border border-white/20 w-full max-w-xl p-6 sm:p-8 shadow-2xl relative animate-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain animate-in fade-in">
+          <div className="bg-[#0b0c10] border border-white/20 w-full max-w-xl max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
+            <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
               <h3 className="text-lg font-display font-black uppercase text-white flex items-center gap-2">
                 <Database className="w-4 h-4 text-racing-red" />
                 <span>Define New Custom Database</span>
@@ -300,81 +312,83 @@ export function CustomDbsTab({
               </button>
             </div>
 
-            <form onSubmit={handleCreateDbSubmit} className="space-y-4">
-              <div>
-                <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
-                  Database Title <span className="text-racing-red">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={dbName}
-                  onChange={(e) => setDbName(e.target.value)}
-                  placeholder="e.g. Battery Cell Batches or Tool Inventory"
-                  className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Description</label>
-                <input
-                  type="text"
-                  value={dbDescription}
-                  onChange={(e) => setDbDescription(e.target.value)}
-                  placeholder="Brief purpose of this database..."
-                  className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                />
-              </div>
-
-              {/* Define Columns */}
-              <div className="border border-white/10 p-3.5 bg-black/30 space-y-3">
-                <span className="text-[11px] font-mono uppercase text-white/70 font-bold block">
-                  Table Columns ({columns.length})
-                </span>
-
-                <div className="space-y-2">
-                  {columns.map((col, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-[#121318] p-2 border border-white/5 text-xs font-mono">
-                      <span>{col.label} <span className="text-white/40">({col.type})</span></span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveColumn(idx)}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex gap-2 pt-2">
+            <form onSubmit={handleCreateDbSubmit} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
+                <div>
+                  <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
+                    Database Title <span className="text-racing-red">*</span>
+                  </label>
                   <input
                     type="text"
-                    value={newColLabel}
-                    onChange={(e) => setNewColLabel(e.target.value)}
-                    placeholder="New Column Name"
-                    className="flex-1 bg-[#121318] border border-white/10 px-2.5 py-1.5 text-xs font-mono text-white outline-none"
+                    required
+                    value={dbName}
+                    onChange={(e) => setDbName(e.target.value)}
+                    placeholder="e.g. Battery Cell Batches or Tool Inventory"
+                    className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
                   />
-                  <select
-                    value={newColType}
-                    onChange={(e) => setNewColType(e.target.value as any)}
-                    className="bg-[#121318] border border-white/10 px-2 py-1.5 text-xs font-mono text-white outline-none"
-                  >
-                    <option value="text">Text</option>
-                    <option value="number">Number</option>
-                    <option value="date">Date</option>
-                  </select>
-                  <button
-                    type="button"
-                    onClick={handleAddColumn}
-                    className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-mono uppercase"
-                  >
-                    Add Column
-                  </button>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Description</label>
+                  <input
+                    type="text"
+                    value={dbDescription}
+                    onChange={(e) => setDbDescription(e.target.value)}
+                    placeholder="Brief purpose of this database..."
+                    className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                  />
+                </div>
+
+                {/* Define Columns */}
+                <div className="border border-white/10 p-3.5 bg-black/30 space-y-3">
+                  <span className="text-[11px] font-mono uppercase text-white/70 font-bold block">
+                    Table Columns ({columns.length})
+                  </span>
+
+                  <div className="space-y-2">
+                    {columns.map((col, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-[#121318] p-2 border border-white/5 text-xs font-mono">
+                        <span>{col.label} <span className="text-white/40">({col.type})</span></span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveColumn(idx)}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <input
+                      type="text"
+                      value={newColLabel}
+                      onChange={(e) => setNewColLabel(e.target.value)}
+                      placeholder="New Column Name"
+                      className="flex-1 bg-[#121318] border border-white/10 px-2.5 py-1.5 text-xs font-mono text-white outline-none"
+                    />
+                    <select
+                      value={newColType}
+                      onChange={(e) => setNewColType(e.target.value as any)}
+                      className="bg-[#121318] border border-white/10 px-2 py-1.5 text-xs font-mono text-white outline-none"
+                    >
+                      <option value="text">Text</option>
+                      <option value="number">Number</option>
+                      <option value="date">Date</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={handleAddColumn}
+                      className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-mono uppercase"
+                    >
+                      Add Column
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-3">
+              <div className="shrink-0 p-5 sm:p-6 pt-4 border-t border-white/10 flex justify-end gap-3 bg-[#0b0c10]">
                 <button
                   type="button"
                   onClick={() => setShowCreateDbModal(false)}
@@ -396,9 +410,9 @@ export function CustomDbsTab({
 
       {/* Modal: Add Record to Active Database */}
       {showAddRecordModal && activeDb && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#0b0c10] border border-white/20 w-full max-w-lg p-6 sm:p-8 shadow-2xl relative animate-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain animate-in fade-in">
+          <div className="bg-[#0b0c10] border border-white/20 w-full max-w-lg max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
+            <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
               <h3 className="text-base font-display font-black uppercase text-white">
                 Add Entry: {activeDb.db_name}
               </h3>
@@ -407,28 +421,30 @@ export function CustomDbsTab({
               </button>
             </div>
 
-            <form onSubmit={handleAddRecordSubmit} className="space-y-3.5">
-              {activeDb.schema_definition.map((col) => (
-                <div key={col.key}>
-                  <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
-                    {col.label}
-                  </label>
-                  <input
-                    type={col.type === "number" ? "number" : col.type === "date" ? "date" : "text"}
-                    required
-                    value={recordData[col.key] || ""}
-                    onChange={(e) =>
-                      setRecordData({
-                        ...recordData,
-                        [col.key]: col.type === "number" ? parseFloat(e.target.value) || 0 : e.target.value,
-                      })
-                    }
-                    className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                  />
-                </div>
-              ))}
+            <form onSubmit={handleAddRecordSubmit} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-3.5">
+                {activeDb.schema_definition.map((col) => (
+                  <div key={col.key}>
+                    <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
+                      {col.label}
+                    </label>
+                    <input
+                      type={col.type === "number" ? "number" : col.type === "date" ? "date" : "text"}
+                      required
+                      value={recordData[col.key] || ""}
+                      onChange={(e) =>
+                        setRecordData({
+                          ...recordData,
+                          [col.key]: col.type === "number" ? parseFloat(e.target.value) || 0 : e.target.value,
+                        })
+                      }
+                      className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                    />
+                  </div>
+                ))}
+              </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-white/10">
+              <div className="shrink-0 p-5 sm:p-6 pt-4 border-t border-white/10 flex justify-end gap-3 bg-[#0b0c10]">
                 <button
                   type="button"
                   onClick={() => setShowAddRecordModal(false)}
@@ -450,9 +466,9 @@ export function CustomDbsTab({
 
       {/* Modal: Edit Record in Active Database */}
       {editingRecord && activeDb && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#0b0c10] border border-white/20 w-full max-w-lg p-6 sm:p-8 shadow-2xl relative animate-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain animate-in fade-in">
+          <div className="bg-[#0b0c10] border border-white/20 w-full max-w-lg max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
+            <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
               <h3 className="text-base font-display font-black uppercase text-white flex items-center gap-2">
                 <Edit2 className="w-4 h-4 text-racing-red" />
                 <span>Edit Entry: {activeDb.db_name}</span>
@@ -468,27 +484,29 @@ export function CustomDbsTab({
               </button>
             </div>
 
-            <form onSubmit={handleEditRecordSubmit} className="space-y-3.5">
-              {activeDb.schema_definition.map((col) => (
-                <div key={col.key}>
-                  <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
-                    {col.label}
-                  </label>
-                  <input
-                    type={col.type === "number" ? "number" : col.type === "date" ? "date" : "text"}
-                    value={editRecordData[col.key] !== undefined && editRecordData[col.key] !== null ? editRecordData[col.key] : ""}
-                    onChange={(e) =>
-                      setEditRecordData({
-                        ...editRecordData,
-                        [col.key]: col.type === "number" ? parseFloat(e.target.value) || 0 : e.target.value,
-                      })
-                    }
-                    className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                  />
-                </div>
-              ))}
+            <form onSubmit={handleEditRecordSubmit} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-3.5">
+                {activeDb.schema_definition.map((col) => (
+                  <div key={col.key}>
+                    <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
+                      {col.label}
+                    </label>
+                    <input
+                      type={col.type === "number" ? "number" : col.type === "date" ? "date" : "text"}
+                      value={editRecordData[col.key] !== undefined && editRecordData[col.key] !== null ? editRecordData[col.key] : ""}
+                      onChange={(e) =>
+                        setEditRecordData({
+                          ...editRecordData,
+                          [col.key]: col.type === "number" ? parseFloat(e.target.value) || 0 : e.target.value,
+                        })
+                      }
+                      className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                    />
+                  </div>
+                ))}
+              </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-white/10">
+              <div className="shrink-0 p-5 sm:p-6 pt-4 border-t border-white/10 flex justify-end gap-3 bg-[#0b0c10]">
                 <button
                   type="button"
                   onClick={() => {
