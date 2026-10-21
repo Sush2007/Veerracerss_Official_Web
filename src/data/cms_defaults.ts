@@ -1,3 +1,12 @@
+export interface RecruitmentCustomQuestion {
+  id: string;
+  label: string;
+  type: 'textbox' | 'dropdown';
+  options?: string[];
+  placeholder?: string;
+  required?: boolean;
+}
+
 export interface SiteSettings {
   hero_title?: string;
   hero_subtitle?: string;
@@ -14,6 +23,7 @@ export interface SiteSettings {
   recruitment_instructions?: string;
   recruitment_eligibility?: string;
   recruitment_question_prompt?: string;
+  recruitment_custom_questions?: RecruitmentCustomQuestion[];
   onboarding_email_subject?: string;
   onboarding_email_template?: string;
   whatsapp_recruit_link?: string;
@@ -188,6 +198,28 @@ export interface AlumniRecord {
   order_index?: number;
 }
 
+export const DEFAULT_RECRUITMENT_QUESTIONS: RecruitmentCustomQuestion[] = [
+  {
+    id: "q-1",
+    label: "Why VeerRacerss Electric & Prior Technical Experience / Hands-on Projects",
+    type: "textbox",
+    placeholder: "Describe your interests, software proficiency, past projects, or reasons for joining VeerRacerss Electric...",
+    required: true,
+  },
+  {
+    id: "q-2",
+    label: "Prior EV / Robotics / Automotive Experience Level",
+    type: "dropdown",
+    options: [
+      "Beginner (Passionate & Eager to Learn)",
+      "Intermediate (Academic / Club Projects)",
+      "Advanced (Formula Student / Competition Experience)",
+      "None (Fresh Mindset)"
+    ],
+    required: false,
+  },
+];
+
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   hero_title: "VEERRACERSS ELECTRIC",
   hero_subtitle: "Odisha’s Premier Formula Student EV Racing Team | VSSUT Burla • Est. 2018.\nEngineered from raw CAD into high-voltage, track-dominating electric formula racecars.",
@@ -204,6 +236,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   recruitment_instructions: "Complete all fields accurately. Shortlisted candidates will be contacted via WhatsApp/Email for the technical discussion and workshop induction.",
   recruitment_eligibility: "Open to 1st Year (Freshers) & 2nd Year (Lateral) B.Tech students across all engineering branches of VSSUT Burla.",
   recruitment_question_prompt: "Why VeerRacerss Electric & Prior Technical Experience / Hands-on Projects",
+  recruitment_custom_questions: DEFAULT_RECRUITMENT_QUESTIONS,
   onboarding_email_subject: "Welcome to VeerRacerss Electric // Application Accepted",
   onboarding_email_template: "Dear {candidate_name},\n\nCongratulations! We are pleased to inform you that following the review of your induction application, you have been accepted into VeerRacerss Electric for the 2026 Season under the {primary_domain} division.\n\nNext Steps:\n1. Join our official recruitment WhatsApp group: {whatsapp_link}\n2. Attend our induction briefing at the Central Workshop Block, VSSUT Burla.\n3. Bring your college student ID card.\n\nWelcome to the team!\n\nWarm regards,\nTeam VeerRacerss Electric\nVSSUT Burla",
   whatsapp_recruit_link: "https://chat.whatsapp.com/veerracerss-recruits-2026",

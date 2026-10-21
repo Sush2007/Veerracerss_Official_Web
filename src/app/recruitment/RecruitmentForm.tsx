@@ -3,6 +3,10 @@
 import { useState, useEffect } from "react";
 import { CheckCircle, AlertCircle, Send, ArrowRight, Shield, Zap, Sparkles } from "lucide-react";
 import { createClient } from "@/src/lib/supabase/client";
+import {
+  RecruitmentCustomQuestion,
+  DEFAULT_RECRUITMENT_QUESTIONS,
+} from "@/src/data/cms_defaults";
 
 interface RecruitmentFormProps {
   formEnabled: boolean;
@@ -26,10 +30,10 @@ export function RecruitmentForm({
   const [primaryDomain, setPrimaryDomain] = useState("Powertrain and Drivetrain");
   const [secondaryDomain, setSecondaryDomain] = useState("Chassis and Design");
   const [prDomain, setPrDomain] = useState("None (Technical Only)");
-  const [questionPrompt, setQuestionPrompt] = useState(
-    "Why VeerRacerss Electric & Prior Technical Experience"
+  const [customQuestions, setCustomQuestions] = useState<RecruitmentCustomQuestion[]>(
+    DEFAULT_RECRUITMENT_QUESTIONS
   );
-  const [experienceSummary, setExperienceSummary] = useState("");
+  const [questionAnswers, setQuestionAnswers] = useState<Record<string, string>>({});
 
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -40,14 +44,32 @@ export function RecruitmentForm({
       try {
         const supabase = createClient();
         const { data } = await supabase.from("site_settings").select("*").limit(1).maybeSingle();
-        if (data?.recruitment_question_prompt) {
-          setQuestionPrompt(data.recruitment_question_prompt);
+        let loadedQs: RecruitmentCustomQuestion[] | null = null;
+        if (
+          data?.recruitment_custom_questions &&
+          Array.isArray(data.recruitment_custom_questions) &&
+          data.recruitment_custom_questions.length > 0
+        ) {
+          loadedQs = data.recruitment_custom_questions;
         } else if (typeof window !== "undefined") {
-          const raw = localStorage.getItem("vr_recruitment_questions");
+          const raw = localStorage.getItem("vr_recruitment_custom_questions");
           if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed.question_prompt) setQuestionPrompt(parsed.question_prompt);
+            try {
+              loadedQs = JSON.parse(raw);
+            } catch {}
           }
+        }
+        if (loadedQs && loadedQs.length > 0) {
+          setCustomQuestions(loadedQs);
+        } else if (data?.recruitment_question_prompt) {
+          setCustomQuestions([
+            {
+              id: "q-1",
+              label: data.recruitment_question_prompt,
+              type: "textbox",
+              required: true,
+            },
+          ]);
         }
       } catch {}
     }
@@ -89,6 +111,17 @@ export function RecruitmentForm({
     setSubmitting(true);
 
     try {
+      // Compile dynamic custom question answers into structured summary
+      const answersSummary =
+        customQuestions.length > 0
+          ? customQuestions
+              .map((q) => {
+                const val = (questionAnswers[q.id] || "").trim();
+                return `${q.label}:\n${val || "(Not answered)"}`;
+              })
+              .join("\n\n")
+          : "";
+
       const res = await fetch("/api/recruitment/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -102,7 +135,7 @@ export function RecruitmentForm({
           primary_domain: primaryDomain,
           secondary_domain: secondaryDomain,
           pr_domain: prDomain,
-          experience_summary: experienceSummary,
+          experience_summary: answersSummary,
         }),
       });
 
@@ -165,7 +198,7 @@ export function RecruitmentForm({
             setEmail("");
             setPhone("");
             setRollNo("");
-            setExperienceSummary("");
+            setQuestionAnswers({});
             setPrDomain("None (Technical Only)");
           }}
           className="bg-white/10 hover:bg-white hover:text-black text-white text-xs font-mono font-bold px-6 py-3 transition-all uppercase tracking-wider"
@@ -357,20 +390,45 @@ export function RecruitmentForm({
           </span>
         </div>
 
-        {/* Technical Experience / Senior Question Prompt */}
-        <div>
-          <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block">
-            {questionPrompt} <span className="text-racing-red">*</span>
-          </label>
-          <textarea
-            required
-            rows={4}
-            value={experienceSummary}
-            onChange={(e) => setExperienceSummary(e.target.value)}
-            placeholder="Describe your interests, software proficiency, past projects, or reasons for joining VeerRacerss Electric..."
-            className="w-full bg-[#121318] border border-white/10 focus:border-racing-red px-3.5 py-2.5 text-xs font-mono text-white outline-none transition-colors"
-          />
-        </div>
+        {/* Senior / Admin Configured Questions (Textbox or Dropdown) */}
+        {customQuestions.map((q, idx) => {
+          const val = questionAnswers[q.id] || "";
+          return (
+            <div key={q.id || idx}>
+              <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block">
+                {q.label} {q.required && <span className="text-racing-red">*</span>}
+              </label>
+              {q.type === "dropdown" ? (
+                <select
+                  required={Boolean(q.required)}
+                  value={val}
+                  onChange={(e) =>
+                    setQuestionAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))
+                  }
+                  className="w-full bg-[#121318] border border-white/10 focus:border-racing-red px-3.5 py-2.5 text-xs font-mono text-white outline-none transition-colors"
+                >
+                  <option value="">-- Select an option --</option>
+                  {(q.options && q.options.length > 0 ? q.options : ["Yes", "No"]).map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <textarea
+                  required={Boolean(q.required)}
+                  rows={4}
+                  value={val}
+                  onChange={(e) =>
+                    setQuestionAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))
+                  }
+                  placeholder={q.placeholder || "Describe your response in detail..."}
+                  className="w-full bg-[#121318] border border-white/10 focus:border-racing-red px-3.5 py-2.5 text-xs font-mono text-white outline-none transition-colors"
+                />
+              )}
+            </div>
+          );
+        })}
 
         {/* Submit Button */}
         <div className="pt-2">

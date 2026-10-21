@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/src/lib/supabase/client";
 import { ArrowLeft, KeyRound, Eye, EyeOff } from "lucide-react";
@@ -15,6 +15,12 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +42,7 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 pt-24 pb-12 overflow-y-auto">
       <Link href="/" className="absolute top-8 left-8 text-white/50 hover:text-white flex items-center gap-2 text-sm font-medium transition-colors">
         <ArrowLeft className="w-5 h-5" /> Back to Home
       </Link>

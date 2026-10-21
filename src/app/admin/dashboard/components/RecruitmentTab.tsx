@@ -22,8 +22,16 @@ import {
   UserCheck,
   UserX,
   ListFilter,
+  Plus,
+  AlignLeft,
+  ChevronDown,
 } from "lucide-react";
-import { RecruitmentApplication, SiteSettings } from "@/src/data/cms_defaults";
+import {
+  RecruitmentApplication,
+  SiteSettings,
+  RecruitmentCustomQuestion,
+  DEFAULT_RECRUITMENT_QUESTIONS,
+} from "@/src/data/cms_defaults";
 import { exportTableToExcel } from "@/src/lib/exportToExcel";
 
 interface RecruitmentTabProps {
@@ -62,10 +70,18 @@ export function RecruitmentTab({
 
   // Set Questions Modal State
   const [showQuestionsModal, setShowQuestionsModal] = useState(false);
-  const [questionPrompt, setQuestionPrompt] = useState(
-    siteSettings.recruitment_question_prompt ||
-      "Why VeerRacerss Electric & Prior Technical Experience / Hands-on Projects"
-  );
+  const [customQuestions, setCustomQuestions] = useState<RecruitmentCustomQuestion[]>(() => {
+    if (siteSettings.recruitment_custom_questions && siteSettings.recruitment_custom_questions.length > 0) {
+      return siteSettings.recruitment_custom_questions;
+    }
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("vr_recruitment_custom_questions");
+        if (raw) return JSON.parse(raw);
+      } catch {}
+    }
+    return DEFAULT_RECRUITMENT_QUESTIONS;
+  });
   const [eligibilityNote, setEligibilityNote] = useState(
     siteSettings.recruitment_eligibility ||
       "Open to 1st Year (Freshers) & 2nd Year (Lateral) B.Tech students across all engineering branches of VSSUT Burla."
@@ -315,16 +331,59 @@ VSSUT Burla`;
     }
   };
 
+  const handleAddQuestion = () => {
+    const newQ: RecruitmentCustomQuestion = {
+      id: `q-${Date.now()}`,
+      label: "",
+      type: "textbox",
+      placeholder: "e.g. Describe your experience or tools used...",
+      required: true,
+    };
+    setCustomQuestions((prev) => [...prev, newQ]);
+  };
+
+  const handleUpdateQuestion = (id: string, updates: Partial<RecruitmentCustomQuestion>) => {
+    setCustomQuestions((prev) =>
+      prev.map((q) => (q.id === id ? { ...q, ...updates } : q))
+    );
+  };
+
+  const handleRemoveQuestion = (id: string) => {
+    if (customQuestions.length <= 1) {
+      if (showError) showError("You must retain at least one question.");
+      return;
+    }
+    setCustomQuestions((prev) => prev.filter((q) => q.id !== id));
+  };
+
   const handleSaveQuestions = async (e: React.FormEvent) => {
     e.preventDefault();
+    const hasEmpty = customQuestions.some((q) => !q.label.trim());
+    if (hasEmpty) {
+      if (showError) showError("Please enter a title/prompt for all questions.");
+      return;
+    }
     setSavingQuestions(true);
     try {
+      const primaryPrompt =
+        customQuestions.find((q) => q.type === "textbox")?.label ||
+        customQuestions[0]?.label ||
+        "Technical Motivation";
       await onUpdateSettings({
-        recruitment_question_prompt: questionPrompt,
+        recruitment_question_prompt: primaryPrompt,
         recruitment_eligibility: eligibilityNote,
         recruitment_form_deadline: deadlineTagline,
+        recruitment_custom_questions: customQuestions,
       });
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_recruitment_custom_questions", JSON.stringify(customQuestions));
+        } catch {}
+      }
       setShowQuestionsModal(false);
+      if (showToast) showToast("Questions & form fields saved successfully!");
+    } catch (err: any) {
+      if (showError) showError(err.message || "Failed to save questions.");
     } finally {
       setSavingQuestions(false);
     }
@@ -669,12 +728,12 @@ VSSUT Burla`;
                     )}
 
                     {candidate.experience_summary && (
-                      <p className="text-xs font-sans text-white/60 font-light leading-relaxed bg-black/40 p-2.5 border border-white/5 mt-2">
-                        <span className="text-white/80 font-mono text-[10px] uppercase font-bold block mb-0.5">
-                          Technical Experience / Motivation Statement:
+                      <div className="text-xs font-sans text-white/70 font-light leading-relaxed bg-black/40 p-3 border border-white/5 mt-2 whitespace-pre-wrap font-mono text-[11px]">
+                        <span className="text-white/80 font-mono text-[10px] uppercase font-bold block mb-1 tracking-wider text-racing-red">
+                          Application Responses:
                         </span>
                         {candidate.experience_summary}
-                      </p>
+                      </div>
                     )}
                   </div>
 
@@ -824,7 +883,7 @@ VSSUT Burla`;
 
 
       {/* =========================================================================
-          MODAL 2: SET APPLICATION QUESTIONS
+          MODAL 2: SET APPLICATION QUESTIONS (DYNAMIC TEXTBOX & DROPDOWN BUILDER)
       ========================================================================= */}
       {showQuestionsModal && (
         <div
@@ -834,7 +893,7 @@ VSSUT Burla`;
           onTouchMove={(e) => e.stopPropagation()}
         >
           <div
-            className="bg-[#0b0c10] border border-white/15 w-full max-w-xl max-h-[88vh] flex flex-col shadow-2xl relative overflow-hidden"
+            className="bg-[#0b0c10] border border-white/15 w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
           >
@@ -842,9 +901,14 @@ VSSUT Burla`;
             <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <MessageSquare className="w-5 h-5 text-racing-red" />
-                <h3 className="font-display font-black text-xl uppercase text-white">
-                  Set Application Questions & Prompts
-                </h3>
+                <div>
+                  <h3 className="font-display font-black text-lg sm:text-xl uppercase text-white">
+                    Set Application Questions & Custom Fields
+                  </h3>
+                  <p className="text-[10px] font-mono text-white/50">
+                    Easily add textboxes and dropdown selection questions for applicant forms
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => setShowQuestionsModal(false)}
@@ -856,62 +920,251 @@ VSSUT Burla`;
 
             {/* Modal Scrollable Body */}
             <form onSubmit={handleSaveQuestions} className="flex flex-col flex-1 overflow-hidden">
-              <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
-                <div>
-                  <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
-                    Technical Experience Question Prompt (Shown to Students)
-                  </label>
-                  <textarea
-                    rows={3}
-                    required
-                    value={questionPrompt}
-                    onChange={(e) => setQuestionPrompt(e.target.value)}
-                    placeholder="e.g. Why VeerRacerss Electric & Prior Technical Experience / Hands-on Projects"
-                    className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
-                  />
-                  <span className="text-[10px] text-white/40 block mt-1 font-mono">
-                    This exact prompt is displayed above the main statement textarea on <code>/recruitment</code>.
-                  </span>
+              <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-6">
+                
+                {/* SECTION 1: QUESTION BUILDER */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-white">
+                        Form Questions ({customQuestions.length})
+                      </h4>
+                      <p className="text-[10px] font-mono text-white/50">
+                        Customize question prompts and pick between Textbox (paragraph) or Dropdown (select option).
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddQuestion}
+                      className="px-3 py-1.5 bg-racing-red/20 hover:bg-racing-red text-racing-red hover:text-white border border-racing-red/40 text-[11px] font-mono font-bold uppercase transition-colors flex items-center gap-1.5"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Question</span>
+                    </button>
+                  </div>
+
+                  {/* Question Cards */}
+                  <div className="space-y-3">
+                    {customQuestions.map((q, idx) => (
+                      <div
+                        key={q.id}
+                        className="bg-[#121318] border border-white/10 p-4 space-y-3 relative group hover:border-white/20 transition-all"
+                      >
+                        {/* Question Top Row: Index, Type Selector & Controls */}
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 pb-2.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-mono bg-racing-red text-white font-bold px-2 py-0.5 uppercase">
+                              Question #{idx + 1}
+                            </span>
+                            <span className="text-[10px] font-mono uppercase text-white/40">
+                              Type: <strong className="text-white uppercase">{q.type}</strong>
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            {/* Type Toggle Pills */}
+                            <div className="flex items-center bg-[#0b0c10] border border-white/10 p-0.5">
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateQuestion(q.id, { type: "textbox" })}
+                                className={`px-2.5 py-1 text-[10px] font-mono uppercase font-bold flex items-center gap-1 transition-colors ${
+                                  q.type === "textbox"
+                                    ? "bg-racing-red text-white"
+                                    : "text-white/60 hover:text-white"
+                                }`}
+                              >
+                                <AlignLeft className="w-3 h-3" />
+                                <span>Textbox</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleUpdateQuestion(q.id, {
+                                    type: "dropdown",
+                                    options: q.options && q.options.length > 0 ? q.options : ["Option 1", "Option 2"],
+                                  })
+                                }
+                                className={`px-2.5 py-1 text-[10px] font-mono uppercase font-bold flex items-center gap-1 transition-colors ${
+                                  q.type === "dropdown"
+                                    ? "bg-racing-red text-white"
+                                    : "text-white/60 hover:text-white"
+                                }`}
+                              >
+                                <ChevronDown className="w-3 h-3" />
+                                <span>Dropdown</span>
+                              </button>
+                            </div>
+
+                            {/* Required Checkbox */}
+                            <label className="flex items-center gap-1.5 text-[11px] font-mono text-white/70 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(q.required)}
+                                onChange={(e) => handleUpdateQuestion(q.id, { required: e.target.checked })}
+                                className="accent-racing-red"
+                              />
+                              <span>Required</span>
+                            </label>
+
+                            {/* Delete Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveQuestion(q.id)}
+                              disabled={customQuestions.length <= 1}
+                              className="p-1 text-white/40 hover:text-red-400 disabled:opacity-30 transition-colors"
+                              title="Delete question"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Question Title / Prompt */}
+                        <div>
+                          <label className="text-[11px] font-mono uppercase text-white/60 mb-1 block">
+                            Question Title / Prompt <span className="text-racing-red">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={q.label}
+                            onChange={(e) => handleUpdateQuestion(q.id, { label: e.target.value })}
+                            placeholder="e.g. Which CAD or simulation software packages have you used?"
+                            className="w-full bg-[#0b0c10] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                          />
+                        </div>
+
+                        {/* Dropdown Options Configuration */}
+                        {q.type === "dropdown" && (
+                          <div className="space-y-2 bg-[#0b0c10] p-3 border border-white/5">
+                            <label className="text-[10px] font-mono uppercase text-amber-400 font-bold block">
+                              Dropdown Options (Comma-Separated)
+                            </label>
+                            <input
+                              type="text"
+                              value={(q.options || []).join(", ")}
+                              onChange={(e) => {
+                                const rawOpts = e.target.value
+                                  .split(",")
+                                  .map((s) => s.trim())
+                                  .filter(Boolean);
+                                handleUpdateQuestion(q.id, { options: rawOpts });
+                              }}
+                              placeholder="e.g. SolidWorks, ANSYS Fluent, Fusion 360, MATLAB, None"
+                              className="w-full bg-[#121318] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                            />
+                            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                              <span className="text-[9px] font-mono text-white/40 uppercase">Preview Options:</span>
+                              {(q.options && q.options.length > 0 ? q.options : ["Option 1", "Option 2"]).map(
+                                (opt, i) => (
+                                  <span
+                                    key={i}
+                                    className="px-2 py-0.5 bg-white/10 border border-white/15 text-white/80 text-[10px] font-mono"
+                                  >
+                                    {opt}
+                                  </span>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Textbox Placeholder Hint */}
+                        {q.type === "textbox" && (
+                          <div>
+                            <label className="text-[10px] font-mono uppercase text-white/50 mb-1 block">
+                              Placeholder / Helper Hint for Students (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              value={q.placeholder || ""}
+                              onChange={(e) => handleUpdateQuestion(q.id, { placeholder: e.target.value })}
+                              placeholder="e.g. Describe your prior technical projects, hands-on tasks, or software..."
+                              className="w-full bg-[#0b0c10] border border-white/10 px-3 py-1.5 text-xs font-mono text-white/70 focus:border-racing-red outline-none"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddQuestion}
+                    className="w-full py-2.5 border border-dashed border-white/20 hover:border-racing-red/60 text-white/60 hover:text-white text-xs font-mono font-bold uppercase transition-colors flex items-center justify-center gap-2 bg-[#121318]/50"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-racing-red" />
+                    <span>Add Another Question</span>
+                  </button>
                 </div>
 
-                <div>
-                  <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
-                    Eligibility & Year Criteria Note
-                  </label>
-                  <textarea
-                    rows={2}
-                    required
-                    value={eligibilityNote}
-                    onChange={(e) => setEligibilityNote(e.target.value)}
-                    placeholder="e.g. Open to 1st Year (Freshers) & 2nd Year (Lateral) B.Tech students..."
-                    className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
-                  />
+                {/* SECTION 2: ELIGIBILITY & PHASE TAGLINE */}
+                <div className="pt-3 border-t border-white/10 space-y-4">
+                  <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-white">
+                    General Recruitment Form Details
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[11px] font-mono uppercase text-white/60 mb-1 block font-bold">
+                        Eligibility & Year Criteria Note
+                      </label>
+                      <textarea
+                        rows={2}
+                        required
+                        value={eligibilityNote}
+                        onChange={(e) => setEligibilityNote(e.target.value)}
+                        placeholder="e.g. Open to 1st Year (Freshers) & 2nd Year (Lateral)..."
+                        className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-mono uppercase text-white/60 mb-1 block font-bold">
+                        Application Phase Tagline
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={deadlineTagline}
+                        onChange={(e) => setDeadlineTagline(e.target.value)}
+                        placeholder="e.g. Season 2026 Phase 1 Induction"
+                        className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
-                    Application Phase Tagline
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={deadlineTagline}
-                    onChange={(e) => setDeadlineTagline(e.target.value)}
-                    placeholder="e.g. Season 2026 Phase 1 Induction"
-                    className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                  />
-                </div>
+                {/* SECTION 3: LIVE FORM PREVIEW */}
+                <div className="bg-black/60 border border-white/10 p-4 space-y-3">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                    <span className="text-[10px] font-mono uppercase text-racing-red font-bold flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Live Form Preview (What Students See On /recruitment):</span>
+                    </span>
+                    <span className="text-[9px] font-mono text-white/40 uppercase">Interactive Preview</span>
+                  </div>
 
-                {/* Live Preview Box */}
-                <div className="bg-black/50 border border-white/10 p-3.5 mt-2">
-                  <span className="text-[10px] font-mono uppercase text-racing-red font-bold block mb-1.5">
-                    Live Form Preview (What Students See):
-                  </span>
-                  <label className="text-xs font-mono uppercase text-white/80 block font-bold mb-1">
-                    {questionPrompt} <span className="text-racing-red">*</span>
-                  </label>
-                  <div className="bg-[#121318] border border-white/10 p-2 text-white/30 text-xs font-mono italic">
-                    [Applicant will type their answer and technical details here...]
+                  <div className="space-y-3 pt-1">
+                    {customQuestions.map((q, i) => (
+                      <div key={q.id} className="space-y-1">
+                        <label className="text-xs font-mono uppercase text-white/80 block font-bold">
+                          {q.label || `Untitled Question #${i + 1}`}
+                          {q.required && <span className="text-racing-red ml-1">*</span>}
+                        </label>
+                        {q.type === "dropdown" ? (
+                          <div className="w-full bg-[#121318] border border-white/10 p-2 text-white/60 text-xs font-mono flex items-center justify-between">
+                            <span>Select an option...</span>
+                            <ChevronDown className="w-3.5 h-3.5 text-white/40" />
+                          </div>
+                        ) : (
+                          <div className="w-full bg-[#121318] border border-white/10 p-2.5 text-white/30 text-xs font-mono italic">
+                            [{q.placeholder || "Applicant will type their answer and technical details here..."}]
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

@@ -7,7 +7,28 @@ import Link from 'next/link';
 import { motion } from 'motion/react';
 import { SplashScreen } from './SplashScreen';
 
-import { ReactLenis } from 'lenis/react';
+import { ReactLenis, useLenis } from 'lenis/react';
+
+function ScrollToTopWatcher() {
+  const pathname = usePathname();
+  const lenis = useLenis();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash;
+      if (!hash) {
+        if (lenis) {
+          lenis.scrollTo(0, { immediate: true });
+        }
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }
+    }
+  }, [pathname, lenis]);
+
+  return null;
+}
 
 const NAV_ITEMS = [
   { label: 'THE CAR', path: '/#car-spotlight', matchValue: 'car-spotlight' },
@@ -103,6 +124,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <ReactLenis root options={{ lerp: 0.05, smoothWheel: true }}>
+      <ScrollToTopWatcher />
       <div className="font-sans text-on-surface selection:bg-racing-red selection:text-white min-h-screen relative dark">
         <SplashScreen />
         

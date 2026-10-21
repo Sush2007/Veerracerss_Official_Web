@@ -30,8 +30,6 @@ export function AdminSecurityModal({
   showToast,
   showError,
 }: AdminSecurityModalProps) {
-  const [tab, setTab] = useState<"otp" | "direct">("otp");
-
   // OTP Flow States
   const [step, setStep] = useState<1 | 2>(1);
   const [emailInput, setEmailInput] = useState(adminEmail || "veerracersselectric.database@gmail.com");
@@ -41,11 +39,6 @@ export function AdminSecurityModal({
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
-
-  // Direct Update State
-  const [directNewPassword, setDirectNewPassword] = useState("");
-  const [directConfirmPassword, setDirectConfirmPassword] = useState("");
-  const [showDirectPassword, setShowDirectPassword] = useState(false);
 
   // Lock body scroll
   useEffect(() => {
@@ -154,49 +147,6 @@ export function AdminSecurityModal({
     }
   };
 
-  // Direct Update Handler
-  const handleDirectPasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (directNewPassword.length < 6) {
-      setFeedback({ type: "error", message: "Password must be at least 6 characters long." });
-      return;
-    }
-    if (directNewPassword !== directConfirmPassword) {
-      setFeedback({ type: "error", message: "Passwords do not match." });
-      return;
-    }
-
-    setLoading(true);
-    setFeedback(null);
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.updateUser({
-        password: directNewPassword,
-      });
-
-      if (error) throw error;
-
-      showToast("Admin password changed successfully!");
-      setFeedback({
-        type: "success",
-        message: "Your password has been changed for the active session.",
-      });
-
-      setTimeout(() => {
-        onClose();
-        setDirectNewPassword("");
-        setDirectConfirmPassword("");
-      }, 1500);
-    } catch (err: any) {
-      setFeedback({
-        type: "error",
-        message: err.message || "Failed to update password.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -222,7 +172,7 @@ export function AdminSecurityModal({
                 Security & Password
               </h3>
               <p className="text-[10px] font-mono text-white/50">
-                PR & Executive Council Account Access
+                Email OTP Verified Admin Password Change
               </p>
             </div>
           </div>
@@ -235,40 +185,9 @@ export function AdminSecurityModal({
           </button>
         </div>
 
-        {/* Tab Toggle */}
-        <div className="flex border-b border-white/10 mb-5">
-          <button
-            onClick={() => {
-              setTab("otp");
-              setFeedback(null);
-            }}
-            className={`flex-1 py-2 text-xs font-mono font-bold uppercase transition-colors border-b-2 ${
-              tab === "otp"
-                ? "border-racing-red text-white"
-                : "border-transparent text-white/50 hover:text-white"
-            }`}
-          >
-            OTP Mail Verification
-          </button>
-          <button
-            onClick={() => {
-              setTab("direct");
-              setFeedback(null);
-            }}
-            className={`flex-1 py-2 text-xs font-mono font-bold uppercase transition-colors border-b-2 ${
-              tab === "direct"
-                ? "border-racing-red text-white"
-                : "border-transparent text-white/50 hover:text-white"
-            }`}
-          >
-            Direct Update
-          </button>
-        </div>
-
-        {/* TAB 1: OTP FLOW */}
-        {tab === "otp" && (
-          <div>
-            {step === 1 ? (
+        {/* OTP FLOW */}
+        <div>
+          {step === 1 ? (
               <form onSubmit={handleSendOtp} className="space-y-4">
                 <div>
                   <label className="text-[11px] uppercase text-white/60 mb-1.5 block font-mono">
@@ -428,88 +347,7 @@ export function AdminSecurityModal({
                 </div>
               </form>
             )}
-          </div>
-        )}
-
-        {/* TAB 2: DIRECT UPDATE */}
-        {tab === "direct" && (
-          <form onSubmit={handleDirectPasswordChange} className="space-y-4">
-            <p className="text-[11px] font-mono text-white/50 leading-relaxed">
-              Since you are already authenticated in the admin workstation, you can directly set your new password below.
-            </p>
-
-            <div>
-              <label className="text-[11px] uppercase text-white/60 mb-1.5 block font-mono">
-                New Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showDirectPassword ? "text" : "password"}
-                  required
-                  minLength={6}
-                  value={directNewPassword}
-                  onChange={(e) => setDirectNewPassword(e.target.value)}
-                  placeholder="Minimum 6 characters"
-                  className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowDirectPassword(!showDirectPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
-                >
-                  {showDirectPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[11px] uppercase text-white/60 mb-1.5 block font-mono">
-                Confirm New Password
-              </label>
-              <input
-                type={showDirectPassword ? "text" : "password"}
-                required
-                minLength={6}
-                value={directConfirmPassword}
-                onChange={(e) => setDirectConfirmPassword(e.target.value)}
-                placeholder="Repeat new password"
-                className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-              />
-            </div>
-
-            {feedback && (
-              <div
-                className={`p-3 text-xs font-mono flex items-center gap-2 border ${
-                  feedback.type === "error"
-                    ? "bg-red-500/10 border-red-500/40 text-red-300"
-                    : "bg-emerald-500/10 border-emerald-500/40 text-emerald-300"
-                }`}
-              >
-                {feedback.type === "error" ? (
-                  <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
-                ) : (
-                  <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400" />
-                )}
-                <span>{feedback.message}</span>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase py-2.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {loading ? (
-                <span>Updating Password...</span>
-              ) : (
-                <>
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Update Password</span>
-                </>
-              )}
-            </button>
-          </form>
-        )}
+        </div>
       </div>
     </div>
   );
