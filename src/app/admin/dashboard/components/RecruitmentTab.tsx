@@ -594,11 +594,11 @@ VSSUT Burla`;
             className="bg-[#111115] border border-white/10 px-2.5 py-1.5 text-xs font-mono text-white/80 focus:border-racing-red outline-none uppercase"
           >
             <option value="ALL">All Domains</option>
-            <option value="Powertrain & High Voltage">Powertrain & High Voltage</option>
-            <option value="Chassis & Aerodynamics">Chassis & Aerodynamics</option>
-            <option value="Suspension & Kinematics">Suspension & Kinematics</option>
-            <option value="Brakes & Vehicle Dynamics">Brakes & Vehicle Dynamics</option>
-            <option value="pr">PR / Media / Sponsorship</option>
+            <option value="Powertrain and Drivetrain">Powertrain and Drivetrain</option>
+            <option value="Chassis and Design">Chassis and Design</option>
+            <option value="Suspension and Steering">Suspension and Steering</option>
+            <option value="Brakes and Tires">Brakes and Tires</option>
+            <option value="pr">PR / Non-Technical</option>
           </select>
         </div>
       </div>

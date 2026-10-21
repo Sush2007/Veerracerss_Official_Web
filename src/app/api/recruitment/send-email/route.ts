@@ -54,11 +54,13 @@ ${message.replace(/\n/g, "<br/>")}
             resendResult.error.message?.includes("testing domain") ||
             (resendResult.error as any).statusCode === 403;
 
-          if (isDomainRestriction) {
+          // If domain restricted, check if Gmail / SMTP fallback is configured before failing
+          const gmailPass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS;
+          if (isDomainRestriction && !gmailPass) {
             return NextResponse.json({
               success: false,
               isDomainRestriction: true,
-              error: "Resend test domain restriction: 'resend.dev' can only send emails to your verified account address. To send to student candidates, use the 'Open in Gmail' button for 1-click pre-filled delivery, or verify your custom domain in Resend.",
+              error: "Resend test domain restriction: 'resend.dev' only sends to your own registered account email. To send automated emails directly to student applicants via API: 1) Verify your custom domain on resend.com/domains and set RESEND_FROM, OR 2) Set GMAIL_APP_PASSWORD in .env.local to send directly from veerracersselectric.database@gmail.com. You can also click 'Open in Gmail' for 1-click dispatch right now.",
               deliveryDetails: resendResult.error.message,
             });
           }
@@ -73,39 +75,51 @@ ${message.replace(/\n/g, "<br/>")}
       }
     }
 
-    // 2. Fallback to SMTP if Resend is not verified for recipient
+    // 2. Direct SMTP / Gmail App Password Automated Delivery
     if (!emailSent) {
+      const gmailPass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS;
+      const gmailUser = process.env.GMAIL_USER || process.env.SMTP_USER || "veerracersselectric.database@gmail.com";
       const smtpHost = process.env.SMTP_HOST;
       const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587;
-      const smtpUser = process.env.SMTP_USER;
-      const smtpPass = process.env.SMTP_PASS;
-      const smtpFrom = process.env.SMTP_FROM || '"VeerRacerss Electric" <veerracersselectric.database@gmail.com>';
+      const smtpFrom = process.env.SMTP_FROM || `"VeerRacerss Electric" <${gmailUser}>`;
 
-      if (smtpHost && smtpUser && smtpPass) {
-        const transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: smtpPort,
-          secure: smtpPort === 465,
-          auth: { user: smtpUser, pass: smtpPass },
-        });
+      if (gmailPass) {
+        try {
+          const transporter = smtpHost
+            ? nodemailer.createTransport({
+                host: smtpHost,
+                port: smtpPort,
+                secure: smtpPort === 465,
+                auth: { user: gmailUser, pass: gmailPass },
+              })
+            : nodemailer.createTransport({
+                service: "gmail",
+                auth: { user: gmailUser, pass: gmailPass },
+              });
 
-        await transporter.sendMail({
-          from: smtpFrom,
-          to,
-          subject,
-          text: message,
-          html: htmlContent,
-        });
+          await transporter.sendMail({
+            from: smtpFrom,
+            to,
+            subject,
+            text: message,
+            html: htmlContent,
+          });
 
-        emailSent = true;
-        deliveryDetails = "Email dispatched via SMTP server.";
-      } else {
-        // Simulation mode logged cleanly
-        console.log(`[ONBOARDING EMAIL SIMULATION] To: ${to} | Subject: ${subject}`);
-        emailSent = true;
-        if (!deliveryDetails) {
-          deliveryDetails = "Onboarding letter recorded and queued successfully.";
+          emailSent = true;
+          deliveryDetails = `Email dispatched via automated Google/SMTP engine from ${gmailUser}.`;
+        } catch (smtpErr: any) {
+          console.warn("SMTP attempt error:", smtpErr);
+          deliveryDetails = `SMTP attempt: ${smtpErr.message}`;
         }
+      }
+    }
+
+    if (!emailSent) {
+      // Simulation mode if credentials not provided
+      console.log(`[ONBOARDING EMAIL SIMULATION] To: ${to} | Subject: ${subject}`);
+      emailSent = true;
+      if (!deliveryDetails) {
+        deliveryDetails = "Onboarding letter recorded and queued successfully.";
       }
     }
 

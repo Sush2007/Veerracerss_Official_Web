@@ -2,15 +2,57 @@
 
 import { motion, useScroll, useTransform } from "motion/react";
 import { Zap, Orbit, Trophy } from "lucide-react";
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Partners } from "../../components/Partners";
-import { CARS_DATA } from "@/src/data/cars";
+import { createClient } from "@/src/lib/supabase/client";
+import { DEFAULT_VEHICLES, VehicleRecord } from "@/src/data/cms_defaults";
 
 export function CarsView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
   const opacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
   const y = useTransform(scrollYProgress, [0, 1], [0, 200]);
+
+  const [fleet, setFleet] = useState<VehicleRecord[]>(DEFAULT_VEHICLES);
+
+  useEffect(() => {
+    async function loadFleet() {
+      // 1. Try localStorage cache first for immediate hydration
+      if (typeof window !== "undefined") {
+        try {
+          const cached = localStorage.getItem("vr_vehicles");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setFleet(parsed);
+            }
+          }
+        } catch {}
+      }
+
+      // 2. Fetch fresh vehicles from Supabase
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("vehicles")
+          .select("*")
+          .order("year", { ascending: false });
+
+        if (data && data.length > 0 && !error) {
+          setFleet(data);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("vr_vehicles", JSON.stringify(data));
+            } catch {}
+          }
+        }
+      } catch {
+        // Fallback to defaults already loaded
+      }
+    }
+
+    loadFleet();
+  }, []);
 
   return (
     <div className="min-h-screen pt-24 bg-[#050505]">
@@ -53,9 +95,9 @@ export function CarsView() {
 
           <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-16 relative z-10">
             <div className="flex flex-col gap-16 sm:gap-24 xl:gap-32">
-              {CARS_DATA.map((car, index) => (
+              {fleet.map((car, index) => (
                 <motion.div 
-                  key={car.name}
+                  key={car.id || car.name}
                   initial={{ opacity: 0, y: 100 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-100px" }}
@@ -87,12 +129,14 @@ export function CarsView() {
                     </div>
 
                     {/* Competition Banner */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-3.5 sm:p-5 pt-8 sm:pt-12 flex items-center gap-2 sm:gap-2.5">
-                      <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-racing-red shrink-0" />
-                      <span className="text-[11px] sm:text-xs text-white/80 font-sans tracking-wider uppercase font-medium">
-                        {car.competition}
-                      </span>
-                    </div>
+                    {car.competition && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-3.5 sm:p-5 pt-8 sm:pt-12 flex items-center gap-2 sm:gap-2.5">
+                        <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-racing-red shrink-0" />
+                        <span className="text-[11px] sm:text-xs text-white/80 font-sans tracking-wider uppercase font-medium">
+                          {car.competition}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Stats and Description */}
@@ -104,35 +148,37 @@ export function CarsView() {
                     <div className="grid grid-cols-2 gap-x-4 sm:gap-x-8 gap-y-4 sm:gap-y-6 mb-6 sm:mb-10">
                        <div className="flex flex-col gap-1 border-b border-white/5 pb-3 sm:pb-4">
                           <p className="text-[9px] sm:text-[10px] text-white/40 uppercase tracking-[0.15em] font-sans font-bold">Top Speed</p>
-                          <p className="text-xl sm:text-2xl font-black font-display tracking-wide text-white group-hover:text-racing-red transition-colors duration-300">{car.stats.speed}</p>
+                          <p className="text-xl sm:text-2xl font-black font-display tracking-wide text-white group-hover:text-racing-red transition-colors duration-300">{car.stats?.speed}</p>
                        </div>
                        <div className="flex flex-col gap-1 border-b border-white/5 pb-3 sm:pb-4">
                           <p className="text-[9px] sm:text-[10px] text-white/40 uppercase tracking-[0.15em] font-sans font-bold">Acceleration</p>
-                          <p className="text-xl sm:text-2xl font-black font-display tracking-wide text-white group-hover:text-racing-red transition-colors duration-300">{car.stats.accel}</p>
+                          <p className="text-xl sm:text-2xl font-black font-display tracking-wide text-white group-hover:text-racing-red transition-colors duration-300">{car.stats?.accel}</p>
                        </div>
                        <div className="flex flex-col gap-1 border-b border-white/5 pb-3 sm:pb-4">
                           <p className="text-[9px] sm:text-[10px] text-white/40 uppercase tracking-[0.15em] font-sans font-bold">Curb Weight</p>
-                          <p className="text-xl sm:text-2xl font-black font-display tracking-wide text-white group-hover:text-racing-red transition-colors duration-300">{car.stats.weight}</p>
+                          <p className="text-xl sm:text-2xl font-black font-display tracking-wide text-white group-hover:text-racing-red transition-colors duration-300">{car.stats?.weight}</p>
                        </div>
                        <div className="flex flex-col gap-1 border-b border-white/5 pb-3 sm:pb-4">
                           <p className="text-[9px] sm:text-[10px] text-white/40 uppercase tracking-[0.15em] font-sans font-bold">Powertrain</p>
-                          <p className="text-xl sm:text-2xl font-black font-display tracking-wide text-white group-hover:text-racing-red transition-colors duration-300">{car.stats.power}</p>
+                          <p className="text-xl sm:text-2xl font-black font-display tracking-wide text-white group-hover:text-racing-red transition-colors duration-300">{car.stats?.power}</p>
                        </div>
                     </div>
 
-                    <div className="bg-[#1A1A1A]/40 backdrop-blur-sm border border-white/5 p-4 sm:p-6 relative overflow-hidden rounded-none">
-                      <h4 className="flex items-center gap-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-racing-red mb-3 sm:mb-4 font-sans">
-                        <Orbit className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Technical Highlights
-                      </h4>
-                      <ul className="flex flex-col gap-2 sm:gap-2.5 relative z-10">
-                        {car.features.map(f => (
-                          <li key={f} className="flex items-start gap-2.5 sm:gap-3 text-xs sm:text-sm text-white/70 font-sans font-light">
-                            <Zap className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-racing-red shrink-0 mt-0.5" />
-                            <span>{f}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                    {car.features && car.features.length > 0 && (
+                      <div className="bg-[#1A1A1A]/40 backdrop-blur-sm border border-white/5 p-4 sm:p-6 relative overflow-hidden rounded-none">
+                        <h4 className="flex items-center gap-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-racing-red mb-3 sm:mb-4 font-sans">
+                          <Orbit className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Technical Highlights
+                        </h4>
+                        <ul className="flex flex-col gap-2 sm:gap-2.5 relative z-10">
+                          {car.features.map(f => (
+                            <li key={f} className="flex items-start gap-2.5 sm:gap-3 text-xs sm:text-sm text-white/70 font-sans font-light">
+                              <Zap className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-racing-red shrink-0 mt-0.5" />
+                              <span>{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               ))}

@@ -23,8 +23,8 @@ export function RecruitmentForm({
   const [rollNo, setRollNo] = useState("");
   const [branch, setBranch] = useState("Mechanical Engineering");
   const [yearOfStudy, setYearOfStudy] = useState("1st Year");
-  const [primaryDomain, setPrimaryDomain] = useState("Powertrain & High Voltage (Battery & Inverters)");
-  const [secondaryDomain, setSecondaryDomain] = useState("Chassis & Aerodynamics (Spaceframe & Carbon Aero)");
+  const [primaryDomain, setPrimaryDomain] = useState("Powertrain and Drivetrain");
+  const [secondaryDomain, setSecondaryDomain] = useState("Chassis and Design");
   const [prDomain, setPrDomain] = useState("None (Technical Only)");
   const [questionPrompt, setQuestionPrompt] = useState(
     "Why VeerRacerss Electric & Prior Technical Experience"
@@ -67,12 +67,12 @@ export function RecruitmentForm({
     "Civil Engineering",
   ];
 
-  // Technical engineering domains only (Electronics/Sensors and PR separated)
+  // Technical engineering domains
   const domains = [
-    "Powertrain & High Voltage (Battery & Inverters)",
-    "Chassis & Aerodynamics (Spaceframe & Carbon Aero)",
-    "Suspension & Kinematics (Double-Wishbone & Steering)",
-    "Brakes & Vehicle Dynamics (Hydraulics & AP Racing)",
+    "Powertrain and Drivetrain",
+    "Chassis and Design",
+    "Suspension and Steering",
+    "Brakes and Tires",
   ];
 
   const prDomains = [
@@ -81,7 +81,6 @@ export function RecruitmentForm({
     "Graphic Designing & 3D Visuals",
     "Video Editing & Content Creation",
     "Corporate Sponsorship & Public Relations",
-    "Social Media Management & Operations",
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {

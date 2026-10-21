@@ -30,6 +30,7 @@ import {
   Filter,
   HardDrive,
   Shield,
+  Award,
 } from "lucide-react";
 import {
   DEFAULT_SITE_SETTINGS,
@@ -39,6 +40,8 @@ import {
   DEFAULT_EXPENSES,
   DEFAULT_RECRUITS,
   DEFAULT_CUSTOM_DATABASES,
+  DEFAULT_VEHICLES,
+  DEFAULT_SPONSORS,
   SiteSettings,
   FeaturedMachine,
   MediaItem,
@@ -47,6 +50,9 @@ import {
   ClubExpense,
   RecruitmentApplication,
   CustomDatabaseRecord,
+  VehicleRecord,
+  SponsorRecord,
+  extractSpotlightFromVehicles,
 } from "@/src/data/cms_defaults";
 import { exportTableToExcel, exportMultiSheetExcel } from "@/src/lib/exportToExcel";
 import { MemberDatasheetModal } from "./components/MemberDatasheetModal";
@@ -56,13 +62,15 @@ import { RecruitmentTab } from "./components/RecruitmentTab";
 import { CustomDbsTab } from "./components/CustomDbsTab";
 import { StorageManagerModal } from "./components/StorageManagerModal";
 import { AdminSecurityModal } from "./components/AdminSecurityModal";
+import { VehiclesTab } from "./components/VehiclesTab";
+import { SponsorsTab } from "./components/SponsorsTab";
 
 export default function AdminDashboard() {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
-    "hero" | "machine" | "media" | "alumni" | "members" | "expenses" | "recruitment" | "custom_dbs"
+    "hero" | "vehicles" | "sponsors" | "machine" | "media" | "alumni" | "members" | "expenses" | "recruitment" | "custom_dbs"
   >("hero");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -72,7 +80,11 @@ export default function AdminDashboard() {
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
   const [savingSettings, setSavingSettings] = useState(false);
 
-  // 2. Featured Machine State
+  // 2. Vehicles Fleet & Auto-Spotlight Sync State
+  const [vehicles, setVehicles] = useState<VehicleRecord[]>(DEFAULT_VEHICLES);
+  const [sponsors, setSponsors] = useState<SponsorRecord[]>(DEFAULT_SPONSORS);
+
+  // 2b. Featured Machine State
   const [machine, setMachine] = useState<FeaturedMachine>(DEFAULT_FEATURED_MACHINE);
   const [savingMachine, setSavingMachine] = useState(false);
   const [cadFile, setCadFile] = useState<File | null>(null);
@@ -167,10 +179,10 @@ export default function AdminDashboard() {
 
   const departments = [
     "Leadership",
-    "Chassis & Design",
-    "Suspension & Steering",
-    "Brakes & Tyres",
-    "Powertrain & Drivetrain",
+    "Chassis and Design",
+    "Suspension and Steering",
+    "Brakes and Tires",
+    "Powertrain and Drivetrain",
     "Executive Council"
   ];
 
@@ -244,7 +256,7 @@ export default function AdminDashboard() {
       }
     } catch {}
 
-    // 2. Featured Machine
+    // 2. Featured Machine & Vehicles Fleet
     try {
       const { data: mData } = await supabase.from("featured_machine").select("*").limit(1).maybeSingle();
       let localExt: any = {};
@@ -262,6 +274,44 @@ export default function AdminDashboard() {
         });
       } else if (localExt.cad_model_url) {
         setMachine((prev) => ({ ...prev, ...localExt }));
+      }
+    } catch {}
+
+    // 2b. Vehicles Fleet
+    try {
+      const { data: vData } = await supabase.from("vehicles").select("*").order("year", { ascending: false });
+      let localVehicles: VehicleRecord[] | null = null;
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("vr_vehicles");
+          if (raw) localVehicles = JSON.parse(raw);
+        } catch {}
+      }
+      if (vData && vData.length > 0) {
+        setVehicles(vData);
+      } else if (localVehicles && localVehicles.length > 0) {
+        setVehicles(localVehicles);
+      } else {
+        setVehicles(DEFAULT_VEHICLES);
+      }
+    } catch {}
+
+    // 2c. Sponsors & Corporate Partners
+    try {
+      const { data: spData } = await supabase.from("sponsors").select("*").order("order_index", { ascending: true });
+      let localSponsors: SponsorRecord[] | null = null;
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("vr_sponsors");
+          if (raw) localSponsors = JSON.parse(raw);
+        } catch {}
+      }
+      if (spData && spData.length > 0) {
+        setSponsors(spData);
+      } else if (localSponsors && localSponsors.length > 0) {
+        setSponsors(localSponsors);
+      } else {
+        setSponsors(DEFAULT_SPONSORS);
       }
     } catch {}
 
@@ -572,6 +622,65 @@ export default function AdminDashboard() {
       showError(err.message || "Failed to save car details.");
     } finally {
       setSavingMachine(false);
+    }
+  };
+
+  // 2c. Vehicles Fleet & Auto-Spotlight Sync Handlers
+  const handleSaveVehicles = async (updatedVehicles: VehicleRecord[]) => {
+    setVehicles(updatedVehicles);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("vr_vehicles", JSON.stringify(updatedVehicles));
+      } catch {}
+    }
+
+    try {
+      for (const v of updatedVehicles) {
+        await supabase.from("vehicles").upsert(v);
+      }
+    } catch (e) {
+      console.warn("Supabase vehicles upsert notice:", e);
+    }
+
+    // Automatically sync newest / spotlight car into Homepage Featured Machine
+    const extractedSpotlight = extractSpotlightFromVehicles(updatedVehicles);
+    setMachine(extractedSpotlight);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("vr_machine_extended", JSON.stringify(extractedSpotlight));
+      } catch {}
+    }
+    try {
+      const { data: existing } = await supabase.from("featured_machine").select("id").limit(1).maybeSingle();
+      if (existing) {
+        await supabase.from("featured_machine").update({
+          ...extractedSpotlight,
+          updated_at: new Date().toISOString(),
+        }).eq("id", existing.id);
+      } else {
+        await supabase.from("featured_machine").insert([{
+          ...extractedSpotlight,
+          updated_at: new Date().toISOString(),
+        }]);
+      }
+    } catch (e) {
+      console.warn("Supabase featured_machine sync notice:", e);
+    }
+  };
+
+  const handleSaveSponsors = async (updatedSponsors: SponsorRecord[]) => {
+    setSponsors(updatedSponsors);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("vr_sponsors", JSON.stringify(updatedSponsors));
+      } catch {}
+    }
+    try {
+      for (const sp of updatedSponsors) {
+        await supabase.from("sponsors").upsert(sp);
+      }
+    } catch (e) {
+      console.warn("Supabase sponsors upsert notice:", e);
     }
   };
 
@@ -1681,13 +1790,23 @@ export default function AdminDashboard() {
           </button>
 
           <button
-            onClick={() => setActiveTab("machine")}
+            onClick={() => setActiveTab("vehicles")}
             className={`shrink-0 whitespace-nowrap px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
-              activeTab === "machine" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
+              activeTab === "vehicles" || activeTab === "machine" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
             <Car className="w-3.5 h-3.5" />
-            <span>The Car (Spotlight)</span>
+            <span>Fleet & Spotlight ({vehicles.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("sponsors")}
+            className={`shrink-0 whitespace-nowrap px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+              activeTab === "sponsors" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
+            }`}
+          >
+            <Award className="w-3.5 h-3.5 text-amber-400" />
+            <span>Sponsors ({sponsors.length})</span>
           </button>
 
           <button
@@ -2076,266 +2195,29 @@ export default function AdminDashboard() {
         )}
 
         {/* =========================================================================
-            TAB 2: THE CAR (SPOTLIGHT SPECS & PHOTOS)
+            TAB 2: FLEET VEHICLES & AUTOMATIC HOMEPAGE SPOTLIGHT SYNC
         ========================================================================= */}
-        {activeTab === "machine" && (
-          <div className="bg-[#0b0c10] border border-white/10 p-6 sm:p-8 max-w-4xl">
-            <div className="mb-6 border-b border-white/10 pb-4">
-              <h2 className="text-lg font-bold font-display uppercase tracking-wide text-white">
-                Flagship Car Spotlight: Specs, CAD & Track Photos
-              </h2>
-              <p className="text-white/50 text-xs mt-1 font-light">
-                Update the active flagship vehicle name, benchmarks, CAD renders, and subsystem engineering specs.
-              </p>
-            </div>
+        {(activeTab === "vehicles" || activeTab === "machine") && (
+          <VehiclesTab
+            vehicles={vehicles}
+            onSaveVehicles={handleSaveVehicles}
+            onUploadImage={(file) => uploadToStorage(file, "member-images", "cars")}
+            showToast={showToast}
+            showError={showError}
+          />
+        )}
 
-            <form onSubmit={handleSaveMachine} className="space-y-6">
-              {/* Core Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs uppercase text-white/50 mb-1 block font-mono">Car Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={machine.car_name}
-                    onChange={(e) => setMachine({ ...machine, car_name: e.target.value })}
-                    className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs uppercase text-white/50 mb-1 block font-mono">Season / Category Tag</label>
-                  <input
-                    type="text"
-                    required
-                    value={machine.season_tag}
-                    onChange={(e) => setMachine({ ...machine, season_tag: e.target.value })}
-                    className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs uppercase text-white/50 mb-1 block font-mono">Description / Narrative</label>
-                <textarea
-                  required
-                  rows={3}
-                  value={machine.description}
-                  onChange={(e) => setMachine({ ...machine, description: e.target.value })}
-                  className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                />
-              </div>
-
-              {/* Benchmarks Grid */}
-              <div className="bg-black/40 border border-white/10 p-4 sm:p-5">
-                <span className="text-xs font-mono uppercase text-white/70 tracking-wider block mb-3 font-bold">
-                  4 Performance Benchmarks
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div>
-                    <label className="text-[10px] uppercase text-white/50 mb-1 block font-mono">Top Speed (KM/H)</label>
-                    <input
-                      type="text"
-                      required
-                      value={machine.top_speed_val}
-                      onChange={(e) => setMachine({ ...machine, top_speed_val: e.target.value })}
-                      className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] uppercase text-white/50 mb-1 block font-mono">0-100 Accel (SEC)</label>
-                    <input
-                      type="text"
-                      required
-                      value={machine.accel_val}
-                      onChange={(e) => setMachine({ ...machine, accel_val: e.target.value })}
-                      className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] uppercase text-white/50 mb-1 block font-mono">Battery Voltage (VOLTS)</label>
-                    <input
-                      type="text"
-                      required
-                      value={machine.voltage_val}
-                      onChange={(e) => setMachine({ ...machine, voltage_val: e.target.value })}
-                      className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] uppercase text-white/50 mb-1 block font-mono">Curb Weight (KG)</label>
-                    <input
-                      type="text"
-                      required
-                      value={machine.weight_val}
-                      onChange={(e) => setMachine({ ...machine, weight_val: e.target.value })}
-                      className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* 3D CAD Model GLB Settings (F08 / D-06) */}
-              <div className="bg-black/40 border border-white/10 p-4 sm:p-5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="text-xs uppercase text-white/70 font-mono font-bold block">
-                      3D CAD Model GLB URL / Path
-                    </label>
-                    <span className="text-[11px] text-white/50">
-                      Streams the interactive 3D digital twin rendered on the Hero and Fleet viewports.
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-mono text-racing-red uppercase font-bold border border-racing-red/30 px-2 py-0.5 bg-racing-red/10">
-                    WebGL 3D Engine
-                  </span>
-                </div>
-                <input
-                  type="text"
-                  value={machine.cad_model_url || ""}
-                  onChange={(e) => setMachine({ ...machine, cad_model_url: e.target.value })}
-                  placeholder="e.g. /car-raw.glb or https://..."
-                  className="w-full bg-[#111115] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                />
-                <div className="pt-1">
-                  <label className="text-[11px] uppercase text-white/40 mb-1 block font-mono">
-                    Upload New 3D CAD File (.glb)
-                  </label>
-                  <input
-                    type="file"
-                    accept=".glb,.gltf"
-                    onChange={(e) => setCadModelFile(e.target.files?.[0] || null)}
-                    className="text-xs text-white/60 file:mr-2 file:py-1.5 file:px-3 file:border-0 file:bg-white/10 file:text-white file:text-xs file:font-mono file:cursor-pointer"
-                  />
-                  {cadModelFile && (
-                    <span className="text-[11px] text-emerald-400 block mt-1">Ready: {cadModelFile.name}</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Photo Uploaders */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-black/40 border border-white/10 p-4">
-                  <label className="text-xs uppercase text-white/70 mb-2 block font-mono font-bold">
-                    Studio CAD Render Photo
-                  </label>
-                  <div className="aspect-[16/9] bg-black mb-3 overflow-hidden border border-white/5">
-                    <img src={machine.cad_image_url} alt="CAD Render" className="w-full h-full object-cover" />
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setCadFile(e.target.files?.[0] || null)}
-                    className="text-xs text-white/60 file:mr-2 file:py-1.5 file:px-3 file:border-0 file:bg-white/10 file:text-white file:text-xs file:font-mono file:cursor-pointer"
-                  />
-                  {cadFile && <span className="text-[11px] text-emerald-400 block mt-1">Ready: {cadFile.name}</span>}
-                </div>
-
-                <div className="bg-black/40 border border-white/10 p-4">
-                  <label className="text-xs uppercase text-white/70 mb-2 block font-mono font-bold">
-                    On-Track Action Photo
-                  </label>
-                  <div className="aspect-[16/9] bg-black mb-3 overflow-hidden border border-white/5">
-                    <img src={machine.track_image_url} alt="Track Photo" className="w-full h-full object-cover" />
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setTrackFile(e.target.files?.[0] || null)}
-                    className="text-xs text-white/60 file:mr-2 file:py-1.5 file:px-3 file:border-0 file:bg-white/10 file:text-white file:text-xs file:font-mono file:cursor-pointer"
-                  />
-                  {trackFile && <span className="text-[11px] text-emerald-400 block mt-1">Ready: {trackFile.name}</span>}
-                </div>
-              </div>
-
-              {/* Subsystems Details */}
-              <div className="bg-black/40 border border-white/10 p-4 sm:p-5 space-y-4">
-                <span className="text-xs font-mono uppercase text-white/70 tracking-wider block font-bold">
-                  Subsystem Technical Specifications
-                </span>
-                
-                {/* Powertrain */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/5">
-                  <input
-                    type="text"
-                    value={machine.powertrain_headline}
-                    onChange={(e) => setMachine({ ...machine, powertrain_headline: e.target.value })}
-                    placeholder="Powertrain headline"
-                    className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white"
-                  />
-                  <input
-                    type="text"
-                    value={machine.powertrain_specs}
-                    onChange={(e) => setMachine({ ...machine, powertrain_specs: e.target.value })}
-                    placeholder="Powertrain specs"
-                    className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white"
-                  />
-                </div>
-
-                {/* Battery Pack */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/5">
-                  <input
-                    type="text"
-                    value={machine.accumulator_headline}
-                    onChange={(e) => setMachine({ ...machine, accumulator_headline: e.target.value })}
-                    placeholder="Battery headline"
-                    className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white"
-                  />
-                  <input
-                    type="text"
-                    value={machine.accumulator_specs}
-                    onChange={(e) => setMachine({ ...machine, accumulator_specs: e.target.value })}
-                    placeholder="Battery specs"
-                    className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white"
-                  />
-                </div>
-
-                {/* Chassis */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/5">
-                  <input
-                    type="text"
-                    value={machine.chassis_headline}
-                    onChange={(e) => setMachine({ ...machine, chassis_headline: e.target.value })}
-                    placeholder="Chassis headline"
-                    className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white"
-                  />
-                  <input
-                    type="text"
-                    value={machine.chassis_specs}
-                    onChange={(e) => setMachine({ ...machine, chassis_specs: e.target.value })}
-                    placeholder="Chassis specs"
-                    className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white"
-                  />
-                </div>
-
-                {/* Aero */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/5">
-                  <input
-                    type="text"
-                    value={machine.aero_headline}
-                    onChange={(e) => setMachine({ ...machine, aero_headline: e.target.value })}
-                    placeholder="Aero headline"
-                    className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white"
-                  />
-                  <input
-                    type="text"
-                    value={machine.aero_specs}
-                    onChange={(e) => setMachine({ ...machine, aero_specs: e.target.value })}
-                    placeholder="Aero specs"
-                    className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={savingMachine}
-                className="inline-flex items-center gap-2 bg-racing-red hover:bg-white hover:text-black text-white px-6 py-3 text-xs font-mono font-bold uppercase tracking-wider transition-all disabled:opacity-50"
-              >
-                <Save className="w-4 h-4" />
-                <span>{savingMachine ? "Saving Vehicle Specs..." : "Save Car Spotlight"}</span>
-              </button>
-            </form>
-          </div>
+        {/* =========================================================================
+            TAB 3: SPONSORS & CORPORATE PARTNERS
+        ========================================================================= */}
+        {activeTab === "sponsors" && (
+          <SponsorsTab
+            sponsors={sponsors}
+            onSaveSponsors={handleSaveSponsors}
+            onUploadImage={(file) => uploadToStorage(file, "member-images", "sponsors")}
+            showToast={showToast}
+            showError={showError}
+          />
         )}
 
         {/* =========================================================================

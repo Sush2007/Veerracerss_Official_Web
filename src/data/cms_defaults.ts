@@ -118,6 +118,50 @@ export interface FeaturedMachine {
   aero_specs: string;
 }
 
+export interface VehicleRecord {
+  id: string;
+  name: string;
+  year: string;
+  category: "EV" | "Combustion";
+  tagline?: string;
+  competition: string;
+  description: string;
+  image: string;
+  cad_image?: string;
+  cad_model_url?: string;
+  stats: {
+    speed: string;
+    accel: string;
+    weight: string;
+    power: string;
+    voltage?: string;
+  };
+  features: string[];
+  subsystems?: {
+    powertrain_headline?: string;
+    powertrain_specs?: string;
+    accumulator_headline?: string;
+    accumulator_specs?: string;
+    chassis_headline?: string;
+    chassis_specs?: string;
+    aero_headline?: string;
+    aero_specs?: string;
+  };
+  is_spotlight?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SponsorRecord {
+  id: string;
+  name: string;
+  category: string;
+  logo: string;
+  url: string;
+  tier: "title" | "partner";
+  order_index?: number;
+}
+
 export interface MediaItem {
   id: string;
   title: string;
@@ -225,6 +269,315 @@ export const DEFAULT_FEATURED_MACHINE: FeaturedMachine = {
 };
 
 export const DEFAULT_MACHINE = DEFAULT_FEATURED_MACHINE;
+
+export const DEFAULT_VEHICLES: VehicleRecord[] = [
+  {
+    id: "car-aether",
+    name: "AETHER",
+    year: "2025",
+    category: "EV",
+    tagline: "FORMULA STUDENT EV PROTOTYPE",
+    competition: "Formula Imperial 2024 @ Buddh International Circuit (P3 Overall EV)",
+    description: "AETHER is the flagship innovation of VeerRacerss Electric for the season 2024-25. It is the first EV made by any engineering college in Odisha. Powered by a 10 kW PMSM Motor with exceptional acceleration and torque, paired with an in-house developed 72V high energy density battery pack. The team passed technical inspections, driver egress, and brake tests with flying colours, culminating in an endurance run that secured P3 Overall in the EV category at Buddh International Circuit.",
+    image: "/cars/aether.jpg",
+    cad_image: "/cars/aether-spotlight.jpg",
+    cad_model_url: "/car-raw.glb",
+    stats: {
+      speed: "115 km/h",
+      accel: "3.1s 0-100",
+      weight: "182 kg",
+      power: "10 kW",
+      voltage: "72V",
+    },
+    features: [
+      "10 KW PMSM Motor",
+      "72V High Energy Density Battery Pack",
+      "First EV in Odisha by an Engineering College",
+      "Formula Imperial 2024 Overall P3 (EV)",
+    ],
+    subsystems: {
+      powertrain_headline: "10 kW PMSM Motor",
+      powertrain_specs: "85 Nm Peak Torque • Direct Chain Reduction • Regenerative Braking",
+      accumulator_headline: "72V High-Energy Li-Ion Pack",
+      accumulator_specs: "In-House BMS • Active Thermal Monitoring • IP67 Isolation",
+      chassis_headline: "AISI 4130 Chromoly Spaceframe",
+      chassis_specs: "182 kg Curb Weight • Torsional Stiffness > 1450 Nm/deg • FIA Egress",
+      aero_headline: "Dual-Element Carbon Wings",
+      aero_specs: "CFD Optimised Endplates • Drag Reduction System • High Downforce",
+    },
+    is_spotlight: true,
+  },
+  {
+    id: "car-zeus-1",
+    name: "ZEUS 1.0",
+    year: "2023",
+    category: "EV",
+    tagline: "INAUGURAL ELECTRIC RACE PLATFORM",
+    competition: "Formula Bharat 2023",
+    description: "ZEUS 1.0 marked our historic transition into the EV domain. It served as the proving ground for electric motor controller calibration, safety interlock loops, and regenerative braking studies, establishing the engineering benchmarks that define our electric racing program.",
+    image: "/cars/zeus-1.0.jpg",
+    cad_image: "/cars/zeus-1.0.jpg",
+    stats: {
+      speed: "105 km/h",
+      accel: "4.2s 0-100",
+      weight: "260 kg",
+      power: "8 kW",
+      voltage: "60V",
+    },
+    features: [
+      "Custom Battery Management System (BMS)",
+      "Aerodynamic Package & Diffuser",
+      "RWD Dynamics Architecture",
+      "Electrical Powertrain Platform",
+    ],
+    subsystems: {
+      powertrain_headline: "8 kW High-Efficiency BLDC Motor",
+      powertrain_specs: "Custom Inverter Calibration • Rear-Wheel Drive",
+      accumulator_headline: "60V High-Discharge Battery Architecture",
+      accumulator_specs: "Modular Pack Assembly • Master Interlock Circuitry",
+      chassis_headline: "Tubular Steel Spaceframe",
+      chassis_specs: "Optimized Torsional Rigidity • Driver Safety Cell",
+      aero_headline: "High-Downforce Rear Diffuser",
+      aero_specs: "Underbody Aerodynamic Management",
+    },
+    is_spotlight: false,
+  },
+  {
+    id: "car-ventus-5",
+    name: "VENTUS 5.0",
+    year: "2022",
+    category: "Combustion",
+    tagline: "PINNACLE COMBUSTION ARCHITECTURE",
+    competition: "Formula Bharat 2022",
+    description: "Part of the legendary Ventus combustion lineage. Built with a focus on mechanical grip, thermal stability, and endurance durability, establishing the fundamental vehicle dynamics philosophies that carried directly into our electric vehicle development.",
+    image: "/cars/ventus-5.0.jpg",
+    stats: {
+      speed: "95 km/h",
+      accel: "4.8s 0-100",
+      weight: "275 kg",
+      power: "Combustion",
+    },
+    features: [
+      "High-Torsional Rigidity Steel Spaceframe",
+      "Reliable Powertrain Calibration",
+      "Custom Double-Wishbone Suspension",
+      "Aerodynamic Winglets",
+    ],
+    is_spotlight: false,
+  },
+  {
+    id: "car-ventus-4",
+    name: "VENTUS 4.0",
+    year: "2020",
+    category: "Combustion",
+    tagline: "ENDURANCE-TUNED CHASSIS",
+    competition: "SUPRA SAE India 2020",
+    description: "A relentless track machine designed to withstand the toughest dynamic endurance stages. Ventus 4.0 pushed our combustion engine tuning, cooling architecture, and weight reduction strategies to the limit.",
+    image: "/cars/ventus-4.0.jpg",
+    stats: {
+      speed: "90 km/h",
+      accel: "5.1s 0-100",
+      weight: "280 kg",
+      power: "Combustion",
+    },
+    features: [
+      "Lightweight Chassis Optimization",
+      "Custom 3D-Printed Air Intake",
+      "Endurance-Tuned ECU Mapping",
+      "Optimized Driver Ergonomics",
+    ],
+    is_spotlight: false,
+  },
+  {
+    id: "car-ventus-163",
+    name: "VENTUS 16.3",
+    year: "2019",
+    category: "Combustion",
+    tagline: "PRECISION HANDLING ITERATION",
+    competition: "Formula Bharat 2019",
+    description: "An evolutionary leap in the Ventus series, refining the driver interface, pedal box adjustability, and manufacturing precision to trim lap times and bolster structural reliability.",
+    image: "/cars/ventus-16.3.jpg",
+    stats: {
+      speed: "85 km/h",
+      accel: "5.5s 0-100",
+      weight: "290 kg",
+      power: "Combustion",
+    },
+    features: [
+      "Ergonomic Cockpit & Quick-Release Steering",
+      "Robust Chain-Driven Differential",
+      "Tuned Exhaust Resonance System",
+      "Stiffened Uprights",
+    ],
+    is_spotlight: false,
+  },
+  {
+    id: "car-ventus-152",
+    name: "VENTUS 15.2",
+    year: "2018",
+    category: "Combustion",
+    tagline: "THE GENESIS FORMULA CAR",
+    competition: "SUPRA SAE India 2018",
+    description: "The early foundations of Team VeerRacerss. Ventus 15.2 was the proving ground for student fabrication, machining, and competition team coordination at VSSUT Burla, sparking the electric racing legacy that thrives today.",
+    image: "/cars/ventus-15.2.jpg",
+    stats: {
+      speed: "80 km/h",
+      accel: "6.0s 0-100",
+      weight: "300 kg",
+      power: "Combustion",
+    },
+    features: [
+      "Foundation Tubular Spaceframe",
+      "100% Student Fabricated",
+      "Reliable Brake Over-Travel Switch Setup",
+      "Proven Suspension Geometry",
+    ],
+    is_spotlight: false,
+  },
+];
+
+export const DEFAULT_SPONSORS: SponsorRecord[] = [
+  {
+    id: "sp-1",
+    name: "KTM",
+    category: "Title Sponsor & Powertrain",
+    logo: "/sponsors/ktm.svg",
+    url: "https://www.ktm.com",
+    tier: "title",
+  },
+  {
+    id: "sp-2",
+    name: "CrossHead Engineering",
+    category: "Title Sponsor & Precision Engineering",
+    logo: "/sponsors/crosshead.svg",
+    url: "https://www.instagram.com/crosshead_engineering/",
+    tier: "title",
+  },
+  {
+    id: "sp-3",
+    name: "SolidWorks",
+    category: "3D CAD & Digital Twin",
+    logo: "/sponsors/solidworks.svg",
+    url: "https://www.solidworks.com",
+    tier: "partner",
+  },
+  {
+    id: "sp-4",
+    name: "Ansys",
+    category: "Simulation & FEA/CFD",
+    logo: "/sponsors/ansys.svg",
+    url: "https://www.ansys.com",
+    tier: "partner",
+  },
+  {
+    id: "sp-5",
+    name: "Snap-on",
+    category: "Precision Workshop Tools",
+    logo: "/sponsors/snapon.svg",
+    url: "https://www.snapon.com",
+    tier: "partner",
+  },
+  {
+    id: "sp-6",
+    name: "Bender",
+    category: "Electrical Safety & IMD",
+    logo: "/sponsors/bender.svg",
+    url: "https://www.bender.de",
+    tier: "partner",
+  },
+  {
+    id: "sp-7",
+    name: "AMEC Mobility",
+    category: "EV Lithium Battery & Powertrain",
+    logo: "/sponsors/amec.svg",
+    url: "https://www.amecmobility.com",
+    tier: "partner",
+  },
+  {
+    id: "sp-8",
+    name: "Burnout by 3 Brothers",
+    category: "CNC Machining & Drivetrain",
+    logo: "/sponsors/burnout3brothers.svg",
+    url: "https://www.facebook.com/3BrothersAhmedabad/",
+    tier: "partner",
+  },
+  {
+    id: "sp-9",
+    name: "My Pit Crew",
+    category: "Trackside & Engineering Solutions",
+    logo: "/sponsors/mypitcrew.svg",
+    url: "https://www.instagram.com/mypitcrew.india/",
+    tier: "partner",
+  },
+  {
+    id: "sp-10",
+    name: "MCL",
+    category: "Public Sector Patron",
+    logo: "/sponsors/mcl.svg",
+    url: "https://www.mahanadicoal.in",
+    tier: "partner",
+  },
+  {
+    id: "sp-11",
+    name: "Morphine Motorsports",
+    category: "Motorsport & Racing Equipment",
+    logo: "/sponsors/morphine.svg",
+    url: "https://www.gomorphine.com",
+    tier: "partner",
+  },
+];
+
+export function extractSpotlightFromVehicles(vehicles: VehicleRecord[]): FeaturedMachine {
+  if (!vehicles || vehicles.length === 0) return DEFAULT_FEATURED_MACHINE;
+
+  // Prefer explicitly marked spotlight car, or newest by year
+  const spotlightCar =
+    vehicles.find((v) => v.is_spotlight) ||
+    [...vehicles].sort((a, b) => parseInt(b.year || "0") - parseInt(a.year || "0"))[0];
+
+  if (!spotlightCar) return DEFAULT_FEATURED_MACHINE;
+
+  const speedVal = spotlightCar.stats.speed.replace(/[^0-9]/g, "") || "115";
+  const accelVal = spotlightCar.stats.accel.replace(/[^0-9.]/g, "") || "3.1";
+  const voltVal = spotlightCar.stats.voltage
+    ? spotlightCar.stats.voltage.replace(/[^0-9]/g, "")
+    : "72";
+  const weightVal = spotlightCar.stats.weight.replace(/[^0-9]/g, "") || "182";
+
+  return {
+    car_name: `${spotlightCar.name} ${spotlightCar.year}`,
+    season_tag: spotlightCar.tagline || `FORMULA STUDENT ${spotlightCar.category} PROTOTYPE`,
+    description: spotlightCar.description,
+    cad_model_url: spotlightCar.cad_model_url || "/car-raw.glb",
+    cad_image_url: spotlightCar.cad_image || spotlightCar.image,
+    track_image_url: spotlightCar.image,
+    top_speed_val: speedVal,
+    accel_val: accelVal,
+    voltage_val: voltVal,
+    weight_val: weightVal,
+    powertrain_headline:
+      spotlightCar.subsystems?.powertrain_headline || `${spotlightCar.stats.power} Motor`,
+    powertrain_specs:
+      spotlightCar.subsystems?.powertrain_specs ||
+      "85 Nm Peak Torque • Direct Chain Reduction • Regenerative Braking",
+    accumulator_headline:
+      spotlightCar.subsystems?.accumulator_headline ||
+      `${spotlightCar.stats.voltage || "72V"} High-Energy Pack`,
+    accumulator_specs:
+      spotlightCar.subsystems?.accumulator_specs ||
+      "In-House BMS • Active Thermal Monitoring • IP67 Isolation",
+    chassis_headline:
+      spotlightCar.subsystems?.chassis_headline || "AISI 4130 Chromoly Spaceframe",
+    chassis_specs:
+      spotlightCar.subsystems?.chassis_specs ||
+      `${spotlightCar.stats.weight} Curb Weight • Torsional Stiffness > 1450 Nm/deg • FIA Egress`,
+    aero_headline:
+      spotlightCar.subsystems?.aero_headline || "Dual-Element Carbon Wings",
+    aero_specs:
+      spotlightCar.subsystems?.aero_specs ||
+      "CFD Optimised Endplates • Drag Reduction System • High Downforce",
+  };
+}
 
 export const DEFAULT_MEDIA_ITEMS: MediaItem[] = [
   {
