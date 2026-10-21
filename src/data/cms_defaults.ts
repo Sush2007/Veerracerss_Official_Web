@@ -548,7 +548,7 @@ export function extractSpotlightFromVehicles(vehicles: VehicleRecord[]): Feature
     car_name: `${spotlightCar.name} ${spotlightCar.year}`,
     season_tag: spotlightCar.tagline || `FORMULA STUDENT ${spotlightCar.category} PROTOTYPE`,
     description: spotlightCar.description,
-    cad_model_url: spotlightCar.cad_model_url || "/car-raw.glb",
+    cad_model_url: (spotlightCar.cad_model_url && spotlightCar.cad_model_url.trim()) ? spotlightCar.cad_model_url.trim() : "/car-raw.glb",
     cad_image_url: spotlightCar.cad_image || spotlightCar.image,
     track_image_url: spotlightCar.image,
     top_speed_val: speedVal,

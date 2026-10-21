@@ -91,14 +91,16 @@ export function Hero({ title, subtitle, modelUrl }: HeroProps = {}) {
           .select("*")
           .limit(1)
           .maybeSingle();
-        if (macData?.cad_model_url) {
-          setCadModelUrl(macData.cad_model_url);
+        if (macData?.cad_model_url && macData.cad_model_url.trim()) {
+          setCadModelUrl(macData.cad_model_url.trim());
         } else if (typeof window !== "undefined") {
           try {
             const mRaw = localStorage.getItem("vr_machine_extended");
             if (mRaw) {
               const parsed = JSON.parse(mRaw);
-              if (parsed.cad_model_url) setCadModelUrl(parsed.cad_model_url);
+              if (parsed.cad_model_url && parsed.cad_model_url.trim()) {
+                setCadModelUrl(parsed.cad_model_url.trim());
+              }
             }
           } catch {}
         }
@@ -111,7 +113,7 @@ export function Hero({ title, subtitle, modelUrl }: HeroProps = {}) {
 
   const activeTitle = title || settings.hero_title || DEFAULT_SITE_SETTINGS.hero_title || "VEERRACERSS ELECTRIC";
   const activeSubtitle = subtitle || settings.hero_subtitle || DEFAULT_SITE_SETTINGS.hero_subtitle || "Odisha’s Premier Formula Student EV Racing Team | VSSUT Burla • Est. 2018.\nEngineered from raw CAD into high-voltage, track-dominating electric formula racecars.";
-  const activeModelUrl = modelUrl || cadModelUrl || "/car-raw.glb";
+  const activeModelUrl = (modelUrl && modelUrl.trim()) || (cadModelUrl && cadModelUrl.trim()) || "/car-raw.glb";
 
   const renderTitleSegment = (segment: string) => {
     const upper = segment.toUpperCase();
