@@ -168,17 +168,10 @@ export function SponsorsTab({
           <div className="flex items-center gap-2.5 shrink-0">
             <button
               onClick={() => openAddModal("partner")}
-              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white px-3.5 py-2 text-xs font-mono font-bold tracking-wider uppercase transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Partner</span>
-            </button>
-            <button
-              onClick={() => openAddModal("title")}
               className="flex items-center gap-1.5 bg-racing-red hover:bg-racing-red/80 text-white px-4 py-2 text-xs font-mono font-bold tracking-wider uppercase transition-colors shadow-lg shadow-racing-red/20"
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Add Title Sponsor</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Sponsor</span>
             </button>
           </div>
         </div>
@@ -196,7 +189,7 @@ export function SponsorsTab({
 
         {titleSponsors.length === 0 ? (
           <div className="bg-[#0b0c10] border border-white/5 p-8 text-center text-white/40 text-xs font-mono">
-            No title sponsors configured yet. Click "Add Title Sponsor" to add one.
+            No title sponsors configured yet. Click "Add Sponsor" to add one.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">

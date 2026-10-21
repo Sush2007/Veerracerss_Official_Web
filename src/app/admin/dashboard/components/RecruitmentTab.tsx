@@ -10,16 +10,13 @@ import {
   RotateCcw,
   Trash2,
   Mail,
-  Send,
   FileSpreadsheet,
-  ExternalLink,
   ToggleLeft,
   ToggleRight,
   Sparkles,
   Phone,
   X,
   MessageSquare,
-  Copy,
   Inbox,
   Check,
   UserCheck,
@@ -40,6 +37,8 @@ interface RecruitmentTabProps {
   ) => Promise<void>;
   onUpdateScore?: (id: string, score: string) => Promise<void>;
   onDeleteApplication: (id: string, name: string) => Promise<void>;
+  showToast?: (msg: string) => void;
+  showError?: (msg: string) => void;
 }
 
 export function RecruitmentTab({
@@ -48,6 +47,8 @@ export function RecruitmentTab({
   onUpdateSettings,
   onUpdateStatus,
   onDeleteApplication,
+  showToast,
+  showError,
 }: RecruitmentTabProps) {
   // Workflow Tab: "inbox" (Awaiting Decision), "accepted", "declined", "all"
   const [workflowTab, setWorkflowTab] = useState<"inbox" | "accepted" | "declined" | "all">("inbox");
@@ -55,17 +56,6 @@ export function RecruitmentTab({
   const [yearFilter, setYearFilter] = useState<string>("ALL");
   const [domainFilter, setDomainFilter] = useState<string>("ALL");
   const [processingId, setProcessingId] = useState<string | null>(null);
-
-  // Onboarding Email Modal State
-  const [emailModalCandidate, setEmailModalCandidate] = useState<RecruitmentApplication | null>(null);
-  const [emailSubject, setEmailSubject] = useState("");
-  const [emailMessage, setEmailMessage] = useState("");
-  const [sendingEmail, setSendingEmail] = useState(false);
-  const [emailFeedback, setEmailFeedback] = useState<{
-    type: "success" | "error";
-    message: string;
-    isDomainRestriction?: boolean;
-  } | null>(null);
 
   // Status Export Modal State
   const [showStatusExportModal, setShowStatusExportModal] = useState(false);
@@ -121,8 +111,7 @@ VSSUT Burla`
   // Strict modal body scroll-locking: Prevents background scrolling 100% of the time
   useEffect(() => {
     const isAnyModalOpen = Boolean(
-      emailModalCandidate ||
-        showStatusExportModal ||
+      showStatusExportModal ||
         showQuestionsModal ||
         showEmailTemplateModal
     );
@@ -137,7 +126,7 @@ VSSUT Burla`
         document.documentElement.style.overflow = prevHtmlOverflow;
       };
     }
-  }, [emailModalCandidate, showStatusExportModal, showQuestionsModal, showEmailTemplateModal]);
+  }, [showStatusExportModal, showQuestionsModal, showEmailTemplateModal]);
 
   // Filter & Smart Sorting Calculations
   const filteredRecruits = recruits
@@ -215,17 +204,16 @@ VSSUT Burla`
       return 0;
     });
 
-  const handleOpenEmailModal = (candidate: RecruitmentApplication) => {
-    setEmailModalCandidate(candidate);
+  const handleAcceptWithEmail = async (candidate: RecruitmentApplication) => {
+    setProcessingId(candidate.id);
+    try {
+      const subject =
+        siteSettings.onboarding_email_subject ||
+        `Welcome to VeerRacerss Electric // Induction Offer: ${candidate.primary_domain}`;
 
-    const subject =
-      siteSettings.onboarding_email_subject ||
-      `Welcome to VeerRacerss Electric // Induction Offer: ${candidate.primary_domain}`;
-    setEmailSubject(subject);
-
-    const baseTemplate =
-      siteSettings.onboarding_email_template ||
-      `Dear {candidate_name},
+      const baseTemplate =
+        siteSettings.onboarding_email_template ||
+        `Dear {candidate_name},
 
 Congratulations! We are pleased to inform you that following the review of your induction application, you have been accepted into VeerRacerss Electric for the 2026 Season under the {primary_domain} division.
 
@@ -240,37 +228,76 @@ Warm regards,
 Team VeerRacerss Electric
 VSSUT Burla`;
 
-    const hydrated = baseTemplate
-      .replace(/\{candidate_name\}/g, candidate.full_name)
-      .replace(/\{\{name\}\}/g, candidate.full_name)
-      .replace(/\{primary_domain\}/g, candidate.primary_domain)
-      .replace(/\{\{domain\}\}/g, candidate.primary_domain)
-      .replace(
-        /\{whatsapp_link\}/g,
-        siteSettings.whatsapp_recruit_link || "https://chat.whatsapp.com/veerracerss-recruits-2026"
-      )
-      .replace(
-        /\{\{whatsapp_link\}\}/g,
-        siteSettings.whatsapp_recruit_link || "https://chat.whatsapp.com/veerracerss-recruits-2026"
-      );
+      const hydrated = baseTemplate
+        .replace(/\{candidate_name\}/g, candidate.full_name)
+        .replace(/\{\{name\}\}/g, candidate.full_name)
+        .replace(/\{primary_domain\}/g, candidate.primary_domain)
+        .replace(/\{\{domain\}\}/g, candidate.primary_domain)
+        .replace(
+          /\{whatsapp_link\}/g,
+          siteSettings.whatsapp_recruit_link || "https://chat.whatsapp.com/veerracerss-recruits-2026"
+        )
+        .replace(
+          /\{\{whatsapp_link\}\}/g,
+          siteSettings.whatsapp_recruit_link || "https://chat.whatsapp.com/veerracerss-recruits-2026"
+        );
 
-    setEmailMessage(hydrated);
-    setEmailFeedback(null);
-  };
+      let emailSentSuccess = false;
+      try {
+        const res = await fetch("/api/recruitment/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: candidate.email,
+            candidateName: candidate.full_name,
+            subject,
+            message: hydrated,
+            applicationId: candidate.id,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          emailSentSuccess = true;
+        }
+      } catch (sendErr) {
+        console.warn("Background automated email dispatch notice:", sendErr);
+      }
 
-  const handleQuickAccept = async (candidate: RecruitmentApplication) => {
-    setProcessingId(candidate.id);
-    try {
-      await onUpdateStatus(candidate.id, "Accepted");
+      await onUpdateStatus(candidate.id, "Accepted", true);
+      candidate.onboarding_email_sent = true;
+      if (showToast) {
+        showToast(
+          emailSentSuccess
+            ? `Accepted ${candidate.full_name}! Confirmation letter dispatched via Google SMTP.`
+            : `Accepted ${candidate.full_name}! Application updated.`
+        );
+      }
+    } catch (err: any) {
+      if (showError) showError(err.message || "Failed to accept candidate.");
     } finally {
       setProcessingId(null);
     }
   };
 
-  const handleQuickDecline = async (candidate: RecruitmentApplication) => {
+  const handleShortlist = async (candidate: RecruitmentApplication) => {
+    setProcessingId(candidate.id);
+    try {
+      await onUpdateStatus(candidate.id, "Shortlisted");
+      if (showToast) showToast(`${candidate.full_name} moved to Shortlist.`);
+    } catch (err: any) {
+      if (showError) showError(err.message || "Failed to shortlist candidate.");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleDecline = async (candidate: RecruitmentApplication) => {
     setProcessingId(candidate.id);
     try {
       await onUpdateStatus(candidate.id, "Declined");
+      if (showToast) showToast(`${candidate.full_name} moved to Declined list.`);
+    } catch (err: any) {
+      if (showError) showError(err.message || "Failed to decline candidate.");
     } finally {
       setProcessingId(null);
     }
@@ -280,61 +307,11 @@ VSSUT Burla`;
     setProcessingId(candidate.id);
     try {
       await onUpdateStatus(candidate.id, "Pending");
+      if (showToast) showToast(`${candidate.full_name} restored to Inbox.`);
+    } catch (err: any) {
+      if (showError) showError(err.message || "Failed to restore candidate.");
     } finally {
       setProcessingId(null);
-    }
-  };
-
-  const handleSendEmail = async () => {
-    if (!emailModalCandidate) return;
-    setSendingEmail(true);
-    setEmailFeedback(null);
-
-    try {
-      const res = await fetch("/api/recruitment/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: emailModalCandidate.email,
-          candidateName: emailModalCandidate.full_name,
-          subject: emailSubject,
-          message: emailMessage,
-          applicationId: emailModalCandidate.id,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (data.isDomainRestriction) {
-        setEmailFeedback({
-          type: "error",
-          message: data.error,
-          isDomainRestriction: true,
-        });
-        return;
-      }
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to dispatch email via Resend.");
-      }
-
-      await onUpdateStatus(emailModalCandidate.id, "Accepted", true);
-      emailModalCandidate.onboarding_email_sent = true;
-      setEmailFeedback({
-        type: "success",
-        message: "Onboarding letter successfully delivered to candidate's inbox!",
-      });
-
-      setTimeout(() => {
-        setEmailModalCandidate(null);
-      }, 1500);
-    } catch (err: any) {
-      setEmailFeedback({
-        type: "error",
-        message: err.message || "Failed to deliver email. Use the direct Gmail button below.",
-      });
-    } finally {
-      setSendingEmail(false);
     }
   };
 
@@ -712,10 +689,18 @@ VSSUT Burla`;
                             ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
                             : isDeclined
                             ? "bg-red-500/20 text-red-400 border-red-500/40"
+                            : candidate.status === "Shortlisted"
+                            ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
                             : "bg-amber-500/10 text-amber-300 border-amber-500/30"
                         }`}
                       >
-                        {isAccepted ? "ACCEPTED" : isDeclined ? "DECLINED" : "AWAITING DECISION"}
+                        {isAccepted
+                          ? "ACCEPTED"
+                          : isDeclined
+                          ? "DECLINED"
+                          : candidate.status === "Shortlisted"
+                          ? "SHORTLISTED"
+                          : "AWAITING DECISION"}
                       </span>
                       {candidate.onboarding_email_sent && (
                         <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 font-bold">
@@ -728,9 +713,9 @@ VSSUT Burla`;
                     <div className="flex flex-wrap items-center gap-2 pt-1">
                       {isAwaiting && (
                         <>
-                          {/* 1-Click Decline */}
+                          {/* 1. Decline */}
                           <button
-                            onClick={() => handleQuickDecline(candidate)}
+                            onClick={() => handleDecline(candidate)}
                             disabled={processingId === candidate.id}
                             className="px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-[11px] font-mono font-bold uppercase transition-colors flex items-center gap-1 disabled:opacity-50"
                             title="Decline candidate and move to Declined list"
@@ -739,39 +724,45 @@ VSSUT Burla`;
                             <span>Decline</span>
                           </button>
 
-                          {/* Quick Accept (Without Email) */}
+                          {/* 2. Shortlist */}
                           <button
-                            onClick={() => handleQuickAccept(candidate)}
-                            disabled={processingId === candidate.id}
-                            className="px-2.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-mono font-bold uppercase transition-colors flex items-center gap-1 disabled:opacity-50"
-                            title="Accept candidate directly"
+                            onClick={() => handleShortlist(candidate)}
+                            disabled={processingId === candidate.id || candidate.status === "Shortlisted"}
+                            className={`px-2.5 py-1.5 text-[11px] font-mono font-bold uppercase transition-colors flex items-center gap-1 disabled:opacity-50 ${
+                              candidate.status === "Shortlisted"
+                                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 cursor-default"
+                                : "bg-white/5 hover:bg-cyan-500/20 text-white/80 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30"
+                            }`}
+                            title="Shortlist candidate for review"
                           >
-                            <Check className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>Accept</span>
+                            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                            <span>{candidate.status === "Shortlisted" ? "Shortlisted" : "Shortlist"}</span>
                           </button>
 
-                          {/* Accept & Open Email Dispatcher */}
+                          {/* 3. Accept */}
                           <button
-                            onClick={() => handleOpenEmailModal(candidate)}
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-md"
-                            title="Accept recruit & open customized onboarding email composer"
+                            onClick={() => handleAcceptWithEmail(candidate)}
+                            disabled={processingId === candidate.id}
+                            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-md disabled:opacity-50"
+                            title="Accept candidate & dispatch confirmation email via Google SMTP"
                           >
-                            <Mail className="w-3.5 h-3.5" />
-                            <span>Accept & Mail</span>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>{processingId === candidate.id ? "Accepting..." : "Accept"}</span>
                           </button>
                         </>
                       )}
 
                       {isAccepted && (
                         <>
-                          {/* Send / Resend Onboarding Letter */}
+                          {/* Resend Confirmation Mail via Google SMTP */}
                           <button
-                            onClick={() => handleOpenEmailModal(candidate)}
-                            className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
-                            title="Dispatch or resend onboarding welcome letter"
+                            onClick={() => handleAcceptWithEmail(candidate)}
+                            disabled={processingId === candidate.id}
+                            className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                            title="Resend onboarding welcome letter via Google SMTP"
                           >
                             <Mail className="w-3.5 h-3.5" />
-                            <span>{candidate.onboarding_email_sent ? "Resend Mail" : "Dispatch Mail"}</span>
+                            <span>{processingId === candidate.id ? "Sending..." : "Resend Mail"}</span>
                           </button>
 
                           {/* Direct WhatsApp Contact */}
@@ -830,183 +821,7 @@ VSSUT Burla`;
         </div>
       )}
 
-      {/* =========================================================================
-          MODAL 1: ONBOARDING EMAIL COMPOSER (With 1-Click Gmail & Resend Handling)
-      ========================================================================= */}
-      {emailModalCandidate && (
-        <div
-          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in"
-          onClick={() => setEmailModalCandidate(null)}
-          onWheel={(e) => e.stopPropagation()}
-          onTouchMove={(e) => e.stopPropagation()}
-        >
-          <div
-            className="bg-[#0b0c10] border border-racing-red/50 w-full max-w-2xl max-h-[88vh] flex flex-col shadow-2xl relative overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-            onWheel={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded bg-racing-red/10 border border-racing-red/40 flex items-center justify-center text-racing-red">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="text-[10px] font-mono uppercase text-racing-red font-bold">
-                    ONBOARDING LETTER DISPATCHER
-                  </span>
-                  <h3 className="text-base font-display font-black uppercase text-white">
-                    Send Acceptance to {emailModalCandidate.full_name}
-                  </h3>
-                </div>
-              </div>
 
-              <button
-                onClick={() => setEmailModalCandidate(null)}
-                className="p-1 text-white/50 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Modal Scrollable Body */}
-            <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
-              <div>
-                <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Recipient</label>
-                <input
-                  type="text"
-                  disabled
-                  value={`${emailModalCandidate.full_name} <${emailModalCandidate.email}>`}
-                  className="w-full bg-[#121318] border border-white/10 px-3 py-1.5 text-xs font-mono text-white/70 outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Subject Line</label>
-                <input
-                  type="text"
-                  value={emailSubject}
-                  onChange={(e) => setEmailSubject(e.target.value)}
-                  className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
-                  Email Message Body (Customize any details before sending)
-                </label>
-                <textarea
-                  rows={8}
-                  value={emailMessage}
-                  onChange={(e) => setEmailMessage(e.target.value)}
-                  className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed font-sans"
-                />
-              </div>
-
-              {/* Feedback Alert */}
-              {emailFeedback && (
-                <div
-                  className={`p-3 text-xs font-mono flex items-start gap-2 border ${
-                    emailFeedback.type === "error"
-                      ? "bg-red-500/10 border-red-500/40 text-red-300"
-                      : "bg-emerald-500/10 border-emerald-500/40 text-emerald-300"
-                  }`}
-                >
-                  {emailFeedback.type === "error" ? (
-                    <AlertCircle className="w-4 h-4 shrink-0 text-red-400 mt-0.5" />
-                  ) : (
-                    <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400 mt-0.5" />
-                  )}
-                  <div className="space-y-1">
-                    <span className="font-bold block">
-                      {emailFeedback.isDomainRestriction ? "Resend Testing Domain Restriction" : "Delivery Notice"}
-                    </span>
-                    <span className="leading-relaxed">{emailFeedback.message}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Direct Gmail Fallback Notice */}
-              <div className="p-3 bg-white/5 border border-white/10 text-white/70 text-xs font-mono flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
-                <span className="text-[11px]">
-                  💡 <strong>Tip:</strong> If Resend domain is in test mode, you can immediately 1-click open this pre-filled message in Gmail.
-                </span>
-                <a
-                  href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-                    emailModalCandidate.email
-                  )}&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailMessage)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={async () => {
-                    await onUpdateStatus(emailModalCandidate.id, "Accepted", true);
-                    emailModalCandidate.onboarding_email_sent = true;
-                  }}
-                  className="px-3.5 py-1.5 bg-white text-black font-bold text-xs uppercase flex items-center gap-1.5 hover:bg-racing-red hover:text-white transition-colors shrink-0"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Open in Gmail</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="shrink-0 p-5 sm:p-6 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 bg-[#0b0c10]">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`Subject: ${emailSubject}\n\n${emailMessage}`);
-                    alert("Email text copied to clipboard!");
-                  }}
-                  className="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-mono uppercase flex items-center gap-1.5 transition-colors"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>Copy Text</span>
-                </button>
-
-                <a
-                  href={`mailto:${encodeURIComponent(emailModalCandidate.email)}?subject=${encodeURIComponent(
-                    emailSubject
-                  )}&body=${encodeURIComponent(emailMessage)}`}
-                  onClick={async () => {
-                    await onUpdateStatus(emailModalCandidate.id, "Accepted", true);
-                    emailModalCandidate.onboarding_email_sent = true;
-                  }}
-                  className="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-mono uppercase flex items-center gap-1.5 transition-colors"
-                >
-                  <Mail className="w-3.5 h-3.5" />
-                  <span>Mail Client</span>
-                </a>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setEmailModalCandidate(null)}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-mono uppercase tracking-wider"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={sendingEmail}
-                  onClick={handleSendEmail}
-                  className="px-6 py-2 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50"
-                >
-                  {sendingEmail ? (
-                    <span>Dispatching...</span>
-                  ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Send via Resend API</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* =========================================================================
           MODAL 2: SET APPLICATION QUESTIONS

@@ -60,7 +60,6 @@ import { BatchProgressionModal } from "./components/BatchProgressionModal";
 import { ExpensesTab } from "./components/ExpensesTab";
 import { RecruitmentTab } from "./components/RecruitmentTab";
 import { CustomDbsTab } from "./components/CustomDbsTab";
-import { StorageManagerModal } from "./components/StorageManagerModal";
 import { AdminSecurityModal } from "./components/AdminSecurityModal";
 import { VehiclesTab } from "./components/VehiclesTab";
 import { SponsorsTab } from "./components/SponsorsTab";
@@ -122,7 +121,15 @@ export default function AdminDashboard() {
   const [editingAlumni, setEditingAlumni] = useState<AlumniRecord | null>(null);
 
   // 5. Active Squad Members State
-  const [members, setMembers] = useState<MemberRecord[]>([]);
+  const [members, setMembers] = useState<MemberRecord[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("vr_members");
+        if (raw) return JSON.parse(raw);
+      } catch {}
+    }
+    return [];
+  });
   const [deleteConfirmMember, setDeleteConfirmMember] = useState<MemberRecord | null>(null);
   const [uploadingAboutImg, setUploadingAboutImg] = useState(false);
   const [memberName, setMemberName] = useState("");
@@ -151,7 +158,6 @@ export default function AdminDashboard() {
   const [customDbs, setCustomDbs] = useState<CustomDatabaseRecord[]>(DEFAULT_CUSTOM_DATABASES);
 
   // 9. Utilities & Modals State
-  const [showStorageModal, setShowStorageModal] = useState(false);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
 
   // Master Dialog Scroll-Lock Effect: Prevents background scrolling whenever ANY modal is active
@@ -163,7 +169,6 @@ export default function AdminDashboard() {
     deleteConfirmMember ||
     selectedMemberForDatasheet ||
     showProgressionModal ||
-    showStorageModal ||
     showSecurityModal
   );
 
@@ -341,23 +346,27 @@ export default function AdminDashboard() {
     // 5. Members
     try {
       const { data: memData } = await supabase.from("members").select("*").order("created_at", { ascending: false });
-      if (memData) {
-        setMembers(
-          memData.map((m: any) => {
-            let yearOfStudy = m.year_of_study;
-            if (!yearOfStudy && m.year) {
-              if (m.year.includes("4th") || (m.year.includes("Final") && !m.year.includes("Pre-Final"))) yearOfStudy = "4th Year";
-              else if (m.year.includes("3rd") || m.year.includes("Pre-Final")) yearOfStudy = "3rd Year";
-              else if (m.year.includes("2nd")) yearOfStudy = "2nd Year";
-              else if (m.year.includes("1st")) yearOfStudy = "1st Year";
-              else yearOfStudy = m.year;
-            }
-            return {
-              ...m,
-              year_of_study: yearOfStudy || "3rd Year",
-            };
-          })
-        );
+      if (memData && memData.length > 0) {
+        const formatted = memData.map((m: any) => {
+          let yearOfStudy = m.year_of_study;
+          if (!yearOfStudy && m.year) {
+            if (m.year.includes("4th") || (m.year.includes("Final") && !m.year.includes("Pre-Final"))) yearOfStudy = "4th Year";
+            else if (m.year.includes("3rd") || m.year.includes("Pre-Final")) yearOfStudy = "3rd Year";
+            else if (m.year.includes("2nd")) yearOfStudy = "2nd Year";
+            else if (m.year.includes("1st")) yearOfStudy = "1st Year";
+            else yearOfStudy = m.year;
+          }
+          return {
+            ...m,
+            year_of_study: yearOfStudy || "3rd Year",
+          };
+        });
+        setMembers(formatted);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("vr_members", JSON.stringify(formatted));
+          } catch {}
+        }
       }
     } catch {}
 
@@ -630,6 +639,7 @@ export default function AdminDashboard() {
 
   // 2c. Vehicles Fleet & Auto-Spotlight Sync Handlers
   const handleSaveVehicles = async (updatedVehicles: VehicleRecord[]) => {
+    const deletedVehicles = vehicles.filter((v) => !updatedVehicles.some((u) => u.id === v.id));
     setVehicles(updatedVehicles);
     if (typeof window !== "undefined") {
       try {
@@ -638,6 +648,11 @@ export default function AdminDashboard() {
     }
 
     try {
+      for (const del of deletedVehicles) {
+        if (isValidUUID(del.id)) {
+          await supabase.from("vehicles").delete().eq("id", del.id);
+        }
+      }
       for (const v of updatedVehicles) {
         await supabase.from("vehicles").upsert(v);
       }
@@ -672,6 +687,7 @@ export default function AdminDashboard() {
   };
 
   const handleSaveSponsors = async (updatedSponsors: SponsorRecord[]) => {
+    const deletedSponsors = sponsors.filter((s) => !updatedSponsors.some((u) => u.id === s.id));
     setSponsors(updatedSponsors);
     if (typeof window !== "undefined") {
       try {
@@ -679,6 +695,11 @@ export default function AdminDashboard() {
       } catch {}
     }
     try {
+      for (const del of deletedSponsors) {
+        if (isValidUUID(del.id)) {
+          await supabase.from("sponsors").delete().eq("id", del.id);
+        }
+      }
       for (const sp of updatedSponsors) {
         await supabase.from("sponsors").upsert(sp);
       }
@@ -1049,7 +1070,13 @@ export default function AdminDashboard() {
           console.warn("Supabase member delete note:", error.message);
         }
       }
-      setMembers(members.filter((m) => m.id !== deleteConfirmMember.id));
+      const updated = members.filter((m) => m.id !== deleteConfirmMember.id);
+      setMembers(updated);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_members", JSON.stringify(updated));
+        } catch {}
+      }
       showToast(`Member "${deleteConfirmMember.name}" removed.`);
     } catch (err: any) {
       showError(err.message || "Failed to delete member.");
@@ -1092,7 +1119,13 @@ export default function AdminDashboard() {
         throw error;
       }
 
-      setMembers(members.map((m) => (m.id === updated.id ? updated : m)));
+      const updatedList = members.map((m) => (m.id === updated.id ? updated : m));
+      setMembers(updatedList);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_members", JSON.stringify(updatedList));
+        } catch {}
+      }
       showToast(`Datasheet for ${updated.name} updated successfully!`);
     } catch (err: any) {
       showError(err.message || "Failed to update member datasheet.");
@@ -1507,8 +1540,8 @@ export default function AdminDashboard() {
         }
       }
 
-      setRecruits((prev) =>
-        prev.map((r) =>
+      setRecruits((prev) => {
+        const next = prev.map((r) =>
           r.id === id
             ? {
                 ...r,
@@ -1516,8 +1549,14 @@ export default function AdminDashboard() {
                 ...(onboardingEmailSent !== undefined ? { onboarding_email_sent: onboardingEmailSent } : {}),
               }
             : r
-        )
-      );
+        );
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("vr_recruitment_applications", JSON.stringify(next));
+          } catch {}
+        }
+        return next;
+      });
       showToast(`Applicant marked as ${newStatus}.`);
     } catch (err: any) {
       showError(err.message || "Failed to update candidate status.");
@@ -1541,7 +1580,15 @@ export default function AdminDashboard() {
           }
         }
       }
-      setRecruits((prev) => prev.map((r) => (r.id === id ? { ...r, interview_score: score } : r)));
+      setRecruits((prev) => {
+        const next = prev.map((r) => (r.id === id ? { ...r, interview_score: score } : r));
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("vr_recruitment_applications", JSON.stringify(next));
+          } catch {}
+        }
+        return next;
+      });
       showToast("Candidate evaluation score updated.");
     } catch (err: any) {
       showError(err.message || "Failed to update review score.");
@@ -1567,7 +1614,15 @@ export default function AdminDashboard() {
           }
         }
       }
-      setRecruits((prev) => prev.filter((r) => r.id !== id));
+      setRecruits((prev) => {
+        const next = prev.filter((r) => r.id !== id);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("vr_recruitment_applications", JSON.stringify(next));
+          } catch {}
+        }
+        return next;
+      });
       showToast("Application deleted.");
     } catch (err: any) {
       showError(err.message || "Failed to delete application.");
@@ -1579,7 +1634,13 @@ export default function AdminDashboard() {
     try {
       const { data, error } = await supabase.from("custom_databases").insert([newDb]).select().single();
       if (error) throw error;
-      setCustomDbs([...customDbs, data]);
+      const updated = [...customDbs, data];
+      setCustomDbs(updated);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_custom_databases", JSON.stringify(updated));
+        } catch {}
+      }
       showToast(`Database "${newDb.db_name}" created!`);
     } catch (err: any) {
       showError(err.message || "Failed to create database. Ensure supabase-operations-setup.sql is executed.");
@@ -1720,15 +1781,6 @@ export default function AdminDashboard() {
 
           <div className="flex flex-wrap items-center gap-2.5">
             <button
-              onClick={() => setShowStorageModal(true)}
-              className="flex items-center gap-1.5 text-xs font-mono font-bold text-amber-400 hover:text-white bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-3.5 py-2 transition-colors uppercase tracking-wider"
-              title="Clean unused & orphaned files from Supabase storage buckets"
-            >
-              <HardDrive className="w-3.5 h-3.5" />
-              <span>Storage Cleaner</span>
-            </button>
-
-            <button
               onClick={() => setShowSecurityModal(true)}
               className="flex items-center gap-1.5 text-xs font-mono font-bold text-cyan-400 hover:text-white bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 px-3.5 py-2 transition-colors uppercase tracking-wider"
               title="Update admin password with email OTP verification"
@@ -1857,9 +1909,10 @@ export default function AdminDashboard() {
             className={`shrink-0 whitespace-nowrap px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
               activeTab === "recruitment" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
+            title={`${recruits.filter((r) => r.status !== "Accepted" && r.status !== "Declined").length} pending review • ${recruits.length} total applications`}
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Recruitment ({recruits.length})</span>
+            <span>Recruitment ({recruits.filter((r) => r.status !== "Accepted" && r.status !== "Declined").length})</span>
           </button>
 
           <button
@@ -3208,6 +3261,8 @@ export default function AdminDashboard() {
             onUpdateStatus={handleUpdateRecruitStatus}
             onUpdateScore={handleUpdateRecruitScore}
             onDeleteApplication={handleDeleteApplication}
+            showToast={showToast}
+            showError={showError}
           />
         )}
 
@@ -3241,21 +3296,6 @@ export default function AdminDashboard() {
             members={members}
             onClose={() => setShowProgressionModal(false)}
             onConfirm={handleExecuteProgression}
-          />
-        )}
-
-        {showStorageModal && (
-          <StorageManagerModal
-            isOpen={showStorageModal}
-            onClose={() => setShowStorageModal(false)}
-            members={members}
-            alumniList={alumniList}
-            machine={machine}
-            mediaList={mediaList}
-            expenses={expenses}
-            siteSettings={siteSettings}
-            showToast={showToast}
-            showError={showError}
           />
         )}
 

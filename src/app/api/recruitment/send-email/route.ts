@@ -33,8 +33,45 @@ ${message.replace(/\n/g, "<br/>")}
       </p>
     </div>`;
 
-    // 1. Try Resend Delivery
-    if (resendApiKey) {
+    // 1. Direct SMTP / Google App Password Automated Delivery (Primary)
+    const gmailPass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS;
+    const gmailUser = process.env.GMAIL_USER || process.env.SMTP_USER || "veerracersselectric.database@gmail.com";
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587;
+    const smtpFrom = process.env.SMTP_FROM || `"VeerRacerss Electric" <${gmailUser}>`;
+
+    if (gmailPass) {
+      try {
+        const transporter = smtpHost
+          ? nodemailer.createTransport({
+              host: smtpHost,
+              port: smtpPort,
+              secure: smtpPort === 465,
+              auth: { user: gmailUser, pass: gmailPass },
+            })
+          : nodemailer.createTransport({
+              service: "gmail",
+              auth: { user: gmailUser, pass: gmailPass },
+            });
+
+        await transporter.sendMail({
+          from: smtpFrom,
+          to,
+          subject,
+          text: message,
+          html: htmlContent,
+        });
+
+        emailSent = true;
+        deliveryDetails = `Email dispatched via automated Google SMTP from ${gmailUser}.`;
+      } catch (smtpErr: any) {
+        console.warn("Google SMTP attempt error:", smtpErr);
+        deliveryDetails = `SMTP note: ${smtpErr.message}`;
+      }
+    }
+
+    // 2. Secondary fallback: Resend API (if configured and SMTP not sent)
+    if (!emailSent && resendApiKey) {
       try {
         const resend = new Resend(resendApiKey);
         const fromAddress = process.env.RESEND_FROM || "VeerRacerss Electric <onboarding@resend.dev>";
@@ -49,68 +86,14 @@ ${message.replace(/\n/g, "<br/>")}
 
         if (resendResult.error) {
           console.warn("Resend API warning:", resendResult.error);
-          const isDomainRestriction =
-            resendResult.error.message?.includes("resend.dev") ||
-            resendResult.error.message?.includes("testing domain") ||
-            (resendResult.error as any).statusCode === 403;
-
-          // If domain restricted, check if Gmail / SMTP fallback is configured before failing
-          const gmailPass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS;
-          if (isDomainRestriction && !gmailPass) {
-            return NextResponse.json({
-              success: false,
-              isDomainRestriction: true,
-              error: "Resend test domain restriction: 'resend.dev' only sends to your own registered account email. To send automated emails directly to student applicants via API: 1) Verify your custom domain on resend.com/domains and set RESEND_FROM, OR 2) Set GMAIL_APP_PASSWORD in .env.local to send directly from veerracersselectric.database@gmail.com. You can also click 'Open in Gmail' for 1-click dispatch right now.",
-              deliveryDetails: resendResult.error.message,
-            });
-          }
           deliveryDetails = `Resend note: ${resendResult.error.message}`;
         } else {
           emailSent = true;
-          deliveryDetails = `Email dispatched successfully via Resend API (ID: ${resendResult.data?.id}).`;
+          deliveryDetails = `Email dispatched successfully via API (ID: ${resendResult.data?.id}).`;
         }
       } catch (resendErr: any) {
         console.warn("Resend send attempt error:", resendErr);
         deliveryDetails = `Resend attempt: ${resendErr.message}`;
-      }
-    }
-
-    // 2. Direct SMTP / Gmail App Password Automated Delivery
-    if (!emailSent) {
-      const gmailPass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS;
-      const gmailUser = process.env.GMAIL_USER || process.env.SMTP_USER || "veerracersselectric.database@gmail.com";
-      const smtpHost = process.env.SMTP_HOST;
-      const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587;
-      const smtpFrom = process.env.SMTP_FROM || `"VeerRacerss Electric" <${gmailUser}>`;
-
-      if (gmailPass) {
-        try {
-          const transporter = smtpHost
-            ? nodemailer.createTransport({
-                host: smtpHost,
-                port: smtpPort,
-                secure: smtpPort === 465,
-                auth: { user: gmailUser, pass: gmailPass },
-              })
-            : nodemailer.createTransport({
-                service: "gmail",
-                auth: { user: gmailUser, pass: gmailPass },
-              });
-
-          await transporter.sendMail({
-            from: smtpFrom,
-            to,
-            subject,
-            text: message,
-            html: htmlContent,
-          });
-
-          emailSent = true;
-          deliveryDetails = `Email dispatched via automated Google/SMTP engine from ${gmailUser}.`;
-        } catch (smtpErr: any) {
-          console.warn("SMTP attempt error:", smtpErr);
-          deliveryDetails = `SMTP attempt: ${smtpErr.message}`;
-        }
       }
     }
 
