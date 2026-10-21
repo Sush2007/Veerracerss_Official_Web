@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CheckCircle, AlertCircle, Send, ArrowRight, Shield, Zap, Sparkles } from "lucide-react";
+import { createClient } from "@/src/lib/supabase/client";
 
 interface RecruitmentFormProps {
   formEnabled: boolean;
@@ -24,11 +25,34 @@ export function RecruitmentForm({
   const [yearOfStudy, setYearOfStudy] = useState("1st Year");
   const [primaryDomain, setPrimaryDomain] = useState("Powertrain & High Voltage (Battery & Inverters)");
   const [secondaryDomain, setSecondaryDomain] = useState("Chassis & Aerodynamics (Spaceframe & Carbon Aero)");
+  const [prDomain, setPrDomain] = useState("None (Technical Only)");
+  const [questionPrompt, setQuestionPrompt] = useState(
+    "Why VeerRacerss Electric & Prior Technical Experience"
+  );
   const [experienceSummary, setExperienceSummary] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadFormSettings() {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase.from("site_settings").select("*").limit(1).maybeSingle();
+        if (data?.recruitment_question_prompt) {
+          setQuestionPrompt(data.recruitment_question_prompt);
+        } else if (typeof window !== "undefined") {
+          const raw = localStorage.getItem("vr_recruitment_questions");
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.question_prompt) setQuestionPrompt(parsed.question_prompt);
+          }
+        }
+      } catch {}
+    }
+    loadFormSettings();
+  }, []);
 
   const branches = [
     "Mechanical Engineering",
@@ -43,13 +67,21 @@ export function RecruitmentForm({
     "Civil Engineering",
   ];
 
+  // Technical engineering domains only (Electronics/Sensors and PR separated)
   const domains = [
     "Powertrain & High Voltage (Battery & Inverters)",
     "Chassis & Aerodynamics (Spaceframe & Carbon Aero)",
     "Suspension & Kinematics (Double-Wishbone & Steering)",
     "Brakes & Vehicle Dynamics (Hydraulics & AP Racing)",
-    "Embedded Electronics & Telemetry (CAN-Bus & Sensors)",
-    "PR, Corporate Sponsorship & Media Relations",
+  ];
+
+  const prDomains = [
+    "None (Technical Only)",
+    "Web Development & Coding",
+    "Graphic Designing & 3D Visuals",
+    "Video Editing & Content Creation",
+    "Corporate Sponsorship & Public Relations",
+    "Social Media Management & Operations",
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,6 +102,7 @@ export function RecruitmentForm({
           year_of_study: yearOfStudy,
           primary_domain: primaryDomain,
           secondary_domain: secondaryDomain,
+          pr_domain: prDomain,
           experience_summary: experienceSummary,
         }),
       });
@@ -121,10 +154,10 @@ export function RecruitmentForm({
           <span>APPLICATION SUBMITTED SUCCESSFULLY</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-display font-black uppercase text-white mb-3">
-          Welcome to the Paddock, {fullName}!
+          Application Received, {fullName}!
         </h2>
         <p className="text-white/70 text-xs sm:text-sm font-sans mb-6 font-light leading-relaxed">
-          Your profile has been forwarded to our domain technical leads. Shortlisted candidates will receive an official onboarding and interview invitation via email at <span className="text-emerald-400 font-mono">{email}</span>.
+          Your profile has been logged with the VeerRacerss Electric technical leads. Shortlisted candidates will receive an official onboarding and interview invitation via email at <span className="text-emerald-400 font-mono">{email}</span>.
         </p>
         <button
           onClick={() => {
@@ -134,6 +167,7 @@ export function RecruitmentForm({
             setPhone("");
             setRollNo("");
             setExperienceSummary("");
+            setPrDomain("None (Technical Only)");
           }}
           className="bg-white/10 hover:bg-white hover:text-black text-white text-xs font-mono font-bold px-6 py-3 transition-all uppercase tracking-wider"
         >
@@ -266,11 +300,11 @@ export function RecruitmentForm({
           </div>
         </div>
 
-        {/* Row 4: Domain Preferences */}
+        {/* Row 4: Technical Domain Preferences */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
             <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block">
-              Primary Domain Preference <span className="text-racing-red">*</span>
+              Primary Technical Domain <span className="text-racing-red">*</span>
             </label>
             <select
               value={primaryDomain}
@@ -287,7 +321,7 @@ export function RecruitmentForm({
 
           <div>
             <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block">
-              Secondary Domain Preference
+              Secondary Technical Domain (Optional)
             </label>
             <select
               value={secondaryDomain}
@@ -303,16 +337,38 @@ export function RecruitmentForm({
           </div>
         </div>
 
-        {/* Technical Experience */}
+        {/* Row 5: PR / Media / Non-Technical Preference (Optional) */}
         <div>
           <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block">
-            Why VeerRacerss Electric & Prior Technical Experience
+            Interested in PR / Media / Non-Technical Domain? (Optional)
+          </label>
+          <select
+            value={prDomain}
+            onChange={(e) => setPrDomain(e.target.value)}
+            className="w-full bg-[#121318] border border-white/10 focus:border-racing-red px-3.5 py-2.5 text-xs font-mono text-white outline-none transition-colors"
+          >
+            {prDomains.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+          <span className="text-[10px] text-white/40 block mt-1 font-mono">
+            If you also possess skills in web development, graphic design, video editing, or sponsorship, select your choice above.
+          </span>
+        </div>
+
+        {/* Technical Experience / Senior Question Prompt */}
+        <div>
+          <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block">
+            {questionPrompt} <span className="text-racing-red">*</span>
           </label>
           <textarea
+            required
             rows={4}
             value={experienceSummary}
             onChange={(e) => setExperienceSummary(e.target.value)}
-            placeholder="Tell us about your interests, past projects (CAD, Arduino, coding, fabrication, sponsorship outreach), or what drives you toward electric motorsport..."
+            placeholder="Describe your interests, software proficiency, past projects, or reasons for joining VeerRacerss Electric..."
             className="w-full bg-[#121318] border border-white/10 focus:border-racing-red px-3.5 py-2.5 text-xs font-mono text-white outline-none transition-colors"
           />
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Users,
   Search,
@@ -22,6 +22,8 @@ import {
   BookOpen,
   X,
   MessageSquare,
+  HelpCircle,
+  Copy,
 } from "lucide-react";
 import { RecruitmentApplication, SiteSettings } from "@/src/data/cms_defaults";
 import { exportTableToExcel } from "@/src/lib/exportToExcel";
@@ -62,19 +64,76 @@ export function RecruitmentTab({
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
   const [sendingEmail, setSendingEmail] = useState(false);
-  const [emailFeedback, setEmailFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [emailFeedback, setEmailFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+    isDomainRestriction?: boolean;
+  } | null>(null);
 
   // Status Export Modal State
   const [showStatusExportModal, setShowStatusExportModal] = useState(false);
 
-  // Edit Portal Modal State
-  const [showEditPortalModal, setShowEditPortalModal] = useState(false);
-  const [portalTitle, setPortalTitle] = useState(siteSettings.recruitment_form_title || "Formula Student Electric 2026 - Official Recruitment");
-  const [portalDeadline, setPortalDeadline] = useState(siteSettings.recruitment_form_deadline || "Season 2026 Phase 1 Induction");
-  const [portalInstructions, setPortalInstructions] = useState(siteSettings.recruitment_instructions || "Complete all fields accurately. Shortlisted candidates will be contacted via WhatsApp/Email for the technical discussion and workshop induction.");
-  const [portalEligibility, setPortalEligibility] = useState(siteSettings.recruitment_eligibility || "Open to 1st Year (Freshers) & 2nd Year (Lateral) B.Tech students across all engineering branches of VSSUT Burla.");
-  const [portalWhatsapp, setPortalWhatsapp] = useState(siteSettings.whatsapp_recruit_link || "https://chat.whatsapp.com/veerracerss-recruits-2026");
-  const [savingPortal, setSavingPortal] = useState(false);
+  // Set Questions Modal State
+  const [showQuestionsModal, setShowQuestionsModal] = useState(false);
+  const [questionPrompt, setQuestionPrompt] = useState(
+    siteSettings.recruitment_question_prompt ||
+      "Why VeerRacerss Electric & Prior Technical Experience / Hands-on Projects"
+  );
+  const [eligibilityNote, setEligibilityNote] = useState(
+    siteSettings.recruitment_eligibility ||
+      "Open to 1st Year (Freshers) & 2nd Year (Lateral) B.Tech students across all engineering branches of VSSUT Burla."
+  );
+  const [deadlineTagline, setDeadlineTagline] = useState(
+    siteSettings.recruitment_form_deadline || "Season 2026 Phase 1 Induction"
+  );
+  const [savingQuestions, setSavingQuestions] = useState(false);
+
+  // Edit Confirmation Email Template Modal State
+  const [showEmailTemplateModal, setShowEmailTemplateModal] = useState(false);
+  const [templateSubject, setTemplateSubject] = useState(
+    siteSettings.onboarding_email_subject || "Welcome to VeerRacerss Electric // Application Accepted"
+  );
+  const [templateBody, setTemplateBody] = useState(
+    siteSettings.onboarding_email_template ||
+      `Dear {candidate_name},
+
+Congratulations! We are pleased to inform you that following the review of your induction application, you have been accepted into VeerRacerss Electric for the 2026 Season under the {primary_domain} division.
+
+Next Steps:
+1. Join our official recruitment WhatsApp group: {whatsapp_link}
+2. Attend our induction briefing at the Central Workshop Block, VSSUT Burla.
+3. Bring your college student ID card.
+
+Welcome to the team!
+
+Warm regards,
+Team VeerRacerss Electric
+VSSUT Burla`
+  );
+  const [whatsappLink, setWhatsappLink] = useState(
+    siteSettings.whatsapp_recruit_link || "https://chat.whatsapp.com/veerracerss-recruits-2026"
+  );
+  const [savingEmailTemplate, setSavingEmailTemplate] = useState(false);
+
+  // Fix dialog scrolling: lock body scroll whenever any modal is open
+  useEffect(() => {
+    const isAnyModalOpen = Boolean(
+      emailModalCandidate ||
+        showStatusExportModal ||
+        showQuestionsModal ||
+        showEmailTemplateModal
+    );
+
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [emailModalCandidate, showStatusExportModal, showQuestionsModal, showEmailTemplateModal]);
 
   // Filter calculations
   const filteredRecruits = recruits.filter((r) => {
@@ -92,20 +151,17 @@ export function RecruitmentTab({
       [
         "powertrain",
         "chassis",
-        "electronics",
-        "embedded",
         "suspension",
         "dynamics",
         "brakes",
-        "thermal",
-        "media",
-        "relations",
+        "web",
+        "graphic",
+        "video",
         "pr",
         "sponsorship",
-        "operations",
+        "media",
       ].some((kw) => {
         if (kw === "dynamics") {
-          // Disallow matching 'dynamics' when part of 'aerodynamics' to prevent cross-domain collision
           const filterHasDynamics = filterLower.replace(/aerodynamics/g, "").includes("dynamics");
           const primaryHasDynamics = primaryLower.replace(/aerodynamics/g, "").includes("dynamics");
           const secondaryHasDynamics = secondaryLower ? secondaryLower.replace(/aerodynamics/g, "").includes("dynamics") : false;
@@ -125,42 +181,50 @@ export function RecruitmentTab({
       (r.roll_no || "").toLowerCase().includes(query) ||
       (r.branch || "").toLowerCase().includes(query) ||
       (r.primary_domain || "").toLowerCase().includes(query) ||
-      (r.secondary_domain && r.secondary_domain.toLowerCase().includes(query));
+      (r.secondary_domain && r.secondary_domain.toLowerCase().includes(query)) ||
+      (r.notes && r.notes.toLowerCase().includes(query));
 
     return matchesStatus && matchesYear && matchesDomain && matchesSearch;
   });
 
   const handleOpenEmailModal = (candidate: RecruitmentApplication) => {
     setEmailModalCandidate(candidate);
-    setEmailSubject(`Welcome to VeerRacerss Electric // Induction Offer: ${candidate.primary_domain}`);
-    
+
+    const subject =
+      siteSettings.onboarding_email_subject ||
+      `Welcome to VeerRacerss Electric // Induction Offer: ${candidate.primary_domain}`;
+    setEmailSubject(subject);
+
     const baseTemplate =
       siteSettings.onboarding_email_template ||
-      `Dear {{name}},
+      `Dear {candidate_name},
 
-Congratulations! On behalf of VeerRacerss Electric, we are thrilled to formally welcome you to the official Formula Student team of VSSUT Burla for Season 2026.
+Congratulations! We are pleased to inform you that following the review of your induction application, you have been accepted into VeerRacerss Electric for the 2026 Season under the {primary_domain} division.
 
-Based on your technical evaluation and domain interviews, you have been selected for the {{domain}} engineering division.
+Next Steps:
+1. Join our official recruitment WhatsApp group: {whatsapp_link}
+2. Attend our induction briefing at the Central Workshop Block, VSSUT Burla.
+3. Bring your college student ID card.
 
-ORIENTATION DETAILS:
-• Date & Time: Saturday at 5:00 PM
-• Venue: Formula Student Research Workshop, Mechanical Block, VSSUT Burla
-• Agenda: Safety briefing, CAD/CAE tools setup, high-voltage battery safety protocol, and sub-team allocation.
-
-OFFICIAL RECRUITS WHATSAPP GROUP:
-Please join the official team communication channel here: {{whatsapp_link}}
-
-Wear comfortable footwear and bring a notebook. We look forward to engineering our next electric racecar together with you!
+Welcome to the team!
 
 Warm regards,
-Team Captain & Executive Council
-VeerRacerss Electric // VSSUT Burla
-veerracersselectric.database@gmail.com`;
+Team VeerRacerss Electric
+VSSUT Burla`;
 
     const hydrated = baseTemplate
-      .replace(/{{name}}/g, candidate.full_name)
-      .replace(/{{domain}}/g, candidate.primary_domain)
-      .replace(/{{whatsapp_link}}/g, siteSettings.whatsapp_recruit_link || "https://chat.whatsapp.com/veerracerss-recruits-2026");
+      .replace(/\{candidate_name\}/g, candidate.full_name)
+      .replace(/\{\{name\}\}/g, candidate.full_name)
+      .replace(/\{primary_domain\}/g, candidate.primary_domain)
+      .replace(/\{\{domain\}\}/g, candidate.primary_domain)
+      .replace(
+        /\{whatsapp_link\}/g,
+        siteSettings.whatsapp_recruit_link || "https://chat.whatsapp.com/veerracerss-recruits-2026"
+      )
+      .replace(
+        /\{\{whatsapp_link\}\}/g,
+        siteSettings.whatsapp_recruit_link || "https://chat.whatsapp.com/veerracerss-recruits-2026"
+      );
 
     setEmailMessage(hydrated);
     setEmailFeedback(null);
@@ -185,6 +249,16 @@ veerracersselectric.database@gmail.com`;
       });
 
       const data = await res.json();
+
+      if (data.isDomainRestriction) {
+        setEmailFeedback({
+          type: "error",
+          message: data.error,
+          isDomainRestriction: true,
+        });
+        return;
+      }
+
       if (!res.ok) throw new Error(data.error || "Failed to dispatch email.");
 
       setEmailFeedback({
@@ -209,25 +283,21 @@ veerracersselectric.database@gmail.com`;
     }
   };
 
-  const handleExport = () => {
-    setShowStatusExportModal(true);
-  };
-
   const handleExecuteExport = (targetStatus: string) => {
-    const list = targetStatus === "ALL" 
-      ? recruits 
-      : recruits.filter(r => r.status === targetStatus);
+    const list =
+      targetStatus === "ALL" ? recruits : recruits.filter((r) => r.status === targetStatus);
 
     exportTableToExcel(
       list.map((r) => ({
         "Full Name": r.full_name,
-        "Email": r.email,
+        Email: r.email,
         "WhatsApp Phone": r.phone,
         "Roll Number": r.roll_no,
         "Academic Branch": r.branch,
         "Year of Study": r.year_of_study,
         "Primary Domain": r.primary_domain,
         "Secondary Domain": r.secondary_domain || "None",
+        "PR Domain / Specialization": r.notes || "Technical Only",
         "Application Status": r.status,
         "Interview Score": r.interview_score || "Pending",
         "Technical Experience": r.experience_summary || "",
@@ -240,20 +310,41 @@ veerracersselectric.database@gmail.com`;
     setShowStatusExportModal(false);
   };
 
-  const handleSavePortalDetails = async (e: React.FormEvent) => {
+  const handleSaveQuestions = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSavingPortal(true);
+    setSavingQuestions(true);
+    try {
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(
+            "vr_recruitment_questions",
+            JSON.stringify({ question_prompt: questionPrompt })
+          );
+        } catch {}
+      }
+      await onUpdateSettings({
+        recruitment_question_prompt: questionPrompt,
+        recruitment_eligibility: eligibilityNote,
+        recruitment_form_deadline: deadlineTagline,
+      });
+      setShowQuestionsModal(false);
+    } finally {
+      setSavingQuestions(false);
+    }
+  };
+
+  const handleSaveEmailTemplate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingEmailTemplate(true);
     try {
       await onUpdateSettings({
-        recruitment_form_title: portalTitle,
-        recruitment_form_deadline: portalDeadline,
-        recruitment_instructions: portalInstructions,
-        recruitment_eligibility: portalEligibility,
-        whatsapp_recruit_link: portalWhatsapp,
+        onboarding_email_subject: templateSubject,
+        onboarding_email_template: templateBody,
+        whatsapp_recruit_link: whatsappLink,
       });
-      setShowEditPortalModal(false);
+      setShowEmailTemplateModal(false);
     } finally {
-      setSavingPortal(false);
+      setSavingEmailTemplate(false);
     }
   };
 
@@ -261,13 +352,12 @@ veerracersselectric.database@gmail.com`;
 
   return (
     <div className="space-y-6">
-      
       {/* Master Toggle & Header Banner */}
       <div className="bg-[#0b0c10] border border-white/10 p-5 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="inline-flex items-center gap-2 mb-1 text-[10px] font-mono uppercase text-racing-red font-bold">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>RECRUITMENT & INDUCTION CONTROL CENTER</span>
+            <span>RECRUITMENT & INDUCTION CONTROL</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-display font-black uppercase text-white">
             Applicant Checklist & Onboarding
@@ -277,33 +367,43 @@ veerracersselectric.database@gmail.com`;
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           {/* Master Form Toggle */}
           <button
             onClick={() => onUpdateSettings({ recruitment_form_enabled: !formActive, recruitment_open: !formActive })}
-            className={`px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 border transition-all ${
+            className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 border transition-all ${
               formActive
                 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
                 : "bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20"
             }`}
           >
             {formActive ? <ToggleRight className="w-5 h-5 text-emerald-400" /> : <ToggleLeft className="w-5 h-5 text-red-400" />}
-            <span>{formActive ? "Applications: ACTIVE (OPEN)" : "Applications: PAUSED (CLOSED)"}</span>
+            <span>{formActive ? "Form: ACTIVE" : "Form: PAUSED"}</span>
           </button>
 
-          {/* Edit Portal Content */}
+          {/* Set Questions Button */}
           <button
-            onClick={() => setShowEditPortalModal(true)}
+            onClick={() => setShowQuestionsModal(true)}
             className="px-3.5 py-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-mono font-bold uppercase flex items-center gap-1.5 transition-colors"
-            title="Edit Recruitment Form Headline, Deadline, Instructions & Links"
+            title="Set the questions and technical prompts asked to applicants"
           >
-            <Edit3 className="w-4 h-4 text-racing-red" />
-            <span>Edit Portal Details</span>
+            <MessageSquare className="w-4 h-4 text-racing-red" />
+            <span>Set Questions</span>
           </button>
 
-          {/* Excel Export */}
+          {/* Edit Confirmation Email Button */}
           <button
-            onClick={handleExport}
+            onClick={() => setShowEmailTemplateModal(true)}
+            className="px-3.5 py-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-mono font-bold uppercase flex items-center gap-1.5 transition-colors"
+            title="Edit the confirmation email received by the student"
+          >
+            <Mail className="w-4 h-4 text-amber-400" />
+            <span>Confirmation Mail</span>
+          </button>
+
+          {/* Excel Export Button */}
+          <button
+            onClick={() => setShowStatusExportModal(true)}
             className="px-3.5 py-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/40 text-xs font-mono font-bold uppercase flex items-center gap-1.5 transition-colors"
           >
             <FileSpreadsheet className="w-4 h-4" />
@@ -359,214 +459,248 @@ veerracersselectric.database@gmail.com`;
             <option value="ALL">All Domains</option>
             <option value="Powertrain & High Voltage (Battery & Inverters)">Powertrain & High Voltage</option>
             <option value="Chassis & Aerodynamics (Spaceframe & Carbon Aero)">Chassis & Aerodynamics</option>
-            <option value="Electronics & Embedded Systems">Electronics & Embedded Systems</option>
-            <option value="Vehicle Dynamics & Suspension">Vehicle Dynamics & Suspension</option>
-            <option value="Brakes & Thermals">Brakes & Thermals</option>
-            <option value="Media & Public Relations">Media & Public Relations</option>
-            <option value="Operations & Sponsorship">Operations & Sponsorship</option>
+            <option value="Suspension & Kinematics (Double-Wishbone & Steering)">Suspension & Kinematics</option>
+            <option value="Brakes & Vehicle Dynamics (Hydraulics & AP Racing)">Brakes & Vehicle Dynamics</option>
+            <option value="pr">PR / Media / Sponsorship</option>
           </select>
         </div>
       </div>
 
-      {/* Candidates Checklist Grid */}
+      {/* Candidates List */}
       {filteredRecruits.length === 0 ? (
-        <div className="text-center py-16 bg-[#0b0c10] border border-white/10 p-8">
-          <p className="font-mono text-xs text-white/40 uppercase tracking-widest">
-            No applicant submissions found matching the criteria.
-          </p>
+        <div className="bg-[#0b0c10] border border-white/10 p-12 text-center text-white/50 font-mono text-xs">
+          <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
+          No recruitment applications found matching the current filters.
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {filteredRecruits.map((candidate) => (
             <div
               key={candidate.id}
-              className="bg-[#0b0c10] border border-white/10 hover:border-white/20 p-5 transition-all shadow-md flex flex-col lg:flex-row justify-between gap-5"
+              className={`bg-[#0b0c10] border p-4 sm:p-5 transition-all ${
+                candidate.status === "Accepted"
+                  ? "border-emerald-500/40 bg-emerald-950/10"
+                  : candidate.status === "Declined"
+                  ? "border-red-500/30 opacity-70"
+                  : candidate.status === "Shortlisted"
+                  ? "border-blue-500/40"
+                  : "border-white/10 hover:border-white/20"
+              }`}
             >
-              {/* Left Info */}
-              <div className="space-y-2 flex-1">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <h3 className="font-display font-black text-lg text-white uppercase">{candidate.full_name}</h3>
-                  <span className="text-[10px] font-mono bg-racing-red/10 text-racing-red border border-racing-red/30 px-2 py-0.5 font-bold uppercase">
-                    {candidate.year_of_study}
-                  </span>
-                  <span className="text-[10px] font-mono bg-white/10 text-white/80 px-2 py-0.5 uppercase">
-                    {candidate.branch}
-                  </span>
-                  <span className="text-[10px] font-mono text-white/40">Roll: {candidate.roll_no}</span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-white/60">
-                  <div className="flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-white/40" />
-                    <span>{candidate.email}</span>
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                {/* Left: Candidate Info */}
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-display font-black text-base uppercase text-white tracking-wide">
+                      {candidate.full_name}
+                    </h3>
+                    <span className="text-[10px] font-mono bg-white/10 px-2 py-0.5 text-white/70">
+                      {candidate.year_of_study} • {candidate.branch}
+                    </span>
+                    <span className="text-[10px] font-mono text-white/50">Roll: {candidate.roll_no}</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-white/40" />
-                    <span>{candidate.phone}</span>
-                  </div>
-                </div>
 
-                <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-mono">
-                  <span className="text-white/40">Preferences:</span>
-                  <span className="bg-[#171820] text-racing-red font-semibold px-2 py-0.5 border border-white/10">
-                    1. {candidate.primary_domain}
-                  </span>
-                  {candidate.secondary_domain && (
-                    <span className="bg-[#171820] text-white/70 px-2 py-0.5 border border-white/10">
-                      2. {candidate.secondary_domain}
+                  <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-white/60">
+                    <span className="flex items-center gap-1 text-white/80">
+                      <Mail className="w-3.5 h-3.5 text-white/40" />
+                      {candidate.email}
                     </span>
-                  )}
-                </div>
-
-                {candidate.experience_summary && (
-                  <p className="text-xs font-sans text-white/60 font-light leading-relaxed bg-black/40 p-2.5 border border-white/5 mt-2">
-                    <span className="text-white/80 font-mono text-[10px] uppercase font-bold block mb-0.5">
-                      Technical Experience & Motivation:
-                    </span>
-                    {candidate.experience_summary}
-                  </p>
-                )}
-              </div>
-
-              {/* Right: Actions, Score & Status */}
-              <div className="flex flex-col sm:flex-row lg:flex-col justify-between items-start lg:items-end gap-3 shrink-0 lg:border-l lg:border-white/10 lg:pl-5">
-                
-                {/* Status Indicator */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono uppercase text-white/50">Status:</span>
-                  <span
-                    className={`text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 border ${
-                      candidate.status === "Accepted"
-                        ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                        : candidate.status === "Declined"
-                        ? "bg-red-500/20 text-red-400 border-red-500/40"
-                        : candidate.status === "Shortlisted"
-                        ? "bg-blue-500/20 text-blue-400 border-blue-500/40"
-                        : "bg-amber-500/20 text-amber-400 border-amber-500/40"
-                    }`}
-                  >
-                    {candidate.status}
-                  </span>
-                  {candidate.onboarding_email_sent && (
-                    <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5">
-                      MAIL SENT
-                    </span>
-                  )}
-                </div>
-
-                {/* Interview Score Input */}
-                <div className="flex flex-col items-start lg:items-end gap-1 text-xs font-mono">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-white/40 text-[10px] uppercase">Score:</span>
-                    <input
-                      type="text"
-                      value={scoreDrafts[candidate.id] !== undefined ? scoreDrafts[candidate.id] : (candidate.interview_score || "")}
-                      placeholder="e.g. 8.5 / 10"
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setScoreDrafts((prev) => ({ ...prev, [candidate.id]: val }));
-                        if (scoreErrors[candidate.id]) {
-                          setScoreErrors((prev) => {
-                            const copy = { ...prev };
-                            delete copy[candidate.id];
-                            return copy;
-                          });
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          (e.target as HTMLInputElement).blur();
-                        }
-                      }}
-                      onBlur={async () => {
-                        const currentVal = scoreDrafts[candidate.id] !== undefined
-                          ? scoreDrafts[candidate.id]
-                          : (candidate.interview_score || "");
-                        if (currentVal.trim() !== (candidate.interview_score || "").trim()) {
-                          setSavingScoreId(candidate.id);
-                          try {
-                            await onUpdateScore(candidate.id, currentVal.trim());
-                          } catch (err: any) {
-                            setScoreErrors((prev) => ({
-                              ...prev,
-                              [candidate.id]: err.message || "Failed to update review score",
-                            }));
-                          } finally {
-                            setSavingScoreId(null);
-                          }
-                        }
-                      }}
-                      disabled={savingScoreId === candidate.id}
-                      className={`w-28 bg-[#111115] border px-2 py-0.5 text-[11px] font-mono text-white text-center outline-none transition-colors ${
-                        scoreErrors[candidate.id]
-                          ? "border-red-500/80 text-red-300"
-                          : "border-white/10 focus:border-racing-red"
-                      } ${savingScoreId === candidate.id ? "opacity-50" : ""}`}
-                    />
-                  </div>
-                  {scoreErrors[candidate.id] && (
-                    <span className="text-[10px] font-mono text-red-400 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3 shrink-0" />
-                      <span>{scoreErrors[candidate.id]}</span>
-                    </span>
-                  )}
-                </div>
-
-                {/* Decision Action Buttons */}
-                <div className="flex flex-wrap items-center gap-2 pt-2">
-                  {candidate.status !== "Pending" && (
-                    <button
-                      onClick={() => onUpdateStatus(candidate.id, "Pending")}
-                      className="px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-mono font-bold uppercase transition-colors flex items-center gap-1"
-                      title="Reset candidate status back to Pending Review"
+                    <a
+                      href={`https://wa.me/${candidate.phone.replace(/[^0-9]/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-emerald-400 hover:underline"
                     >
-                      <RotateCcw className="w-3 h-3" />
-                      <span>Pending</span>
-                    </button>
+                      <Phone className="w-3.5 h-3.5" />
+                      {candidate.phone}
+                    </a>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-mono pt-1">
+                    <span className="text-white/40">Technical Domains:</span>
+                    <span className="bg-[#171820] text-racing-red font-semibold px-2 py-0.5 border border-white/10">
+                      1. {candidate.primary_domain}
+                    </span>
+                    {candidate.secondary_domain && (
+                      <span className="bg-[#171820] text-white/70 px-2 py-0.5 border border-white/10">
+                        2. {candidate.secondary_domain}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* PR Domain Interest Tag */}
+                  {candidate.notes && candidate.notes.includes("PR") && (
+                    <div className="pt-0.5">
+                      <span className="inline-block bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 text-[10px] font-mono font-bold">
+                        {candidate.notes}
+                      </span>
+                    </div>
                   )}
 
-                  <button
-                    onClick={() => onUpdateStatus(candidate.id, "Shortlisted")}
-                    className="px-2.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[11px] font-mono font-bold uppercase transition-colors"
-                  >
-                    Shortlist
-                  </button>
-
-                  <button
-                    onClick={() => handleOpenEmailModal(candidate)}
-                    className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-white border border-emerald-500/40 text-[11px] font-mono font-bold uppercase flex items-center gap-1 transition-all"
-                  >
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>Accept & Onboard</span>
-                  </button>
-
-                  <button
-                    onClick={() => onUpdateStatus(candidate.id, "Declined")}
-                    className="px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-[11px] font-mono font-bold uppercase transition-colors"
-                  >
-                    Decline
-                  </button>
-
-                  <button
-                    onClick={() => onDeleteApplication(candidate.id, candidate.full_name)}
-                    className="p-1.5 text-white/30 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/30 transition-colors"
-                    title={`Delete application of ${candidate.full_name}`}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {candidate.experience_summary && (
+                    <p className="text-xs font-sans text-white/60 font-light leading-relaxed bg-black/40 p-2.5 border border-white/5 mt-2">
+                      <span className="text-white/80 font-mono text-[10px] uppercase font-bold block mb-0.5">
+                        Technical Experience / Motivation Statement:
+                      </span>
+                      {candidate.experience_summary}
+                    </p>
+                  )}
                 </div>
 
+                {/* Right: Actions, Score & Status */}
+                <div className="flex flex-col sm:flex-row lg:flex-col justify-between items-start lg:items-end gap-3 shrink-0 lg:border-l lg:border-white/10 lg:pl-5">
+                  {/* Status Indicator */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono uppercase text-white/50">Status:</span>
+                    <span
+                      className={`text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 border ${
+                        candidate.status === "Accepted"
+                          ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                          : candidate.status === "Declined"
+                          ? "bg-red-500/20 text-red-400 border-red-500/40"
+                          : candidate.status === "Shortlisted"
+                          ? "bg-blue-500/20 text-blue-400 border-blue-500/40"
+                          : "bg-amber-500/20 text-amber-400 border-amber-500/40"
+                      }`}
+                    >
+                      {candidate.status}
+                    </span>
+                    {candidate.onboarding_email_sent && (
+                      <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 font-bold">
+                        MAIL DISPATCHED
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Interview Score Input */}
+                  <div className="flex flex-col items-start lg:items-end gap-1 text-xs font-mono">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-white/40 text-[10px] uppercase">Score:</span>
+                      <input
+                        type="text"
+                        value={
+                          scoreDrafts[candidate.id] !== undefined
+                            ? scoreDrafts[candidate.id]
+                            : candidate.interview_score || ""
+                        }
+                        placeholder="e.g. 8.5 / 10"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setScoreDrafts((prev) => ({ ...prev, [candidate.id]: val }));
+                          if (scoreErrors[candidate.id]) {
+                            setScoreErrors((prev) => {
+                              const copy = { ...prev };
+                              delete copy[candidate.id];
+                              return copy;
+                            });
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            (e.target as HTMLInputElement).blur();
+                          }
+                        }}
+                        onBlur={async () => {
+                          const currentVal =
+                            scoreDrafts[candidate.id] !== undefined
+                              ? scoreDrafts[candidate.id]
+                              : candidate.interview_score || "";
+                          if (currentVal.trim() !== (candidate.interview_score || "").trim()) {
+                            setSavingScoreId(candidate.id);
+                            try {
+                              await onUpdateScore(candidate.id, currentVal.trim());
+                            } catch (err: any) {
+                              setScoreErrors((prev) => ({
+                                ...prev,
+                                [candidate.id]: err.message || "Failed to update review score",
+                              }));
+                            } finally {
+                              setSavingScoreId(null);
+                            }
+                          }
+                        }}
+                        disabled={savingScoreId === candidate.id}
+                        className={`w-28 bg-[#111115] border px-2 py-0.5 text-[11px] font-mono text-white text-center outline-none transition-colors ${
+                          scoreErrors[candidate.id]
+                            ? "border-red-500/80 text-red-300"
+                            : "border-white/10 focus:border-racing-red"
+                        } ${savingScoreId === candidate.id ? "opacity-50" : ""}`}
+                      />
+                    </div>
+                    {scoreErrors[candidate.id] && (
+                      <span className="text-[10px] font-mono text-red-400 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3 shrink-0" />
+                        <span>{scoreErrors[candidate.id]}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Decision Action Buttons */}
+                  <div className="flex flex-wrap items-center gap-2 pt-2">
+                    {candidate.status !== "Pending" && (
+                      <button
+                        onClick={() => onUpdateStatus(candidate.id, "Pending")}
+                        className="px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-mono font-bold uppercase transition-colors flex items-center gap-1"
+                        title="Reset to Pending"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        <span>Reset</span>
+                      </button>
+                    )}
+
+                    {candidate.status !== "Shortlisted" && (
+                      <button
+                        onClick={() => onUpdateStatus(candidate.id, "Shortlisted")}
+                        className="px-2.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[11px] font-mono font-bold uppercase transition-colors flex items-center gap-1"
+                        title="Shortlist for Interview"
+                      >
+                        <Clock className="w-3 h-3" />
+                        <span>Shortlist</span>
+                      </button>
+                    )}
+
+                    {candidate.status !== "Declined" && (
+                      <button
+                        onClick={() => onUpdateStatus(candidate.id, "Declined")}
+                        className="px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-[11px] font-mono font-bold uppercase transition-colors flex items-center gap-1"
+                        title="Decline Candidate"
+                      >
+                        <XCircle className="w-3 h-3" />
+                        <span>Decline</span>
+                      </button>
+                    )}
+
+                    {/* Accept & Send Onboarding Email */}
+                    <button
+                      onClick={() => handleOpenEmailModal(candidate)}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-md"
+                      title="Accept recruit & open customized onboarding email composer"
+                    >
+                      <CheckCircle className="w-3 h-3" />
+                      <span>{candidate.status === "Accepted" ? "Email Letter" : "Accept & Mail"}</span>
+                    </button>
+
+                    <button
+                      onClick={() => onDeleteApplication(candidate.id, candidate.full_name)}
+                      className="p-1.5 text-white/30 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/30 transition-colors"
+                      title={`Delete application of ${candidate.full_name}`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Onboarding Email Composer Modal */}
+      {/* =========================================================================
+          MODAL 1: ONBOARDING EMAIL COMPOSER (With 1-Click Gmail & Resend Handling)
+      ========================================================================= */}
       {emailModalCandidate && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#0b0c10] border border-racing-red/50 w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl relative animate-in zoom-in-95">
-            
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
+          <div className="bg-[#0b0c10] border border-racing-red/50 w-full max-w-2xl max-h-[90vh] overflow-y-auto overscroll-contain my-auto p-6 sm:p-8 shadow-2xl relative">
             <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded bg-racing-red/10 border border-racing-red/40 flex items-center justify-center text-racing-red">
@@ -574,7 +708,7 @@ veerracersselectric.database@gmail.com`;
                 </div>
                 <div>
                   <span className="text-[10px] font-mono uppercase text-racing-red font-bold">
-                    CUSTOM ONBOARDING LETTER COMPOSER
+                    ONBOARDING LETTER DISPATCHER
                   </span>
                   <h3 className="text-base font-display font-black uppercase text-white">
                     Send Acceptance to {emailModalCandidate.full_name}
@@ -613,67 +747,336 @@ veerracersselectric.database@gmail.com`;
 
               <div>
                 <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
-                  Email Message Body (Customize any paragraphs, timings, or links)
+                  Email Message Body (Customize any details before sending)
                 </label>
                 <textarea
-                  rows={12}
+                  rows={10}
                   value={emailMessage}
                   onChange={(e) => setEmailMessage(e.target.value)}
                   className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
                 />
               </div>
 
+              {/* Feedback Alert */}
               {emailFeedback && (
                 <div
-                  className={`p-3 text-xs font-mono flex items-center gap-2 border ${
+                  className={`p-3 text-xs font-mono flex items-start gap-2 border ${
                     emailFeedback.type === "error"
                       ? "bg-red-500/10 border-red-500/40 text-red-300"
                       : "bg-emerald-500/10 border-emerald-500/40 text-emerald-300"
                   }`}
                 >
                   {emailFeedback.type === "error" ? (
-                    <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                    <AlertCircle className="w-4 h-4 shrink-0 text-red-400 mt-0.5" />
                   ) : (
-                    <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400" />
+                    <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400 mt-0.5" />
                   )}
-                  <span>{emailFeedback.message}</span>
+                  <div className="space-y-1">
+                    <span className="font-bold block">
+                      {emailFeedback.isDomainRestriction ? "Resend Testing Domain Restriction" : "Delivery Notice"}
+                    </span>
+                    <span className="leading-relaxed">{emailFeedback.message}</span>
+                  </div>
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setEmailModalCandidate(null)}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-mono uppercase tracking-wider"
+              {/* Direct Gmail Fallback Notice */}
+              <div className="p-3 bg-white/5 border border-white/10 text-white/70 text-xs font-mono flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                <span className="text-[11px]">
+                  💡 <strong>Tip:</strong> If Resend domain is in test mode, you can immediately 1-click open this pre-filled message in Gmail.
+                </span>
+                <a
+                  href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+                    emailModalCandidate.email
+                  )}&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailMessage)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={async () => {
+                    await onUpdateStatus(emailModalCandidate.id, "Accepted", true);
+                    emailModalCandidate.onboarding_email_sent = true;
+                  }}
+                  className="px-3.5 py-1.5 bg-white text-black font-bold text-xs uppercase flex items-center gap-1.5 hover:bg-racing-red hover:text-white transition-colors shrink-0"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={sendingEmail}
-                  onClick={handleSendEmail}
-                  className="px-6 py-2 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50"
-                >
-                  {sendingEmail ? (
-                    <span>Dispatching Letter...</span>
-                  ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Send Onboarding Email</span>
-                    </>
-                  )}
-                </button>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Open in Gmail</span>
+                </a>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/10">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`Subject: ${emailSubject}\n\n${emailMessage}`);
+                      alert("Email text copied to clipboard!");
+                    }}
+                    className="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-mono uppercase flex items-center gap-1.5 transition-colors"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy Text</span>
+                  </button>
+
+                  <a
+                    href={`mailto:${encodeURIComponent(emailModalCandidate.email)}?subject=${encodeURIComponent(
+                      emailSubject
+                    )}&body=${encodeURIComponent(emailMessage)}`}
+                    onClick={async () => {
+                      await onUpdateStatus(emailModalCandidate.id, "Accepted", true);
+                      emailModalCandidate.onboarding_email_sent = true;
+                    }}
+                    className="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-mono uppercase flex items-center gap-1.5 transition-colors"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>Mail Client</span>
+                  </a>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEmailModalCandidate(null)}
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-mono uppercase tracking-wider"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={sendingEmail}
+                    onClick={handleSendEmail}
+                    className="px-6 py-2 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50"
+                  >
+                    {sendingEmail ? (
+                      <span>Dispatching...</span>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Send via Resend API</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
-
           </div>
         </div>
       )}
 
-      {/* Status Selection Modal for Excel Export */}
+      {/* =========================================================================
+          MODAL 2: SET APPLICATION QUESTIONS
+      ========================================================================= */}
+      {showQuestionsModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
+          <div className="bg-[#0b0c10] border border-white/15 w-full max-w-xl max-h-[90vh] overflow-y-auto overscroll-contain my-auto p-6 sm:p-8 shadow-2xl relative">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+              <div className="flex items-center gap-2.5">
+                <MessageSquare className="w-5 h-5 text-racing-red" />
+                <h3 className="font-display font-black text-xl uppercase text-white">
+                  Set Application Questions & Prompts
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowQuestionsModal(false)}
+                className="p-1 text-white/50 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveQuestions} className="space-y-4">
+              <div>
+                <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
+                  Technical Experience Question Prompt (Shown to Students)
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={questionPrompt}
+                  onChange={(e) => setQuestionPrompt(e.target.value)}
+                  placeholder="e.g. Why VeerRacerss Electric & Prior Technical Experience / Hands-on Projects"
+                  className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
+                />
+                <span className="text-[10px] text-white/40 block mt-1 font-mono">
+                  This exact prompt is displayed above the main statement textarea on <code>/recruitment</code>.
+                </span>
+              </div>
+
+              <div>
+                <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
+                  Eligibility & Year Criteria Note
+                </label>
+                <textarea
+                  rows={2}
+                  required
+                  value={eligibilityNote}
+                  onChange={(e) => setEligibilityNote(e.target.value)}
+                  placeholder="e.g. Open to 1st Year (Freshers) & 2nd Year (Lateral) B.Tech students..."
+                  className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
+                  Application Phase Tagline
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={deadlineTagline}
+                  onChange={(e) => setDeadlineTagline(e.target.value)}
+                  placeholder="e.g. Season 2026 Phase 1 Induction"
+                  className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                />
+              </div>
+
+              {/* Live Preview Box */}
+              <div className="bg-black/50 border border-white/10 p-3.5 mt-2">
+                <span className="text-[10px] font-mono uppercase text-racing-red font-bold block mb-1.5">
+                  Live Form Preview (What Students See):
+                </span>
+                <label className="text-xs font-mono uppercase text-white/80 block font-bold mb-1">
+                  {questionPrompt} <span className="text-racing-red">*</span>
+                </label>
+                <div className="bg-[#121318] border border-white/10 p-2 text-white/30 text-xs font-mono italic">
+                  [Applicant will type their answer and technical details here...]
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setShowQuestionsModal(false)}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-mono uppercase"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingQuestions}
+                  className="px-6 py-2 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase transition-all disabled:opacity-50"
+                >
+                  {savingQuestions ? "Saving Questions..." : "Save Questions"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL 3: EDIT CONFIRMATION EMAIL TEMPLATE
+      ========================================================================= */}
+      {showEmailTemplateModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
+          <div className="bg-[#0b0c10] border border-white/15 w-full max-w-2xl max-h-[90vh] overflow-y-auto overscroll-contain my-auto p-6 sm:p-8 shadow-2xl relative">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+              <div className="flex items-center gap-2.5">
+                <Mail className="w-5 h-5 text-amber-400" />
+                <h3 className="font-display font-black text-xl uppercase text-white">
+                  Edit Confirmation & Onboarding Email Content
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowEmailTemplateModal(false)}
+                className="p-1 text-white/50 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEmailTemplate} className="space-y-4">
+              <div>
+                <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
+                  Email Subject Line
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={templateSubject}
+                  onChange={(e) => setTemplateSubject(e.target.value)}
+                  placeholder="e.g. Welcome to VeerRacerss Electric // Application Accepted"
+                  className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-mono uppercase text-white/60 font-bold block">
+                    Email Body Content (Template)
+                  </label>
+                  <span className="text-[10px] font-mono text-white/40">
+                    Supports: <code>{'{candidate_name}'}</code>, <code>{'{primary_domain}'}</code>, <code>{'{whatsapp_link}'}</code>
+                  </span>
+                </div>
+                <textarea
+                  rows={10}
+                  required
+                  value={templateBody}
+                  onChange={(e) => setTemplateBody(e.target.value)}
+                  placeholder="Enter the onboarding text received by accepted recruits..."
+                  className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed font-sans"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-mono uppercase text-white/60 mb-1.5 block font-bold">
+                  Official WhatsApp Recruits Group Link
+                </label>
+                <input
+                  type="url"
+                  required
+                  value={whatsappLink}
+                  onChange={(e) => setWhatsappLink(e.target.value)}
+                  placeholder="https://chat.whatsapp.com/..."
+                  className="w-full bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                />
+                <span className="text-[10px] text-white/40 block mt-1 font-mono">
+                  This link automatically replaces <code>{'{whatsapp_link}'}</code> in the email.
+                </span>
+              </div>
+
+              {/* Live Preview */}
+              <div className="bg-black/50 border border-white/10 p-4">
+                <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block mb-2">
+                  Live Email Preview (With Sample Student Data):
+                </span>
+                <div className="bg-[#14151b] border border-white/10 p-3 text-white/80 text-xs font-sans whitespace-pre-wrap leading-relaxed">
+                  <strong className="text-white block pb-1 border-b border-white/10 mb-2">
+                    Subject: {templateSubject}
+                  </strong>
+                  {templateBody
+                    .replace(/\{candidate_name\}/g, "Rahul Sharma")
+                    .replace(/\{primary_domain\}/g, "Powertrain & High Voltage")
+                    .replace(/\{whatsapp_link\}/g, whatsappLink || "https://chat.whatsapp.com/...")}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setShowEmailTemplateModal(false)}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-mono uppercase"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEmailTemplate}
+                  className="px-6 py-2 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase transition-all disabled:opacity-50"
+                >
+                  {savingEmailTemplate ? "Saving Template..." : "Save Email Template"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL 4: STATUS SELECTION MODAL FOR EXCEL EXPORT
+      ========================================================================= */}
       {showStatusExportModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0b0c10] border border-white/15 w-full max-w-md p-6 shadow-2xl relative animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md overflow-y-auto overscroll-contain flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
+          <div className="bg-[#0b0c10] border border-white/15 w-full max-w-md max-h-[90vh] overflow-y-auto overscroll-contain my-auto p-6 shadow-2xl relative">
             <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
               <div className="flex items-center gap-2">
                 <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
@@ -705,7 +1108,9 @@ veerracersselectric.database@gmail.com`;
                 className="w-full text-left px-4 py-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-mono text-xs flex items-center justify-between transition-colors"
               >
                 <span className="font-bold uppercase">Accepted Recruits Only (For Onboarding Roster)</span>
-                <span className="bg-emerald-500/20 px-2 py-0.5 text-[10px] rounded">{recruits.filter(r => r.status === "Accepted").length}</span>
+                <span className="bg-emerald-500/20 px-2 py-0.5 text-[10px] rounded">
+                  {recruits.filter((r) => r.status === "Accepted").length}
+                </span>
               </button>
 
               <button
@@ -713,7 +1118,9 @@ veerracersselectric.database@gmail.com`;
                 className="w-full text-left px-4 py-3 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 font-mono text-xs flex items-center justify-between transition-colors"
               >
                 <span className="font-bold uppercase">Shortlisted Candidates (For Round 2 Interviews)</span>
-                <span className="bg-blue-500/20 px-2 py-0.5 text-[10px] rounded">{recruits.filter(r => r.status === "Shortlisted").length}</span>
+                <span className="bg-blue-500/20 px-2 py-0.5 text-[10px] rounded">
+                  {recruits.filter((r) => r.status === "Shortlisted").length}
+                </span>
               </button>
 
               <button
@@ -721,7 +1128,9 @@ veerracersselectric.database@gmail.com`;
                 className="w-full text-left px-4 py-3 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-mono text-xs flex items-center justify-between transition-colors"
               >
                 <span className="font-bold uppercase">Pending Review Applications</span>
-                <span className="bg-amber-500/20 px-2 py-0.5 text-[10px] rounded">{recruits.filter(r => r.status === "Pending").length}</span>
+                <span className="bg-amber-500/20 px-2 py-0.5 text-[10px] rounded">
+                  {recruits.filter((r) => r.status === "Pending").length}
+                </span>
               </button>
 
               <button
@@ -729,7 +1138,9 @@ veerracersselectric.database@gmail.com`;
                 className="w-full text-left px-4 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 font-mono text-xs flex items-center justify-between transition-colors"
               >
                 <span className="font-bold uppercase">Declined Applications</span>
-                <span className="bg-red-500/20 px-2 py-0.5 text-[10px] rounded">{recruits.filter(r => r.status === "Declined").length}</span>
+                <span className="bg-red-500/20 px-2 py-0.5 text-[10px] rounded">
+                  {recruits.filter((r) => r.status === "Declined").length}
+                </span>
               </button>
             </div>
 
@@ -744,102 +1155,6 @@ veerracersselectric.database@gmail.com`;
           </div>
         </div>
       )}
-
-      {/* Edit Recruitment Portal Details Modal */}
-      {showEditPortalModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm overflow-y-auto p-4 flex items-center justify-center">
-          <div className="bg-[#0b0c10] border border-white/15 w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl relative animate-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
-              <div className="flex items-center gap-2.5">
-                <Edit3 className="w-5 h-5 text-racing-red" />
-                <h3 className="font-display font-black text-xl uppercase text-white">Edit Recruitment Portal Content</h3>
-              </div>
-              <button
-                onClick={() => setShowEditPortalModal(false)}
-                className="p-1 text-white/50 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSavePortalDetails} className="space-y-4">
-              <div>
-                <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Portal Headline / Title</label>
-                <input
-                  type="text"
-                  required
-                  value={portalTitle}
-                  onChange={(e) => setPortalTitle(e.target.value)}
-                  className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Deadline / Induction Phase Tagline</label>
-                <input
-                  type="text"
-                  required
-                  value={portalDeadline}
-                  onChange={(e) => setPortalDeadline(e.target.value)}
-                  placeholder="e.g. Season 2026 Phase 1 Induction • Closes Sunday 11:59 PM"
-                  className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">Eligibility Note</label>
-                <textarea
-                  rows={2}
-                  value={portalEligibility}
-                  onChange={(e) => setPortalEligibility(e.target.value)}
-                  placeholder="e.g. Open to all 1st and 2nd year B.Tech students of VSSUT Burla across all branches..."
-                  className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">General Instructions & Safety Guidelines</label>
-                <textarea
-                  rows={3}
-                  value={portalInstructions}
-                  onChange={(e) => setPortalInstructions(e.target.value)}
-                  placeholder="Instructions shown to candidates above the form..."
-                  className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none leading-relaxed"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">WhatsApp Group Link for Accepted Recruits</label>
-                <input
-                  type="url"
-                  value={portalWhatsapp}
-                  onChange={(e) => setPortalWhatsapp(e.target.value)}
-                  placeholder="https://chat.whatsapp.com/..."
-                  className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setShowEditPortalModal(false)}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-mono uppercase tracking-wider"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingPortal}
-                  className="px-6 py-2 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase tracking-wider transition-all disabled:opacity-50"
-                >
-                  {savingPortal ? "Saving..." : "Save Portal Content"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

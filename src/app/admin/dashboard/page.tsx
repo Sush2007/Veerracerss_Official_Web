@@ -28,6 +28,8 @@ import {
   Sparkles,
   BookOpen,
   Filter,
+  HardDrive,
+  Shield,
 } from "lucide-react";
 import {
   DEFAULT_SITE_SETTINGS,
@@ -52,6 +54,8 @@ import { BatchProgressionModal } from "./components/BatchProgressionModal";
 import { ExpensesTab } from "./components/ExpensesTab";
 import { RecruitmentTab } from "./components/RecruitmentTab";
 import { CustomDbsTab } from "./components/CustomDbsTab";
+import { StorageManagerModal } from "./components/StorageManagerModal";
+import { AdminSecurityModal } from "./components/AdminSecurityModal";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -132,6 +136,10 @@ export default function AdminDashboard() {
 
   // 8. Custom Databases State
   const [customDbs, setCustomDbs] = useState<CustomDatabaseRecord[]>(DEFAULT_CUSTOM_DATABASES);
+
+  // 9. Utilities & Modals State
+  const [showStorageModal, setShowStorageModal] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
 
   const departments = [
     "Leadership",
@@ -379,6 +387,8 @@ export default function AdminDashboard() {
         recruitment_form_deadline: siteSettings.recruitment_form_deadline || "Season 2026 Phase 1 Induction",
         recruitment_instructions: siteSettings.recruitment_instructions || DEFAULT_SITE_SETTINGS.recruitment_instructions,
         recruitment_eligibility: siteSettings.recruitment_eligibility || DEFAULT_SITE_SETTINGS.recruitment_eligibility,
+        recruitment_question_prompt: siteSettings.recruitment_question_prompt || DEFAULT_SITE_SETTINGS.recruitment_question_prompt,
+        onboarding_email_subject: siteSettings.onboarding_email_subject || DEFAULT_SITE_SETTINGS.onboarding_email_subject,
         whatsapp_recruit_link: siteSettings.whatsapp_recruit_link || "https://chat.whatsapp.com/veerracerss-recruits-2026",
         onboarding_email_template: siteSettings.onboarding_email_template,
         about_image_url: siteSettings.about_image_url || DEFAULT_SITE_SETTINGS.about_image_url,
@@ -418,6 +428,8 @@ export default function AdminDashboard() {
         delete clean.recruitment_form_deadline;
         delete clean.recruitment_instructions;
         delete clean.recruitment_eligibility;
+        delete clean.recruitment_question_prompt;
+        delete clean.onboarding_email_subject;
         delete clean.whatsapp_recruit_link;
         delete clean.onboarding_email_template;
         delete clean.about_image_url;
@@ -1315,11 +1327,18 @@ export default function AdminDashboard() {
   // 7. Recruitment Handlers
   const handleUpdateSettings = async (newSettings: Partial<SiteSettings>) => {
     try {
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("vr_site_settings_extended");
+          const existingLocal = raw ? JSON.parse(raw) : {};
+          localStorage.setItem("vr_site_settings_extended", JSON.stringify({ ...existingLocal, ...newSettings }));
+        } catch {}
+      }
       const { data: existing } = await supabase.from("site_settings").select("id").limit(1).maybeSingle();
       if (existing) {
         await supabase.from("site_settings").update(newSettings).eq("id", existing.id);
       }
-      setSiteSettings({ ...siteSettings, ...newSettings });
+      setSiteSettings((prev) => ({ ...prev, ...newSettings }));
       showToast("Settings updated!");
     } catch (err: any) {
       showError(err.message || "Failed to update settings.");
@@ -1564,6 +1583,24 @@ export default function AdminDashboard() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={() => setShowStorageModal(true)}
+              className="flex items-center gap-1.5 text-xs font-mono font-bold text-amber-400 hover:text-white bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-3.5 py-2 transition-colors uppercase tracking-wider"
+              title="Clean unused & orphaned files from Supabase storage buckets"
+            >
+              <HardDrive className="w-3.5 h-3.5" />
+              <span>Storage Cleaner</span>
+            </button>
+
+            <button
+              onClick={() => setShowSecurityModal(true)}
+              className="flex items-center gap-1.5 text-xs font-mono font-bold text-cyan-400 hover:text-white bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 px-3.5 py-2 transition-colors uppercase tracking-wider"
+              title="Update admin password with email OTP verification"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span>Security</span>
+            </button>
+
             <button
               onClick={handleExportMasterBackup}
               className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-400 hover:text-white bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-3.5 py-2 transition-colors uppercase tracking-wider"
@@ -3209,6 +3246,31 @@ export default function AdminDashboard() {
             members={members}
             onClose={() => setShowProgressionModal(false)}
             onConfirm={handleExecuteProgression}
+          />
+        )}
+
+        {showStorageModal && (
+          <StorageManagerModal
+            isOpen={showStorageModal}
+            onClose={() => setShowStorageModal(false)}
+            members={members}
+            alumniList={alumniList}
+            machine={machine}
+            mediaList={mediaList}
+            expenses={expenses}
+            siteSettings={siteSettings}
+            showToast={showToast}
+            showError={showError}
+          />
+        )}
+
+        {showSecurityModal && (
+          <AdminSecurityModal
+            isOpen={showSecurityModal}
+            onClose={() => setShowSecurityModal(false)}
+            adminEmail={siteSettings.contact_email || "veerracersselectric.database@gmail.com"}
+            showToast={showToast}
+            showError={showError}
           />
         )}
 

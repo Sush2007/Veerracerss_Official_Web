@@ -49,6 +49,19 @@ ${message.replace(/\n/g, "<br/>")}
 
         if (resendResult.error) {
           console.warn("Resend API warning:", resendResult.error);
+          const isDomainRestriction =
+            resendResult.error.message?.includes("resend.dev") ||
+            resendResult.error.message?.includes("testing domain") ||
+            (resendResult.error as any).statusCode === 403;
+
+          if (isDomainRestriction) {
+            return NextResponse.json({
+              success: false,
+              isDomainRestriction: true,
+              error: "Resend test domain restriction: 'resend.dev' can only send emails to your verified account address. To send to student candidates, use the 'Open in Gmail' button for 1-click pre-filled delivery, or verify your custom domain in Resend.",
+              deliveryDetails: resendResult.error.message,
+            });
+          }
           deliveryDetails = `Resend note: ${resendResult.error.message}`;
         } else {
           emailSent = true;

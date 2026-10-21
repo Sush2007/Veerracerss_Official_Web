@@ -13,6 +13,7 @@ export async function POST(req: Request) {
       year_of_study,
       primary_domain,
       secondary_domain,
+      pr_domain,
       experience_summary,
       portfolio_url,
     } = body;
@@ -45,6 +46,10 @@ export async function POST(req: Request) {
       );
     }
 
+    const prInterestNote = pr_domain && pr_domain !== "None (Technical Only)"
+      ? `[PR / Media Interest: ${pr_domain}]`
+      : "";
+
     // Insert application
     const { data, error } = await supabase
       .from("recruitment_applications")
@@ -62,6 +67,7 @@ export async function POST(req: Request) {
           portfolio_url: portfolio_url || null,
           status: "Pending",
           interview_score: "Pending Review",
+          notes: prInterestNote || null,
         },
       ])
       .select()

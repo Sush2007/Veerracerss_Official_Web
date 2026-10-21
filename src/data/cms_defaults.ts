@@ -13,6 +13,8 @@ export interface SiteSettings {
   recruitment_form_deadline?: string;
   recruitment_instructions?: string;
   recruitment_eligibility?: string;
+  recruitment_question_prompt?: string;
+  onboarding_email_subject?: string;
   onboarding_email_template?: string;
   whatsapp_recruit_link?: string;
   about_image_url?: string;
@@ -157,6 +159,9 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   recruitment_form_deadline: "Season 2026 Phase 1 Induction",
   recruitment_instructions: "Complete all fields accurately. Shortlisted candidates will be contacted via WhatsApp/Email for the technical discussion and workshop induction.",
   recruitment_eligibility: "Open to 1st Year (Freshers) & 2nd Year (Lateral) B.Tech students across all engineering branches of VSSUT Burla.",
+  recruitment_question_prompt: "Why VeerRacerss Electric & Prior Technical Experience / Hands-on Projects",
+  onboarding_email_subject: "Welcome to VeerRacerss Electric // Application Accepted",
+  onboarding_email_template: "Dear {candidate_name},\n\nCongratulations! We are pleased to inform you that following the review of your induction application, you have been accepted into VeerRacerss Electric for the 2026 Season under the {primary_domain} division.\n\nNext Steps:\n1. Join our official recruitment WhatsApp group: {whatsapp_link}\n2. Attend our induction briefing at the Central Workshop Block, VSSUT Burla.\n3. Bring your college student ID card.\n\nWelcome to the team!\n\nWarm regards,\nTeam VeerRacerss Electric\nVSSUT Burla",
   whatsapp_recruit_link: "https://chat.whatsapp.com/veerracerss-recruits-2026",
   about_image_url: "/team/who-we-are.jpg",
   about_title: "WHO WE ARE",
@@ -194,26 +199,6 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
       detail: "Spaceframe, BMS, aerodynamics & telemetry",
     },
   ],
-  onboarding_email_template: `Dear {{name}},
-
-Congratulations! On behalf of VeerRacerss Electric, we are thrilled to formally welcome you to the official Formula Student team of VSSUT Burla for Season 2026.
-
-Based on your technical evaluation and domain interviews, you have been selected for the {{domain}} engineering division.
-
-ORIENTATION DETAILS:
-• Date & Time: Saturday at 5:00 PM
-• Venue: Formula Student Research Workshop, Mechanical Block, VSSUT Burla
-• Agenda: Safety briefing, CAD/CAE tools setup, high-voltage battery safety protocol, and sub-team allocation.
-
-OFFICIAL RECRUITS WHATSAPP GROUP:
-Please join the official team communication channel here: {{whatsapp_link}}
-
-Wear comfortable footwear and bring a notebook. We look forward to engineering our next electric racecar together with you!
-
-Warm regards,
-Team Captain & Executive Council
-VeerRacerss Electric // VSSUT Burla
-veerracersselectric.database@gmail.com`,
 };
 
 export const DEFAULT_SETTINGS = DEFAULT_SITE_SETTINGS;

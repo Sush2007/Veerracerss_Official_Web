@@ -37,11 +37,11 @@ export function FestiveCreatives() {
             className="inline-flex items-center gap-2 mb-3 px-3.5 py-1.5 bg-racing-red/10 border border-racing-red/30 text-racing-red font-mono text-xs uppercase tracking-widest font-semibold"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>STUDENT MEDIA & GRAPHIC DESIGN PADDOCK</span>
+            <span>STUDENT MEDIA & GRAPHIC DESIGN STUDIO</span>
           </motion.div>
 
           <h2 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl uppercase text-white tracking-tight leading-[1.05]">
-            CREATIVE PADDOCK <span className="text-racing-red">//</span> FESTIVE & SEASONAL DESIGNS
+            CREATIVE GALLERY <span className="text-racing-red">//</span> FESTIVE & SEASONAL DESIGNS
           </h2>
 
           <p className="font-sans text-white/60 text-xs sm:text-sm md:text-base mt-3 sm:mt-4 font-light leading-relaxed">
