@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -35,11 +37,14 @@ export async function POST(req: Request) {
     // Verify recruitment is actively open
     const { data: settings } = await supabase
       .from("site_settings")
-      .select("recruitment_form_enabled")
+      .select("*")
       .limit(1)
       .maybeSingle();
 
-    if (settings && settings.recruitment_form_enabled === false) {
+    if (
+      settings &&
+      (settings.recruitment_form_enabled === false || (settings as any).recruitment_open === false)
+    ) {
       return NextResponse.json(
         { error: "Recruitment applications for Season 2026 are currently closed." },
         { status: 403 }

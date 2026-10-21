@@ -9,6 +9,10 @@ import { Faculty } from '../components/Faculty';
 import { TeamLeaders } from '../components/TeamLeaders';
 import { Partners } from '../components/Partners';
 import { FAQ } from '../components/FAQ';
+import { createClient } from '@/src/lib/supabase/client';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: 'VeerRacerss Electric | The Official Student Formula Racing Club | VSSUT Burla',
@@ -32,11 +36,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  let initialSettings = null;
+  try {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('site_settings')
+      .select('*')
+      .limit(1)
+      .maybeSingle();
+    if (data) {
+      initialSettings = data;
+    }
+  } catch {
+    // Fallback active
+  }
+
   return (
     <>
       {/* 1. Hero Cockpit with 3D CAD Formula Model */}
-      <Hero />
+      <Hero initialSettings={initialSettings} />
 
       {/* 2. Track & Workshop Moments: Autoplay Horizontal Reel */}
       <TrackMoments />

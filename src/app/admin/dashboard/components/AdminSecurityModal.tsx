@@ -12,6 +12,7 @@ import {
   X,
   Send,
   ShieldCheck,
+  UserCheck,
 } from "lucide-react";
 import { createClient } from "@/src/lib/supabase/client";
 
@@ -30,23 +31,35 @@ export function AdminSecurityModal({
   showToast,
   showError,
 }: AdminSecurityModalProps) {
+  const [activeTab, setActiveTab] = useState<"password_otp" | "password_direct" | "change_email">("password_otp");
+
   // OTP Flow States
   const [step, setStep] = useState<1 | 2>(1);
-  const [emailInput, setEmailInput] = useState(adminEmail || "veerracersselectric.database@gmail.com");
+  const [emailInput, setEmailInput] = useState(adminEmail || "");
   const [otpToken, setOtpToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  // Direct Update State
+  const [directNewPassword, setDirectNewPassword] = useState("");
+  const [directConfirmPassword, setDirectConfirmPassword] = useState("");
+  const [showDirectPassword, setShowDirectPassword] = useState(false);
+
+  // Change Email State
+  const [newAccountEmail, setNewAccountEmail] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  // Lock body scroll
+  // Sync email & lock body scroll
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
       document.documentElement.style.overflow = "hidden";
-      setEmailInput(adminEmail || "veerracersselectric.database@gmail.com");
+      setEmailInput(adminEmail || "");
       setFeedback(null);
+      setStep(1);
     } else {
       document.body.style.overflow = "";
       document.documentElement.style.overflow = "";
@@ -57,7 +70,7 @@ export function AdminSecurityModal({
     };
   }, [isOpen, adminEmail]);
 
-  // Step 1: Send OTP to Email
+  // 1. Send OTP to Email
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailInput.trim()) {
@@ -78,7 +91,7 @@ export function AdminSecurityModal({
       setStep(2);
       setFeedback({
         type: "success",
-        message: `Verification code / reset link has been dispatched to ${emailInput}. Check your inbox!`,
+        message: `Verification code / reset link dispatched to ${emailInput.trim()}. Check your inbox!`,
       });
       showToast("OTP sent to your email!");
     } catch (err: any) {
@@ -91,7 +104,7 @@ export function AdminSecurityModal({
     }
   };
 
-  // Step 2: Verify OTP & Apply New Password
+  // 2. Verify OTP & Apply New Password
   const handleVerifyOtpAndChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword.length < 6) {
@@ -108,7 +121,6 @@ export function AdminSecurityModal({
     try {
       const supabase = createClient();
 
-      // Verify OTP token
       const { error: verifyErr } = await supabase.auth.verifyOtp({
         email: emailInput.trim(),
         token: otpToken.trim(),
@@ -117,7 +129,6 @@ export function AdminSecurityModal({
 
       if (verifyErr) throw verifyErr;
 
-      // Update password
       const { error: updateErr } = await supabase.auth.updateUser({
         password: newPassword,
       });
@@ -147,6 +158,82 @@ export function AdminSecurityModal({
     }
   };
 
+  // 3. Direct Password Update (Failsafe)
+  const handleDirectPasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (directNewPassword.length < 6) {
+      setFeedback({ type: "error", message: "Password must be at least 6 characters long." });
+      return;
+    }
+    if (directNewPassword !== directConfirmPassword) {
+      setFeedback({ type: "error", message: "Passwords do not match." });
+      return;
+    }
+
+    setLoading(true);
+    setFeedback(null);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({
+        password: directNewPassword,
+      });
+
+      if (error) throw error;
+
+      showToast("Admin password updated successfully!");
+      setFeedback({
+        type: "success",
+        message: "Password updated successfully for this session.",
+      });
+
+      setTimeout(() => {
+        onClose();
+        setDirectNewPassword("");
+        setDirectConfirmPassword("");
+      }, 1500);
+    } catch (err: any) {
+      setFeedback({
+        type: "error",
+        message: err.message || "Failed to update password.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 4. Update Admin Account Email
+  const handleUpdateEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAccountEmail.trim()) {
+      setFeedback({ type: "error", message: "Please enter a valid new email address." });
+      return;
+    }
+
+    setLoading(true);
+    setFeedback(null);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({
+        email: newAccountEmail.trim(),
+      });
+
+      if (error) throw error;
+
+      showToast("Confirmation email sent to new address!");
+      setFeedback({
+        type: "success",
+        message: `A confirmation link was dispatched to ${newAccountEmail.trim()}. Please click the link in your email to confirm the change.`,
+      });
+    } catch (err: any) {
+      setFeedback({
+        type: "error",
+        message: err.message || "Failed to update admin email address.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -157,22 +244,22 @@ export function AdminSecurityModal({
       onTouchMove={(e) => e.stopPropagation()}
     >
       <div
-        className="bg-[#0b0c10] border border-white/15 w-full max-w-md max-h-[88vh] flex flex-col p-6 sm:p-8 shadow-2xl relative overflow-hidden"
+        className="bg-[#0b0c10] border border-white/15 w-full max-w-lg max-h-[88vh] flex flex-col p-6 sm:p-8 shadow-2xl relative overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+        <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 bg-racing-red/10 border border-racing-red/30 flex items-center justify-center text-racing-red">
               <Lock className="w-4 h-4" />
             </div>
             <div>
               <h3 className="font-display font-black text-lg uppercase text-white tracking-wide">
-                Security & Password
+                Security & Account
               </h3>
               <p className="text-[10px] font-mono text-white/50">
-                Email OTP Verified Admin Password Change
+                Update Admin Password or Email Address
               </p>
             </div>
           </div>
@@ -185,9 +272,74 @@ export function AdminSecurityModal({
           </button>
         </div>
 
-        {/* OTP FLOW */}
-        <div>
-          {step === 1 ? (
+        {/* Tab Selection */}
+        <div className="grid grid-cols-3 gap-1 bg-white/5 p-1 border border-white/10 mb-5">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("password_otp");
+              setFeedback(null);
+            }}
+            className={`py-2 px-2 text-[10px] sm:text-xs font-mono font-bold uppercase transition-all ${
+              activeTab === "password_otp"
+                ? "bg-racing-red text-white shadow-sm"
+                : "text-white/60 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            OTP Password
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("password_direct");
+              setFeedback(null);
+            }}
+            className={`py-2 px-2 text-[10px] sm:text-xs font-mono font-bold uppercase transition-all ${
+              activeTab === "password_direct"
+                ? "bg-racing-red text-white shadow-sm"
+                : "text-white/60 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            Direct Password
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("change_email");
+              setFeedback(null);
+            }}
+            className={`py-2 px-2 text-[10px] sm:text-xs font-mono font-bold uppercase transition-all ${
+              activeTab === "change_email"
+                ? "bg-racing-red text-white shadow-sm"
+                : "text-white/60 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            Change Email
+          </button>
+        </div>
+
+        {/* Feedback alert */}
+        {feedback && (
+          <div
+            className={`p-3 text-xs font-mono flex items-center gap-2 border mb-4 ${
+              feedback.type === "error"
+                ? "bg-red-500/10 border-red-500/40 text-red-300"
+                : "bg-emerald-500/10 border-emerald-500/40 text-emerald-300"
+            }`}
+          >
+            {feedback.type === "error" ? (
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+            ) : (
+              <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400" />
+            )}
+            <span>{feedback.message}</span>
+          </div>
+        )}
+
+        {/* TAB 1: PASSWORD OTP */}
+        {activeTab === "password_otp" && (
+          <div>
+            {step === 1 ? (
               <form onSubmit={handleSendOtp} className="space-y-4">
                 <div>
                   <label className="text-[11px] uppercase text-white/60 mb-1.5 block font-mono">
@@ -200,7 +352,7 @@ export function AdminSecurityModal({
                       required
                       value={emailInput}
                       onChange={(e) => setEmailInput(e.target.value)}
-                      placeholder="e.g. veerracersselectric.database@gmail.com"
+                      placeholder="admin@email.com"
                       className="w-full bg-[#121318] border border-white/10 pl-9 pr-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
                     />
                   </div>
@@ -208,23 +360,6 @@ export function AdminSecurityModal({
                     A confirmation email containing your verification code will be sent to this address.
                   </span>
                 </div>
-
-                {feedback && (
-                  <div
-                    className={`p-3 text-xs font-mono flex items-center gap-2 border ${
-                      feedback.type === "error"
-                        ? "bg-red-500/10 border-red-500/40 text-red-300"
-                        : "bg-emerald-500/10 border-emerald-500/40 text-emerald-300"
-                    }`}
-                  >
-                    {feedback.type === "error" ? (
-                      <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
-                    ) : (
-                      <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400" />
-                    )}
-                    <span>{feedback.message}</span>
-                  </div>
-                )}
 
                 <button
                   type="submit"
@@ -242,10 +377,10 @@ export function AdminSecurityModal({
                 </button>
               </form>
             ) : (
-              <form onSubmit={handleVerifyOtpAndChange} className="space-y-4 animate-in fade-in">
+              <form onSubmit={handleVerifyOtpAndChange} className="space-y-4">
                 <div>
                   <label className="text-[11px] uppercase text-white/60 mb-1.5 block font-mono">
-                    6-Digit OTP / Token
+                    6-Digit Verification Code (OTP)
                   </label>
                   <div className="relative">
                     <KeyRound className="w-4 h-4 text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -254,13 +389,10 @@ export function AdminSecurityModal({
                       required
                       value={otpToken}
                       onChange={(e) => setOtpToken(e.target.value)}
-                      placeholder="e.g. 123456"
-                      className="w-full bg-[#121318] border border-white/10 pl-9 pr-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none tracking-widest font-bold"
+                      placeholder="Enter the code sent to your email"
+                      className="w-full bg-[#121318] border border-white/10 pl-9 pr-3 py-2 text-xs font-mono text-white tracking-widest focus:border-racing-red outline-none"
                     />
                   </div>
-                  <span className="text-[10px] text-white/40 block mt-1 font-mono">
-                    Enter the code received at <strong className="text-white">{emailInput}</strong>
-                  </span>
                 </div>
 
                 <div>
@@ -302,52 +434,144 @@ export function AdminSecurityModal({
                   />
                 </div>
 
-                {feedback && (
-                  <div
-                    className={`p-3 text-xs font-mono flex items-center gap-2 border ${
-                      feedback.type === "error"
-                        ? "bg-red-500/10 border-red-500/40 text-red-300"
-                        : "bg-emerald-500/10 border-emerald-500/40 text-emerald-300"
-                    }`}
-                  >
-                    {feedback.type === "error" ? (
-                      <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
-                    ) : (
-                      <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400" />
-                    )}
-                    <span>{feedback.message}</span>
-                  </div>
-                )}
-
-                <div className="flex gap-2">
+                <div className="flex gap-2 pt-2">
                   <button
                     type="button"
                     onClick={() => {
                       setStep(1);
                       setFeedback(null);
                     }}
-                    className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-mono uppercase"
+                    className="w-1/3 bg-white/10 hover:bg-white/20 text-white text-xs font-mono uppercase py-2.5 transition-colors"
                   >
                     Back
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase py-2.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-2/3 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase py-2.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {loading ? (
-                      <span>Verifying & Updating...</span>
+                      <span>Verifying...</span>
                     ) : (
                       <>
                         <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>Verify OTP & Update Password</span>
+                        <span>Verify & Update</span>
                       </>
                     )}
                   </button>
                 </div>
               </form>
             )}
-        </div>
+          </div>
+        )}
+
+        {/* TAB 2: DIRECT PASSWORD UPDATE */}
+        {activeTab === "password_direct" && (
+          <form onSubmit={handleDirectPasswordChange} className="space-y-4">
+            <div>
+              <label className="text-[11px] uppercase text-white/60 mb-1.5 block font-mono">
+                New Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showDirectPassword ? "text" : "password"}
+                  required
+                  minLength={6}
+                  value={directNewPassword}
+                  onChange={(e) => setDirectNewPassword(e.target.value)}
+                  placeholder="Minimum 6 characters"
+                  className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowDirectPassword(!showDirectPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                >
+                  {showDirectPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[11px] uppercase text-white/60 mb-1.5 block font-mono">
+                Confirm New Password
+              </label>
+              <input
+                type={showDirectPassword ? "text" : "password"}
+                required
+                minLength={6}
+                value={directConfirmPassword}
+                onChange={(e) => setDirectConfirmPassword(e.target.value)}
+                placeholder="Repeat new password"
+                className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase py-2.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading ? (
+                <span>Updating Password...</span>
+              ) : (
+                <>
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Update Password Directly</span>
+                </>
+              )}
+            </button>
+          </form>
+        )}
+
+        {/* TAB 3: CHANGE ADMIN EMAIL */}
+        {activeTab === "change_email" && (
+          <form onSubmit={handleUpdateEmail} className="space-y-4">
+            <div>
+              <label className="text-[11px] uppercase text-white/60 mb-1.5 block font-mono">
+                Current Registered Email
+              </label>
+              <div className="bg-[#121318] border border-white/10 px-3.5 py-2 text-xs font-mono text-white/60">
+                {adminEmail || "No email detected in active session"}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[11px] uppercase text-white/60 mb-1.5 block font-mono">
+                New Admin Email Address
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="email"
+                  required
+                  value={newAccountEmail}
+                  onChange={(e) => setNewAccountEmail(e.target.value)}
+                  placeholder="e.g. yourname@domain.com"
+                  className="w-full bg-[#121318] border border-white/10 pl-9 pr-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                />
+              </div>
+              <span className="text-[10px] text-white/40 block mt-1 font-mono">
+                A verification link will be sent to the new email address to complete the change.
+              </span>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase py-2.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading ? (
+                <span>Updating Email...</span>
+              ) : (
+                <>
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span>Send Confirmation To New Email</span>
+                </>
+              )}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

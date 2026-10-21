@@ -5,6 +5,9 @@ import { createClient } from "@/src/lib/supabase/client";
 import { DEFAULT_SITE_SETTINGS } from "@/src/data/cms_defaults";
 import { RecruitmentForm } from "./RecruitmentForm";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: "Recruitment 2026 // VeerRacerss Electric",
   description: "Official Formula Student induction application portal for VeerRacerss Electric, VSSUT Burla.",
@@ -20,13 +23,13 @@ export default async function RecruitmentPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from("site_settings")
-      .select("recruitment_open, recruitment_form_enabled, recruitment_form_title, recruitment_form_deadline, contact_email")
+      .select("*")
       .limit(1)
       .maybeSingle();
 
     if (data) {
-      if (typeof data.recruitment_open === "boolean") formEnabled = data.recruitment_open;
-      else if (typeof data.recruitment_form_enabled === "boolean") formEnabled = data.recruitment_form_enabled;
+      const isOpen = data.recruitment_form_enabled !== false && (data as any).recruitment_open !== false;
+      formEnabled = isOpen;
       if (data.recruitment_form_title) formTitle = data.recruitment_form_title;
       if (data.recruitment_form_deadline) formDeadline = data.recruitment_form_deadline;
       if (data.contact_email) contactEmail = data.contact_email;

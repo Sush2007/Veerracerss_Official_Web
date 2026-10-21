@@ -204,6 +204,8 @@ export default function AdminDashboard() {
     setTimeout(() => setErrorMessage(null), 6000);
   };
 
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
+
   useEffect(() => {
     checkUser();
     fetchAllData();
@@ -214,6 +216,9 @@ export default function AdminDashboard() {
     if (!session) {
       router.replace("/admin/login");
     } else {
+      if (session?.user?.email) {
+        setCurrentUserEmail(session.user.email);
+      }
       setLoading(false);
     }
   };
@@ -467,8 +472,8 @@ export default function AdminDashboard() {
         announcement_badge_text: siteSettings.announcement_badge_text,
         announcement_badge_enabled: siteSettings.announcement_badge_enabled,
         contact_email: siteSettings.contact_email,
-        recruitment_open: siteSettings.recruitment_open !== false,
-        recruitment_form_enabled: siteSettings.recruitment_form_enabled !== false,
+        recruitment_open: siteSettings.recruitment_open !== false && siteSettings.recruitment_form_enabled !== false,
+        recruitment_form_enabled: siteSettings.recruitment_open !== false && siteSettings.recruitment_form_enabled !== false,
         recruitment_form_title: siteSettings.recruitment_form_title || "Formula Student Electric 2026 - Official Recruitment",
         recruitment_form_deadline: siteSettings.recruitment_form_deadline || "Season 2026 Phase 1 Induction",
         recruitment_instructions: siteSettings.recruitment_instructions || DEFAULT_SITE_SETTINGS.recruitment_instructions,
@@ -490,7 +495,8 @@ export default function AdminDashboard() {
           localStorage.setItem("vr_site_settings_extended", JSON.stringify({
             hero_title: siteSettings.hero_title || DEFAULT_SITE_SETTINGS.hero_title,
             hero_subtitle: siteSettings.hero_subtitle || DEFAULT_SITE_SETTINGS.hero_subtitle,
-            recruitment_open: siteSettings.recruitment_open,
+            recruitment_open: siteSettings.recruitment_open !== false && siteSettings.recruitment_form_enabled !== false,
+            recruitment_form_enabled: siteSettings.recruitment_open !== false && siteSettings.recruitment_form_enabled !== false,
           }));
           localStorage.setItem("vr_about_settings", JSON.stringify({
             about_image_url: siteSettings.about_image_url || DEFAULT_SITE_SETTINGS.about_image_url,
@@ -509,15 +515,11 @@ export default function AdminDashboard() {
         delete clean.hero_title;
         delete clean.hero_subtitle;
         delete clean.recruitment_open;
-        delete clean.recruitment_form_enabled;
-        delete clean.recruitment_form_title;
-        delete clean.recruitment_form_deadline;
+        delete clean.recruitment_custom_questions;
         delete clean.recruitment_instructions;
         delete clean.recruitment_eligibility;
         delete clean.recruitment_question_prompt;
         delete clean.onboarding_email_subject;
-        delete clean.whatsapp_recruit_link;
-        delete clean.onboarding_email_template;
         delete clean.about_image_url;
         delete clean.about_title;
         delete clean.about_subtitle;
@@ -529,13 +531,13 @@ export default function AdminDashboard() {
       let res;
       if (existing) {
         res = await supabase.from("site_settings").update(settingsPayload).eq("id", existing.id);
-        if (res.error && res.error.message?.includes("column")) {
+        if (res.error && (res.error.message?.includes("column") || res.error.code === "PGRST204" || res.error.code === "42703")) {
           // Fallback if extended columns not yet run in supabase
           res = await supabase.from("site_settings").update(stripExtended(settingsPayload)).eq("id", existing.id);
         }
       } else {
         res = await supabase.from("site_settings").insert([settingsPayload]);
-        if (res.error && res.error.message?.includes("column")) {
+        if (res.error && (res.error.message?.includes("column") || res.error.code === "PGRST204" || res.error.code === "42703")) {
           res = await supabase.from("site_settings").insert([stripExtended(settingsPayload)]);
         }
       }
@@ -1501,11 +1503,73 @@ export default function AdminDashboard() {
           const raw = localStorage.getItem("vr_site_settings_extended");
           const existingLocal = raw ? JSON.parse(raw) : {};
           localStorage.setItem("vr_site_settings_extended", JSON.stringify({ ...existingLocal, ...newSettings }));
+          if (newSettings.recruitment_custom_questions) {
+            localStorage.setItem("vr_recruitment_custom_questions", JSON.stringify(newSettings.recruitment_custom_questions));
+          }
         } catch {}
       }
       const { data: existing } = await supabase.from("site_settings").select("id").limit(1).maybeSingle();
       if (existing) {
-        await supabase.from("site_settings").update(newSettings).eq("id", existing.id);
+        const syncSettings: any = { ...newSettings };
+        if (syncSettings.recruitment_open !== undefined && syncSettings.recruitment_form_enabled === undefined) {
+          syncSettings.recruitment_form_enabled = syncSettings.recruitment_open;
+        } else if (syncSettings.recruitment_form_enabled !== undefined && syncSettings.recruitment_open === undefined) {
+          syncSettings.recruitment_open = syncSettings.recruitment_form_enabled;
+        }
+
+        const allowedColumns = [
+          "recruitment_open",
+          "recruitment_form_enabled",
+          "recruitment_custom_questions",
+          "recruitment_cta_enabled",
+          "announcement_badge_enabled",
+          "recruitment_cta_label",
+          "recruitment_cta_url",
+          "announcement_badge_text",
+          "contact_email",
+          "recruitment_form_title",
+          "recruitment_form_deadline",
+          "whatsapp_recruit_link",
+          "onboarding_email_template",
+          "hero_title",
+          "hero_subtitle",
+          "updated_at",
+        ];
+        const dbPayload: any = { updated_at: new Date().toISOString() };
+        for (const key of allowedColumns) {
+          if (key in syncSettings) {
+            dbPayload[key] = syncSettings[key];
+          }
+        }
+        let { error: updateErr } = await supabase.from("site_settings").update(dbPayload).eq("id", existing.id);
+        if (updateErr && (updateErr.message?.includes("column") || updateErr.code === "PGRST204" || updateErr.code === "42703")) {
+          // If extended columns are not yet in DB schema, safely fallback to core table columns
+          const coreColumns = [
+            "recruitment_cta_label",
+            "recruitment_cta_url",
+            "recruitment_cta_enabled",
+            "announcement_badge_text",
+            "announcement_badge_enabled",
+            "contact_email",
+            "recruitment_form_enabled",
+            "recruitment_form_title",
+            "recruitment_form_deadline",
+            "whatsapp_recruit_link",
+            "onboarding_email_template",
+            "updated_at",
+          ];
+          const fallbackPayload: any = { updated_at: new Date().toISOString() };
+          for (const key of coreColumns) {
+            if (key in syncSettings) {
+              fallbackPayload[key] = syncSettings[key];
+            }
+          }
+          const retryRes = await supabase.from("site_settings").update(fallbackPayload).eq("id", existing.id);
+          updateErr = retryRes.error;
+        }
+        if (updateErr) {
+          console.warn("Supabase update notice:", updateErr);
+        }
       }
       setSiteSettings((prev) => ({ ...prev, ...newSettings }));
       showToast("Settings updated!");
@@ -1517,7 +1581,8 @@ export default function AdminDashboard() {
   const handleUpdateRecruitStatus = async (
     id: string,
     newStatus: "Pending" | "Shortlisted" | "Accepted" | "Declined",
-    onboardingEmailSent?: boolean
+    onboardingEmailSent?: boolean,
+    silent?: boolean
   ) => {
     try {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -1557,7 +1622,9 @@ export default function AdminDashboard() {
         }
         return next;
       });
-      showToast(`Applicant marked as ${newStatus}.`);
+      if (!silent) {
+        showToast(`Applicant marked as ${newStatus}.`);
+      }
     } catch (err: any) {
       showError(err.message || "Failed to update candidate status.");
     }
@@ -1817,20 +1884,22 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        {/* Floating Notification Toast */}
-        {toastMessage && (
-          <div className="fixed bottom-6 right-6 z-50 bg-[#0d1f14] border border-emerald-500/50 text-emerald-300 px-4 py-3 shadow-2xl flex items-center gap-3 text-xs font-mono tracking-wider uppercase animate-in slide-in-from-bottom-5">
-            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>{toastMessage}</span>
-          </div>
-        )}
+        {/* Floating Notification Toast Container - Stacks messages gracefully */}
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none">
+          {errorMessage && (
+            <div className="pointer-events-auto bg-[#2b0d10] border border-red-500/50 text-red-300 px-4 py-3 shadow-2xl flex items-center gap-3 text-xs font-mono tracking-wider uppercase animate-in slide-in-from-bottom-5">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
 
-        {errorMessage && (
-          <div className="fixed bottom-6 right-6 z-50 bg-[#2b0d10] border border-red-500/50 text-red-300 px-4 py-3 shadow-2xl flex items-center gap-3 text-xs font-mono tracking-wider uppercase animate-in slide-in-from-bottom-5">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
+          {toastMessage && (
+            <div className="pointer-events-auto bg-[#0d1f14] border border-emerald-500/50 text-emerald-300 px-4 py-3 shadow-2xl flex items-center gap-3 text-xs font-mono tracking-wider uppercase animate-in slide-in-from-bottom-5">
+              <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>{toastMessage}</span>
+            </div>
+          )}
+        </div>
 
         {/* Section Tabs - Responsive Horizontal Scrollable Bar on Mobile, Clean Grid on Desktop */}
         <div className="flex overflow-x-auto no-scrollbar scroll-smooth gap-2 pb-3 mb-8 border-b border-white/10 sm:flex-wrap items-center">
@@ -3303,7 +3372,7 @@ export default function AdminDashboard() {
           <AdminSecurityModal
             isOpen={showSecurityModal}
             onClose={() => setShowSecurityModal(false)}
-            adminEmail={siteSettings.contact_email || "veerracersselectric.database@gmail.com"}
+            adminEmail={currentUserEmail || siteSettings.contact_email || ""}
             showToast={showToast}
             showError={showError}
           />

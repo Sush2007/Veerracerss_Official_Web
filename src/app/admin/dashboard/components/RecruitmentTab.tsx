@@ -41,7 +41,8 @@ interface RecruitmentTabProps {
   onUpdateStatus: (
     id: string,
     status: "Pending" | "Shortlisted" | "Accepted" | "Declined",
-    onboardingEmailSent?: boolean
+    onboardingEmailSent?: boolean,
+    silent?: boolean
   ) => Promise<void>;
   onUpdateScore?: (id: string, score: string) => Promise<void>;
   onDeleteApplication: (id: string, name: string) => Promise<void>;
@@ -171,6 +172,7 @@ VSSUT Burla`
         [
           "powertrain",
           "chassis",
+          "electronics",
           "suspension",
           "dynamics",
           "brakes",
@@ -259,6 +261,7 @@ VSSUT Burla`;
         );
 
       let emailSentSuccess = false;
+      let emailErrorMessage = "";
       try {
         const res = await fetch("/api/recruitment/send-email", {
           method: "POST",
@@ -274,19 +277,26 @@ VSSUT Burla`;
         const data = await res.json();
         if (res.ok && data.success) {
           emailSentSuccess = true;
+        } else {
+          emailErrorMessage = data.error || "Email delivery failed.";
         }
-      } catch (sendErr) {
+      } catch (sendErr: any) {
+        emailErrorMessage = sendErr.message || "Network error dispatching email.";
         console.warn("Background automated email dispatch notice:", sendErr);
       }
 
-      await onUpdateStatus(candidate.id, "Accepted", true);
-      candidate.onboarding_email_sent = true;
-      if (showToast) {
-        showToast(
-          emailSentSuccess
-            ? `Accepted ${candidate.full_name}! Confirmation letter dispatched via Google SMTP.`
-            : `Accepted ${candidate.full_name}! Application updated.`
-        );
+      await onUpdateStatus(candidate.id, "Accepted", emailSentSuccess, true);
+      candidate.onboarding_email_sent = emailSentSuccess;
+      if (emailSentSuccess) {
+        if (showToast) {
+          showToast(`Accepted ${candidate.full_name}! Confirmation letter dispatched to ${candidate.email} via Google SMTP.`);
+        }
+      } else {
+        if (showError) {
+          showError(`Accepted ${candidate.full_name}, but email failed: ${emailErrorMessage}`);
+        } else if (showToast) {
+          showToast(`Accepted ${candidate.full_name} (Email dispatch failed: ${emailErrorMessage})`);
+        }
       }
     } catch (err: any) {
       if (showError) showError(err.message || "Failed to accept candidate.");
@@ -633,11 +643,13 @@ VSSUT Burla`;
             className="bg-[#111115] border border-white/10 px-2.5 py-1.5 text-xs font-mono text-white/80 focus:border-racing-red outline-none uppercase"
           >
             <option value="ALL">All Domains</option>
-            <option value="Powertrain and Drivetrain">Powertrain and Drivetrain</option>
-            <option value="Chassis and Design">Chassis and Design</option>
-            <option value="Suspension and Steering">Suspension and Steering</option>
-            <option value="Brakes and Tires">Brakes and Tires</option>
-            <option value="pr">PR / Non-Technical</option>
+            <option value="Powertrain & High Voltage">Powertrain & High Voltage</option>
+            <option value="Chassis & Aerodynamics">Chassis & Aerodynamics</option>
+            <option value="Electronics & Embedded Systems">Electronics & Embedded Systems</option>
+            <option value="Vehicle Dynamics & Suspension">Vehicle Dynamics & Suspension</option>
+            <option value="Brakes & Thermals">Brakes & Thermals</option>
+            <option value="Media & Public Relations">Media & Public Relations</option>
+            <option value="Operations & Sponsorship">Operations & Sponsorship</option>
           </select>
         </div>
       </div>
@@ -761,11 +773,15 @@ VSSUT Burla`;
                           ? "SHORTLISTED"
                           : "AWAITING DECISION"}
                       </span>
-                      {candidate.onboarding_email_sent && (
-                        <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 font-bold">
+                      {candidate.onboarding_email_sent ? (
+                        <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 font-bold">
                           MAIL SENT
                         </span>
-                      )}
+                      ) : isAccepted ? (
+                        <span className="text-[9px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 font-bold">
+                          MAIL PENDING / FAILED
+                        </span>
+                      ) : null}
                     </div>
 
                     {/* Intelligent Action Buttons */}

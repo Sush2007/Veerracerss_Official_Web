@@ -21,6 +21,7 @@ export function RecruitmentForm({
   formDeadline,
   contactEmail,
 }: RecruitmentFormProps) {
+  const [isFormActive, setIsFormActive] = useState<boolean>(formEnabled);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -40,10 +41,29 @@ export function RecruitmentForm({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    setIsFormActive(formEnabled);
+  }, [formEnabled]);
+
+  useEffect(() => {
     async function loadFormSettings() {
       try {
         const supabase = createClient();
         const { data } = await supabase.from("site_settings").select("*").limit(1).maybeSingle();
+        if (data) {
+          const active = data.recruitment_form_enabled !== false && (data as any).recruitment_open !== false;
+          setIsFormActive(active);
+        } else if (typeof window !== "undefined") {
+          try {
+            const raw = localStorage.getItem("vr_site_settings_extended");
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed.recruitment_form_enabled !== undefined || parsed.recruitment_open !== undefined) {
+                setIsFormActive(parsed.recruitment_form_enabled !== false && parsed.recruitment_open !== false);
+              }
+            }
+          } catch {}
+        }
+
         let loadedQs: RecruitmentCustomQuestion[] | null = null;
         if (
           data?.recruitment_custom_questions &&
@@ -152,7 +172,7 @@ export function RecruitmentForm({
     }
   };
 
-  if (!formEnabled) {
+  if (!isFormActive) {
     return (
       <div className="bg-[#0c0d12] border border-white/10 p-8 sm:p-12 text-center max-w-2xl mx-auto shadow-2xl">
         <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4 text-racing-red">

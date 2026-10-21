@@ -8,7 +8,7 @@ import Link from "next/link";
 import { motion } from "motion/react";
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState("veerracersselectric.database@gmail.com");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +78,7 @@ export default function AdminLogin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-racing-red transition-colors text-sm"
-              placeholder="veerracersselectric.database@gmail.com"
+              placeholder="admin@email.com"
             />
           </div>
           <div>

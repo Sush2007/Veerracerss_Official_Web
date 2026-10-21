@@ -3,10 +3,16 @@ import { Resend } from "resend";
 import nodemailer from "nodemailer";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { to, candidateName, subject, message, applicationId } = body;
+    const to = body.to || body.candidate_email || body.email;
+    const candidateName = body.candidateName || body.candidate_name || body.full_name;
+    const subject = body.subject;
+    const message = body.message || body.custom_message || body.content;
+    const applicationId = body.applicationId || body.application_id || body.id;
 
     if (!to || !subject || !message) {
       return NextResponse.json(
@@ -41,6 +47,8 @@ ${message.replace(/\n/g, "<br/>")}
     const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587;
     const smtpFrom = process.env.SMTP_FROM || `"VeerRacerss Electric" <${gmailUser}>`;
 
+    let deliveryError: string | null = null;
+
     if (gmailPass) {
       try {
         const transporter = smtpHost
@@ -49,10 +57,16 @@ ${message.replace(/\n/g, "<br/>")}
               port: smtpPort,
               secure: smtpPort === 465,
               auth: { user: gmailUser, pass: gmailPass },
+              connectionTimeout: 10000,
+              greetingTimeout: 10000,
+              socketTimeout: 15000,
             })
           : nodemailer.createTransport({
               service: "gmail",
               auth: { user: gmailUser, pass: gmailPass },
+              connectionTimeout: 10000,
+              greetingTimeout: 10000,
+              socketTimeout: 15000,
             });
 
         await transporter.sendMail({
@@ -66,8 +80,9 @@ ${message.replace(/\n/g, "<br/>")}
         emailSent = true;
         deliveryDetails = `Email dispatched via automated Google SMTP from ${gmailUser}.`;
       } catch (smtpErr: any) {
-        console.warn("Google SMTP attempt error:", smtpErr);
-        deliveryDetails = `SMTP note: ${smtpErr.message}`;
+        console.error("Google SMTP send error:", smtpErr);
+        deliveryError = smtpErr.message || "Failed to dispatch via Google SMTP";
+        deliveryDetails = `SMTP error: ${smtpErr.message}`;
       }
     }
 
@@ -87,28 +102,33 @@ ${message.replace(/\n/g, "<br/>")}
 
         if (resendResult.error) {
           console.warn("Resend API warning:", resendResult.error);
+          deliveryError = resendResult.error.message;
           deliveryDetails = `Resend note: ${resendResult.error.message}`;
         } else {
           emailSent = true;
+          deliveryError = null;
           deliveryDetails = `Email dispatched successfully via API (ID: ${resendResult.data?.id}).`;
         }
       } catch (resendErr: any) {
         console.warn("Resend send attempt error:", resendErr);
+        deliveryError = resendErr.message;
         deliveryDetails = `Resend attempt: ${resendErr.message}`;
       }
     }
 
     if (!emailSent) {
-      // Simulation mode if credentials not provided
-      console.log(`[ONBOARDING EMAIL SIMULATION] To: ${to} | Subject: ${subject}`);
-      emailSent = true;
-      if (!deliveryDetails) {
-        deliveryDetails = "Onboarding letter recorded and queued successfully.";
-      }
+      return NextResponse.json(
+        {
+          error: deliveryError || "Could not deliver email. Please check your Google SMTP App Password.",
+          deliveryDetails,
+        },
+        { status: 502 }
+      );
     }
 
-    // 3. Update recruitment application record in Supabase
-    if (applicationId) {
+    // 3. Update recruitment application record in Supabase (validated UUID only)
+    const isUuid = applicationId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(applicationId);
+    if (isUuid) {
       try {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fizxzmnvsbsjrmgthdqq.supabase.co";
         const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
