@@ -34,8 +34,9 @@ ${message.replace(/\n/g, "<br/>")}
     </div>`;
 
     // 1. Direct SMTP / Google App Password Automated Delivery (Primary)
-    const gmailPass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS;
-    const gmailUser = process.env.GMAIL_USER || process.env.SMTP_USER || "veerracersselectric.database@gmail.com";
+    const rawPass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS;
+    const gmailPass = rawPass ? rawPass.trim().replace(/\s+/g, "") : "";
+    const gmailUser = (process.env.GMAIL_USER || process.env.SMTP_USER || "veerracersselectric.database@gmail.com").trim();
     const smtpHost = process.env.SMTP_HOST;
     const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587;
     const smtpFrom = process.env.SMTP_FROM || `"VeerRacerss Electric" <${gmailUser}>`;
