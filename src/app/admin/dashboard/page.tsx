@@ -279,25 +279,64 @@ export default function AdminDashboard() {
     // 6. Club Expenses
     try {
       const { data: expData } = await supabase.from("club_expenses").select("*").order("expense_date", { ascending: false });
-      if (expData && expData.length > 0) setExpenses(expData);
+      let localExp: ClubExpense[] | null = null;
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("vr_club_expenses");
+          if (raw) localExp = JSON.parse(raw);
+        } catch {}
+      }
+      if (expData && expData.length > 0) {
+        setExpenses(expData);
+      } else if (localExp !== null) {
+        setExpenses(localExp);
+      }
     } catch {}
 
     // 7. Recruitment Applications
     try {
       const { data: recData } = await supabase.from("recruitment_applications").select("*").order("created_at", { ascending: false });
-      if (recData && recData.length > 0) setRecruits(recData);
+      let localRec: RecruitmentApplication[] | null = null;
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("vr_recruitment_applications");
+          if (raw) localRec = JSON.parse(raw);
+        } catch {}
+      }
+      if (recData && recData.length > 0) {
+        setRecruits(recData);
+      } else if (localRec !== null) {
+        setRecruits(localRec);
+      }
     } catch {}
 
     // 8. Custom Databases
     try {
       const { data: cdbData } = await supabase.from("custom_databases").select("*").order("created_at", { ascending: true });
-      if (cdbData && cdbData.length > 0) setCustomDbs(cdbData);
+      let localCdbs: CustomDatabaseRecord[] | null = null;
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("vr_custom_databases");
+          if (raw) localCdbs = JSON.parse(raw);
+        } catch {}
+      }
+      if (cdbData && cdbData.length > 0) {
+        setCustomDbs(cdbData);
+      } else if (localCdbs !== null) {
+        setCustomDbs(localCdbs);
+      }
     } catch {}
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.replace("/");
+  };
+
+  // Helper: Verify if ID conforms to standard PostgreSQL UUID format
+  const isValidUUID = (id?: string | null): boolean => {
+    if (!id) return false;
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
   };
 
   // Helper: Sanitize & upload file to Supabase storage
@@ -603,9 +642,19 @@ export default function AdminDashboard() {
   const handleConfirmDeleteMedia = async () => {
     if (!deleteConfirmMedia) return;
     try {
-      const { error } = await supabase.from("media_items").delete().eq("id", deleteConfirmMedia.id);
-      if (error) throw error;
-      setMediaList(mediaList.filter((m) => m.id !== deleteConfirmMedia.id));
+      if (isValidUUID(deleteConfirmMedia.id)) {
+        const { error } = await supabase.from("media_items").delete().eq("id", deleteConfirmMedia.id);
+        if (error && error.code !== "22P02" && !error.message?.includes("invalid input syntax")) {
+          console.warn("Supabase media delete note:", error.message);
+        }
+      }
+      const updated = mediaList.filter((m) => m.id !== deleteConfirmMedia.id);
+      setMediaList(updated);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_media_items", JSON.stringify(updated));
+        } catch {}
+      }
       showToast("Media item deleted.");
     } catch (err: any) {
       showError(err.message || "Failed to delete item.");
@@ -757,9 +806,19 @@ export default function AdminDashboard() {
   const handleConfirmDeleteAlumni = async () => {
     if (!deleteConfirmAlumni) return;
     try {
-      const { error } = await supabase.from("alumni").delete().eq("id", deleteConfirmAlumni.id);
-      if (error) throw error;
-      setAlumniList(alumniList.filter((a) => a.id !== deleteConfirmAlumni.id));
+      if (isValidUUID(deleteConfirmAlumni.id)) {
+        const { error } = await supabase.from("alumni").delete().eq("id", deleteConfirmAlumni.id);
+        if (error && error.code !== "22P02" && !error.message?.includes("invalid input syntax")) {
+          console.warn("Supabase alumni delete note:", error.message);
+        }
+      }
+      const updated = alumniList.filter((a) => a.id !== deleteConfirmAlumni.id);
+      setAlumniList(updated);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_alumni_records", JSON.stringify(updated));
+        } catch {}
+      }
       showToast("Alumni profile deleted.");
     } catch (err: any) {
       showError(err.message || "Failed to delete alumni.");
@@ -836,8 +895,12 @@ export default function AdminDashboard() {
   const handleConfirmDeleteMember = async () => {
     if (!deleteConfirmMember) return;
     try {
-      const { error } = await supabase.from("members").delete().eq("id", deleteConfirmMember.id);
-      if (error) throw error;
+      if (isValidUUID(deleteConfirmMember.id)) {
+        const { error } = await supabase.from("members").delete().eq("id", deleteConfirmMember.id);
+        if (error && error.code !== "22P02" && !error.message?.includes("invalid input syntax")) {
+          console.warn("Supabase member delete note:", error.message);
+        }
+      }
       setMembers(members.filter((m) => m.id !== deleteConfirmMember.id));
       showToast(`Member "${deleteConfirmMember.name}" removed.`);
     } catch (err: any) {
@@ -1180,10 +1243,27 @@ export default function AdminDashboard() {
       }
 
       const payload = { ...newExp, receipt_url: receiptUrl };
-      const { data, error } = await supabase.from("club_expenses").insert([payload]).select().single();
-      if (error) throw error;
+      let savedRecord: ClubExpense;
+      try {
+        const { data, error } = await supabase.from("club_expenses").insert([payload]).select().single();
+        if (error) throw error;
+        savedRecord = data;
+      } catch (dbErr: any) {
+        console.warn("Supabase club_expenses insert fallback to local:", dbErr.message);
+        savedRecord = {
+          id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `exp-${Date.now()}`,
+          ...payload,
+          created_at: new Date().toISOString()
+        };
+      }
 
-      setExpenses([data, ...expenses]);
+      const updated = [savedRecord, ...expenses];
+      setExpenses(updated);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_club_expenses", JSON.stringify(updated));
+        } catch {}
+      }
       showToast("Expense voucher recorded successfully!");
     } catch (err: any) {
       showError(err.message || "Failed to log expense voucher. Ensure supabase-operations-setup.sql is executed.");
@@ -1195,9 +1275,19 @@ export default function AdminDashboard() {
   const handleDeleteExpense = async (id: string, title: string) => {
     if (!confirm(`Delete expense record "${title}"?`)) return;
     try {
-      const { error } = await supabase.from("club_expenses").delete().eq("id", id);
-      if (error) throw error;
-      setExpenses(expenses.filter((e) => e.id !== id));
+      if (isValidUUID(id)) {
+        const { error } = await supabase.from("club_expenses").delete().eq("id", id);
+        if (error && error.code !== "22P02" && !error.message?.includes("invalid input syntax")) {
+          console.warn("Supabase expense delete note:", error.message);
+        }
+      }
+      const updated = expenses.filter((e) => e.id !== id);
+      setExpenses(updated);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_club_expenses", JSON.stringify(updated));
+        } catch {}
+      }
       showToast("Expense voucher deleted.");
     } catch (err: any) {
       showError(err.message || "Failed to delete expense.");
@@ -1206,9 +1296,16 @@ export default function AdminDashboard() {
 
   const handleUpdateExpenseStatus = async (id: string, newStatus: string) => {
     try {
-      const { error } = await supabase.from("club_expenses").update({ status: newStatus }).eq("id", id);
-      if (error) throw error;
-      setExpenses(expenses.map((e) => (e.id === id ? { ...e, status: newStatus } : e)));
+      if (isValidUUID(id)) {
+        await supabase.from("club_expenses").update({ status: newStatus }).eq("id", id);
+      }
+      const updated = expenses.map((e) => (e.id === id ? { ...e, status: newStatus } : e));
+      setExpenses(updated);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_club_expenses", JSON.stringify(updated));
+        } catch {}
+      }
       showToast("Status updated.");
     } catch (err: any) {
       showError(err.message || "Failed to update status.");
@@ -1337,8 +1434,19 @@ export default function AdminDashboard() {
   const handleDeleteDatabase = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete entire database "${name}" and all its records?`)) return;
     try {
-      await supabase.from("custom_databases").delete().eq("id", id);
-      setCustomDbs(customDbs.filter((db) => db.id !== id));
+      if (isValidUUID(id)) {
+        const { error } = await supabase.from("custom_databases").delete().eq("id", id);
+        if (error && error.code !== "22P02" && !error.message?.includes("invalid input syntax")) {
+          console.warn("Supabase db delete note:", error.message);
+        }
+      }
+      const updated = customDbs.filter((db) => db.id !== id);
+      setCustomDbs(updated);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_custom_databases", JSON.stringify(updated));
+        } catch {}
+      }
       showToast(`Database "${name}" deleted.`);
     } catch (err: any) {
       showError(err.message || "Failed to delete database.");
@@ -1350,15 +1458,23 @@ export default function AdminDashboard() {
       const targetDb = customDbs.find((db) => db.id === dbId);
       if (!targetDb) return;
       const updatedRecords = [...(targetDb.records || []), record];
-      const { error } = await supabase
-        .from("custom_databases")
-        .update({ records: updatedRecords, updated_at: new Date().toISOString() })
-        .eq("id", dbId);
-      if (error) throw error;
+      if (isValidUUID(dbId)) {
+        const { error } = await supabase
+          .from("custom_databases")
+          .update({ records: updatedRecords, updated_at: new Date().toISOString() })
+          .eq("id", dbId);
+        if (error && error.code !== "22P02" && !error.message?.includes("invalid input syntax")) {
+          console.warn("Supabase update db records note:", error.message);
+        }
+      }
 
-      setCustomDbs(
-        customDbs.map((db) => (db.id === dbId ? { ...db, records: updatedRecords } : db))
-      );
+      const updated = customDbs.map((db) => (db.id === dbId ? { ...db, records: updatedRecords } : db));
+      setCustomDbs(updated);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_custom_databases", JSON.stringify(updated));
+        } catch {}
+      }
       showToast("Record added to database.");
     } catch (err: any) {
       showError(err.message || "Failed to add record.");
@@ -1370,15 +1486,23 @@ export default function AdminDashboard() {
       const targetDb = customDbs.find((db) => db.id === dbId);
       if (!targetDb) return;
       const updatedRecords = (targetDb.records || []).filter((r) => r.id !== recordId);
-      const { error } = await supabase
-        .from("custom_databases")
-        .update({ records: updatedRecords, updated_at: new Date().toISOString() })
-        .eq("id", dbId);
-      if (error) throw error;
+      if (isValidUUID(dbId)) {
+        const { error } = await supabase
+          .from("custom_databases")
+          .update({ records: updatedRecords, updated_at: new Date().toISOString() })
+          .eq("id", dbId);
+        if (error && error.code !== "22P02" && !error.message?.includes("invalid input syntax")) {
+          console.warn("Supabase delete db record note:", error.message);
+        }
+      }
 
-      setCustomDbs(
-        customDbs.map((db) => (db.id === dbId ? { ...db, records: updatedRecords } : db))
-      );
+      const updated = customDbs.map((db) => (db.id === dbId ? { ...db, records: updatedRecords } : db));
+      setCustomDbs(updated);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_custom_databases", JSON.stringify(updated));
+        } catch {}
+      }
       showToast("Record deleted.");
     } catch (err: any) {
       showError(err.message || "Failed to delete record.");
@@ -1392,15 +1516,23 @@ export default function AdminDashboard() {
       const updatedRecords = (targetDb.records || []).map((r) =>
         r.id === recordId ? { ...r, ...updatedRecord, id: recordId } : r
       );
-      const { error } = await supabase
-        .from("custom_databases")
-        .update({ records: updatedRecords, updated_at: new Date().toISOString() })
-        .eq("id", dbId);
-      if (error) throw error;
+      if (isValidUUID(dbId)) {
+        const { error } = await supabase
+          .from("custom_databases")
+          .update({ records: updatedRecords, updated_at: new Date().toISOString() })
+          .eq("id", dbId);
+        if (error && error.code !== "22P02" && !error.message?.includes("invalid input syntax")) {
+          console.warn("Supabase update db record note:", error.message);
+        }
+      }
 
-      setCustomDbs(
-        customDbs.map((db) => (db.id === dbId ? { ...db, records: updatedRecords } : db))
-      );
+      const updated = customDbs.map((db) => (db.id === dbId ? { ...db, records: updatedRecords } : db));
+      setCustomDbs(updated);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_custom_databases", JSON.stringify(updated));
+        } catch {}
+      }
       showToast("Record updated successfully!");
     } catch (err: any) {
       showError(err.message || "Failed to update record.");

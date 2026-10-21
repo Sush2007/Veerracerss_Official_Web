@@ -53,7 +53,7 @@ export function StatsStrip() {
     async function loadTelemetry() {
       try {
         const supabase = createClient();
-        const { data } = await supabase.from("site_settings").select("telemetry_stats").limit(1).maybeSingle();
+        const { data } = await supabase.from("site_settings").select("*").limit(1).maybeSingle();
 
         let localTelemetry: any = null;
         if (typeof window !== "undefined") {

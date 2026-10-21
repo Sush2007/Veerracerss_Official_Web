@@ -88,7 +88,7 @@ export function Hero({ title, subtitle, modelUrl }: HeroProps = {}) {
         // Also check featured_machine for dynamic cad_model_url
         const { data: macData } = await supabase
           .from("featured_machine")
-          .select("cad_model_url")
+          .select("*")
           .limit(1)
           .maybeSingle();
         if (macData?.cad_model_url) {
