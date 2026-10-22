@@ -200,7 +200,6 @@ export const DEFAULT_ACHIEVEMENTS: CompetitionAchievement[] = [
     competition: "SUPRA SAE INDIA 2026",
     tagline: "National Top-10 Design & Social Excellence",
     location: "Formula Student India Track",
-    image: "/achievements/supra-sae-2026.jpg",
     featured: true,
     awards: [
       {
@@ -235,7 +234,6 @@ export const DEFAULT_ACHIEVEMENTS: CompetitionAchievement[] = [
     competition: "FORMULA IMPERIAL 2025",
     tagline: "National Champions in Lightweight Chassis & EV Runner-Up",
     location: "Buddh International Circuit, Greater Noida",
-    image: "/achievements/formula-imperial-2025.jpg",
     isChampion: true,
     featured: true,
     awards: [
@@ -272,7 +270,6 @@ export const DEFAULT_ACHIEVEMENTS: CompetitionAchievement[] = [
     tagline: "National Podium Finish in Electric Class",
     location: "Buddh International Circuit, Greater Noida",
     carName: "AETHER",
-    image: "/achievements/formula-imperial-2024.jpg",
     awards: [
       {
         title: "AIR-3 IN EV CATEGORY",
@@ -290,7 +287,6 @@ export const DEFAULT_ACHIEVEMENTS: CompetitionAchievement[] = [
     tagline: "Double All India Rank 1 & Endurance Champions",
     location: "Formula Imperial Circuit",
     carName: "ZEUS 1.0",
-    image: "/achievements/formula-imperial-2023.jpg",
     isChampion: true,
     featured: true,
     awards: [
@@ -327,7 +323,6 @@ export const DEFAULT_ACHIEVEMENTS: CompetitionAchievement[] = [
     competition: "PI-EV 2022",
     tagline: "National Leadership in Team Governance",
     location: "Formula Bharat Virtual",
-    image: "/achievements/pi-ev-2022.jpg",
     awards: [
       {
         title: "AIR-4 IN TEAM MANAGEMENT",
@@ -345,7 +340,6 @@ export const DEFAULT_ACHIEVEMENTS: CompetitionAchievement[] = [
     tagline: "National Cost Podium & Top-10 Design",
     location: "Kari Motor Speedway, Coimbatore",
     carName: "VENTUS 5.0",
-    image: "/achievements/ffs-india-2019.jpg",
     awards: [
       {
         title: "AIR-3 IN COST",
@@ -374,7 +368,6 @@ export const DEFAULT_ACHIEVEMENTS: CompetitionAchievement[] = [
     competition: "FORMULA BHARAT 2019",
     tagline: "National Contender at Kari Motor Speedway",
     location: "Kari Motor Speedway, Coimbatore",
-    image: "/achievements/pi-ev-2022.jpg",
     awards: [
       {
         title: "SECURED AIR 22/70 TEAMS",
@@ -392,7 +385,6 @@ export const DEFAULT_ACHIEVEMENTS: CompetitionAchievement[] = [
     tagline: "AIR 9/112 Teams - Most Successful Season in VSSUT Formula SAE History",
     location: "Madras Motor Race Track (MMRT), Chennai",
     carName: "VENTUS 4.0",
-    image: "/achievements/supra-sae-2018.jpg",
     awards: [
       {
         title: "AIR-9 / 112 TEAMS OVERALL",
