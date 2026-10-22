@@ -27,6 +27,25 @@ export function Partners() {
       // 2. Fetch fresh sponsors from Supabase
       try {
         const supabase = createClient();
+        
+        // Check custom_databases "Corporate Sponsors" first
+        const { data: dbData } = await supabase
+          .from("custom_databases")
+          .select("records")
+          .eq("db_name", "Corporate Sponsors")
+          .maybeSingle();
+
+        if (dbData?.records && Array.isArray(dbData.records) && dbData.records.length > 0) {
+          setSponsorsList(dbData.records);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("vr_sponsors", JSON.stringify(dbData.records));
+            } catch {}
+          }
+          return;
+        }
+
+        // Fallback to table if present
         const { data, error } = await supabase
           .from("sponsors")
           .select("*")

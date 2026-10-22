@@ -20,6 +20,19 @@ export function About() {
         const supabase = createClient();
         const { data } = await supabase.from("site_settings").select("*").limit(1).maybeSingle();
         
+        // Query cloud extended settings from custom_databases
+        let cloudExt: any = {};
+        try {
+          const { data: dbData } = await supabase
+            .from("custom_databases")
+            .select("records")
+            .eq("db_name", "System Settings Extended")
+            .maybeSingle();
+          if (dbData?.records && Array.isArray(dbData.records) && dbData.records[0]) {
+            cloudExt = dbData.records[0];
+          }
+        } catch {}
+
         let localExt: any = {};
         if (typeof window !== "undefined") {
           try {
@@ -28,19 +41,17 @@ export function About() {
           } catch {}
         }
 
-        if (data) {
-          setAboutData({
-            image_url: data.about_image_url || localExt.about_image_url || DEFAULT_SITE_SETTINGS.about_image_url || "/team/who-we-are.jpg",
-            title: data.about_title || localExt.about_title || DEFAULT_SITE_SETTINGS.about_title || "WHO WE ARE",
-            subtitle: data.about_subtitle || localExt.about_subtitle || DEFAULT_SITE_SETTINGS.about_subtitle || "THE OFFICIAL STUDENT FORMULA RACING CLUB",
-            description: data.about_description || localExt.about_description || DEFAULT_SITE_SETTINGS.about_description || "We are VeerRacerss Electric, the official Formula Student EV team of VSSUT Burla. We design, fabricate, and race high-performance electric race cars from the ground up, pushing the limits of lightweight composites, battery thermal safety, and dynamic vehicle telemetry.",
-          });
-        } else if (localExt.about_image_url || localExt.about_title || localExt.about_description) {
-          setAboutData((prev) => ({
-            ...prev,
-            ...localExt,
-          }));
-        }
+        const resolvedImg = data?.about_image_url || cloudExt.about_image_url || localExt.about_image_url || DEFAULT_SITE_SETTINGS.about_image_url || "/team/who-we-are.jpg";
+        const resolvedTitle = data?.about_title || cloudExt.about_title || localExt.about_title || DEFAULT_SITE_SETTINGS.about_title || "WHO WE ARE";
+        const resolvedSubtitle = data?.about_subtitle || cloudExt.about_subtitle || localExt.about_subtitle || DEFAULT_SITE_SETTINGS.about_subtitle || "THE OFFICIAL STUDENT FORMULA RACING CLUB";
+        const resolvedDesc = data?.about_description || cloudExt.about_description || localExt.about_description || DEFAULT_SITE_SETTINGS.about_description || "We are VeerRacerss Electric, the official Formula Student EV team of VSSUT Burla. We design, fabricate, and race high-performance electric race cars from the ground up, pushing the limits of lightweight composites, battery thermal safety, and dynamic vehicle telemetry.";
+
+        setAboutData({
+          image_url: resolvedImg,
+          title: resolvedTitle,
+          subtitle: resolvedSubtitle,
+          description: resolvedDesc,
+        });
       } catch {
         // Fallback already assigned in initial state
       }

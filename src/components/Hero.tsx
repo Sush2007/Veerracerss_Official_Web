@@ -66,6 +66,19 @@ export function Hero({ title, subtitle, modelUrl, initialSettings }: HeroProps =
           .limit(1)
           .maybeSingle();
 
+        // Cloud extended settings from custom_databases
+        let cloudExt: any = {};
+        try {
+          const { data: dbData } = await supabase
+            .from("custom_databases")
+            .select("records")
+            .eq("db_name", "System Settings Extended")
+            .maybeSingle();
+          if (dbData?.records && Array.isArray(dbData.records) && dbData.records[0]) {
+            cloudExt = dbData.records[0];
+          }
+        } catch {}
+
         // Local cache fallback if columns haven't been migrated
         let localExt: any = {};
         if (typeof window !== "undefined") {
@@ -75,34 +88,31 @@ export function Hero({ title, subtitle, modelUrl, initialSettings }: HeroProps =
           } catch {}
         }
 
-        if (data && !error) {
-          // Recruitment form active state strictly governs recruitment mode
-          const recOpen = data.recruitment_form_enabled !== false && (data as any).recruitment_open !== false;
-          setIsRecruitmentOpen(recOpen);
-          setSettings({
-            hero_title: data.hero_title || localExt.hero_title || DEFAULT_SITE_SETTINGS.hero_title,
-            hero_subtitle: data.hero_subtitle || localExt.hero_subtitle || DEFAULT_SITE_SETTINGS.hero_subtitle,
-            recruitment_cta_label: data.recruitment_cta_label || DEFAULT_SITE_SETTINGS.recruitment_cta_label,
-            recruitment_cta_url: data.recruitment_cta_url || DEFAULT_SITE_SETTINGS.recruitment_cta_url,
-            recruitment_cta_enabled: data.recruitment_cta_enabled !== false,
-            announcement_badge_text: data.announcement_badge_text || DEFAULT_SITE_SETTINGS.announcement_badge_text,
-            announcement_badge_enabled: data.announcement_badge_enabled !== false,
-            contact_email: data.contact_email || DEFAULT_SITE_SETTINGS.contact_email,
-            recruitment_open: recOpen,
-            recruitment_form_enabled: data.recruitment_form_enabled !== false,
-          });
-        } else {
-          const recOpen = localExt.recruitment_form_enabled !== false && localExt.recruitment_open !== false;
-          setIsRecruitmentOpen(recOpen);
-          if (localExt.hero_title || localExt.hero_subtitle) {
-            setSettings((prev) => ({
-              ...prev,
-              hero_title: localExt.hero_title || prev.hero_title,
-              hero_subtitle: localExt.hero_subtitle || prev.hero_subtitle,
-              recruitment_open: recOpen,
-            }));
-          }
+        const resolvedHeroTitle = data?.hero_title || cloudExt.hero_title || localExt.hero_title || DEFAULT_SITE_SETTINGS.hero_title;
+        const resolvedHeroSubtitle = data?.hero_subtitle || cloudExt.hero_subtitle || localExt.hero_subtitle || DEFAULT_SITE_SETTINGS.hero_subtitle;
+        
+        let recOpen = true;
+        if (data?.recruitment_form_enabled !== undefined && (data as any)?.recruitment_open !== undefined) {
+          recOpen = data.recruitment_form_enabled !== false && (data as any).recruitment_open !== false;
+        } else if (cloudExt.recruitment_open !== undefined || cloudExt.recruitment_form_enabled !== undefined) {
+          recOpen = cloudExt.recruitment_open !== false && cloudExt.recruitment_form_enabled !== false;
+        } else if (localExt.recruitment_open !== undefined || localExt.recruitment_form_enabled !== undefined) {
+          recOpen = localExt.recruitment_open !== false && localExt.recruitment_form_enabled !== false;
         }
+
+        setIsRecruitmentOpen(recOpen);
+        setSettings({
+          hero_title: resolvedHeroTitle,
+          hero_subtitle: resolvedHeroSubtitle,
+          recruitment_cta_label: data?.recruitment_cta_label || cloudExt.recruitment_cta_label || DEFAULT_SITE_SETTINGS.recruitment_cta_label,
+          recruitment_cta_url: data?.recruitment_cta_url || cloudExt.recruitment_cta_url || DEFAULT_SITE_SETTINGS.recruitment_cta_url,
+          recruitment_cta_enabled: data?.recruitment_cta_enabled !== false,
+          announcement_badge_text: data?.announcement_badge_text || cloudExt.announcement_badge_text || DEFAULT_SITE_SETTINGS.announcement_badge_text,
+          announcement_badge_enabled: data?.announcement_badge_enabled !== false,
+          contact_email: data?.contact_email || cloudExt.contact_email || DEFAULT_SITE_SETTINGS.contact_email,
+          recruitment_open: recOpen,
+          recruitment_form_enabled: recOpen,
+        });
 
         // Also check featured_machine for dynamic cad_model_url
         const { data: macData } = await supabase
@@ -112,6 +122,8 @@ export function Hero({ title, subtitle, modelUrl, initialSettings }: HeroProps =
           .maybeSingle();
         if (macData?.cad_model_url && macData.cad_model_url.trim()) {
           setCadModelUrl(macData.cad_model_url.trim());
+        } else if (cloudExt.cad_model_url && cloudExt.cad_model_url.trim()) {
+          setCadModelUrl(cloudExt.cad_model_url.trim());
         } else if (typeof window !== "undefined") {
           try {
             const mRaw = localStorage.getItem("vr_machine_extended");

@@ -49,9 +49,25 @@ export function RecruitmentForm({
       try {
         const supabase = createClient();
         const { data } = await supabase.from("site_settings").select("*").limit(1).maybeSingle();
-        if (data) {
+
+        // Check cloud extended settings from custom_databases
+        let cloudExt: any = {};
+        try {
+          const { data: dbData } = await supabase
+            .from("custom_databases")
+            .select("records")
+            .eq("db_name", "System Settings Extended")
+            .maybeSingle();
+          if (dbData?.records && Array.isArray(dbData.records) && dbData.records[0]) {
+            cloudExt = dbData.records[0];
+          }
+        } catch {}
+
+        if (data?.recruitment_form_enabled !== undefined && (data as any)?.recruitment_open !== undefined) {
           const active = data.recruitment_form_enabled !== false && (data as any).recruitment_open !== false;
           setIsFormActive(active);
+        } else if (cloudExt.recruitment_open !== undefined || cloudExt.recruitment_form_enabled !== undefined) {
+          setIsFormActive(cloudExt.recruitment_open !== false && cloudExt.recruitment_form_enabled !== false);
         } else if (typeof window !== "undefined") {
           try {
             const raw = localStorage.getItem("vr_site_settings_extended");
@@ -71,6 +87,12 @@ export function RecruitmentForm({
           data.recruitment_custom_questions.length > 0
         ) {
           loadedQs = data.recruitment_custom_questions;
+        } else if (
+          cloudExt.recruitment_custom_questions &&
+          Array.isArray(cloudExt.recruitment_custom_questions) &&
+          cloudExt.recruitment_custom_questions.length > 0
+        ) {
+          loadedQs = cloudExt.recruitment_custom_questions;
         } else if (typeof window !== "undefined") {
           const raw = localStorage.getItem("vr_recruitment_custom_questions");
           if (raw) {
@@ -81,6 +103,15 @@ export function RecruitmentForm({
         }
         if (loadedQs && loadedQs.length > 0) {
           setCustomQuestions(loadedQs);
+        } else if (cloudExt.recruitment_question_prompt) {
+          setCustomQuestions([
+            {
+              id: "q-1",
+              label: cloudExt.recruitment_question_prompt,
+              type: "textbox",
+              required: true,
+            },
+          ]);
         } else if (data?.recruitment_question_prompt) {
           setCustomQuestions([
             {

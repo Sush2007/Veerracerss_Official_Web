@@ -32,6 +32,7 @@ import {
   Shield,
   Award,
   Trophy,
+  RefreshCw,
 } from "lucide-react";
 import {
   DEFAULT_SITE_SETTINGS,
@@ -210,10 +211,44 @@ export default function AdminDashboard() {
   };
 
   const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
+  const [syncStatus, setSyncStatus] = useState<"synced" | "syncing" | "error">("synced");
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+
+  const broadcastSync = () => {
+    if (typeof window !== "undefined") {
+      try {
+        const channel = new BroadcastChannel("vr_dashboard_sync");
+        channel.postMessage({ type: "REFRESH_ALL", timestamp: Date.now() });
+        channel.close();
+      } catch {}
+    }
+  };
 
   useEffect(() => {
     checkUser();
     fetchAllData();
+
+    // Cross-tab synchronization via BroadcastChannel
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel("vr_dashboard_sync");
+      channel.onmessage = (event) => {
+        if (event.data?.type === "REFRESH_ALL") {
+          fetchAllData(false);
+        }
+      };
+    } catch {}
+
+    // Auto-refresh when tab gains focus
+    const onFocus = () => {
+      fetchAllData(false);
+    };
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      if (channel) channel.close();
+      window.removeEventListener("focus", onFocus);
+    };
   }, []);
 
   const checkUser = async () => {
@@ -228,240 +263,81 @@ export default function AdminDashboard() {
     }
   };
 
-  const fetchAllData = async () => {
-    // 1. Site Settings
+  const fetchAllData = async (showSyncIndicator = true) => {
+    if (showSyncIndicator) setSyncStatus("syncing");
     try {
-      const { data: sData } = await supabase.from("site_settings").select("*").limit(1).maybeSingle();
-      let localExt: any = {};
-      let localAbout: any = {};
-      let localTelemetry: any = null;
+      const res = await fetch("/api/admin/sync", { cache: "no-store" });
+      if (!res.ok) throw new Error("Sync endpoint responded with status " + res.status);
+      const json = await res.json();
+      if (!json.success || !json.data) throw new Error(json.error || "Failed to load cloud snapshot");
+
+      const liveSettings = json.data.site_settings || json.data.settings;
+      const liveMachine = json.data.featured_machine || json.data.machine;
+      const liveVehicles = json.data.vehicles;
+      const liveSponsors = json.data.sponsors;
+      const liveAchievements = json.data.achievements;
+      const liveMembers = json.data.members;
+      const liveExpenses = json.data.expenses;
+      const liveRecruits = json.data.recruits;
+      const liveMedia = json.data.media;
+      const liveAlumni = json.data.alumni;
+      const liveCdbs = json.data.custom_databases || json.data.customDbs;
+
+      if (liveSettings) setSiteSettings(liveSettings);
+      if (liveMachine) setMachine(liveMachine);
+      if (liveVehicles && Array.isArray(liveVehicles)) setVehicles(liveVehicles);
+      if (liveSponsors && Array.isArray(liveSponsors)) setSponsors(liveSponsors);
+      if (liveAchievements && Array.isArray(liveAchievements)) setAchievements(liveAchievements);
+      if (liveMembers && Array.isArray(liveMembers)) setMembers(liveMembers);
+      if (liveExpenses && Array.isArray(liveExpenses)) setExpenses(liveExpenses);
+      if (liveRecruits && Array.isArray(liveRecruits)) setRecruits(liveRecruits);
+      if (liveMedia && Array.isArray(liveMedia)) setMediaList(liveMedia);
+      if (liveAlumni && Array.isArray(liveAlumni)) setAlumniList(liveAlumni);
+      if (liveCdbs && Array.isArray(liveCdbs)) setCustomDbs(liveCdbs);
+
+      // Save to local storage for offline resilience without overriding cloud
       if (typeof window !== "undefined") {
         try {
-          const raw = localStorage.getItem("vr_site_settings_extended");
-          if (raw) localExt = JSON.parse(raw);
-          const rawAbout = localStorage.getItem("vr_about_settings");
-          if (rawAbout) localAbout = JSON.parse(rawAbout);
-          const rawTel = localStorage.getItem("vr_telemetry_stats");
-          if (rawTel) localTelemetry = JSON.parse(rawTel);
+          if (liveVehicles) localStorage.setItem("vr_vehicles", JSON.stringify(liveVehicles));
+          if (liveSponsors) localStorage.setItem("vr_sponsors", JSON.stringify(liveSponsors));
+          if (liveAchievements) localStorage.setItem("vr_achievements", JSON.stringify(liveAchievements));
+          if (liveMachine) localStorage.setItem("vr_machine_extended", JSON.stringify(liveMachine));
         } catch {}
       }
-      if (sData) {
-        setSiteSettings({
-          ...DEFAULT_SITE_SETTINGS,
-          ...sData,
-          ...localExt,
-          about_image_url: sData.about_image_url || localAbout.about_image_url || DEFAULT_SITE_SETTINGS.about_image_url,
-          about_title: sData.about_title || localAbout.about_title || DEFAULT_SITE_SETTINGS.about_title,
-          about_subtitle: sData.about_subtitle || localAbout.about_subtitle || DEFAULT_SITE_SETTINGS.about_subtitle,
-          about_description: sData.about_description || localAbout.about_description || DEFAULT_SITE_SETTINGS.about_description,
-          telemetry_stats: (sData.telemetry_stats && sData.telemetry_stats.length > 0)
-            ? sData.telemetry_stats
-            : (localTelemetry && localTelemetry.length > 0)
-            ? localTelemetry
-            : DEFAULT_SITE_SETTINGS.telemetry_stats,
-        });
-      } else {
-        setSiteSettings((prev) => ({
-          ...DEFAULT_SITE_SETTINGS,
-          ...prev,
-          ...localExt,
-          about_image_url: localAbout.about_image_url || DEFAULT_SITE_SETTINGS.about_image_url,
-          about_title: localAbout.about_title || DEFAULT_SITE_SETTINGS.about_title,
-          about_subtitle: localAbout.about_subtitle || DEFAULT_SITE_SETTINGS.about_subtitle,
-          about_description: localAbout.about_description || DEFAULT_SITE_SETTINGS.about_description,
-          telemetry_stats: (localTelemetry && localTelemetry.length > 0) ? localTelemetry : DEFAULT_SITE_SETTINGS.telemetry_stats,
-        }));
-      }
-    } catch {}
 
-    // 2. Featured Machine & Vehicles Fleet
-    try {
-      const { data: mData } = await supabase.from("featured_machine").select("*").limit(1).maybeSingle();
-      let localExt: any = {};
-      if (typeof window !== "undefined") {
-        try {
-          const raw = localStorage.getItem("vr_machine_extended");
-          if (raw) localExt = JSON.parse(raw);
-        } catch {}
-      }
-      if (mData) {
-        setMachine({
-          ...DEFAULT_FEATURED_MACHINE,
-          ...localExt,
-          ...mData,
-        });
-      } else if (localExt.cad_model_url) {
-        setMachine((prev) => ({ ...prev, ...localExt }));
-      }
-    } catch {}
+      setSyncStatus("synced");
+      setLastSyncedAt(new Date());
+    } catch (err: any) {
+      console.warn("Unified cloud sync warning, falling back to direct table reads:", err);
+      setSyncStatus("error");
 
-    // 2b. Vehicles Fleet
-    try {
-      const { data: vData } = await supabase.from("vehicles").select("*").order("year", { ascending: false });
-      let localVehicles: VehicleRecord[] | null = null;
-      if (typeof window !== "undefined") {
-        try {
-          const raw = localStorage.getItem("vr_vehicles");
-          if (raw) localVehicles = JSON.parse(raw);
-        } catch {}
-      }
-      if (vData && vData.length > 0) {
-        setVehicles(vData);
-      } else if (localVehicles && localVehicles.length > 0) {
-        setVehicles(localVehicles);
-      } else {
-        // Fallback to custom_databases Fleet & Vehicles
-        const { data: fleetDb } = await supabase
-          .from("custom_databases")
-          .select("records")
-          .eq("db_name", "Fleet & Vehicles")
-          .maybeSingle();
+      // Robust fallback if direct API request fails
+      try {
+        const { data: sData } = await supabase.from("site_settings").select("*").limit(1).maybeSingle();
+        if (sData) setSiteSettings((prev) => ({ ...prev, ...sData }));
 
-        if (fleetDb && Array.isArray(fleetDb.records) && fleetDb.records.length > 0) {
-          setVehicles(fleetDb.records);
-          if (typeof window !== "undefined") {
-            try {
-              localStorage.setItem("vr_vehicles", JSON.stringify(fleetDb.records));
-            } catch {}
-          }
-        } else {
-          setVehicles(DEFAULT_VEHICLES);
-        }
-      }
-    } catch {}
+        const { data: mData } = await supabase.from("featured_machine").select("*").limit(1).maybeSingle();
+        if (mData) setMachine((prev) => ({ ...prev, ...mData }));
 
-    // 2c. Sponsors & Corporate Partners
-    try {
-      const { data: spData } = await supabase.from("sponsors").select("*").order("order_index", { ascending: true });
-      let localSponsors: SponsorRecord[] | null = null;
-      if (typeof window !== "undefined") {
-        try {
-          const raw = localStorage.getItem("vr_sponsors");
-          if (raw) localSponsors = JSON.parse(raw);
-        } catch {}
-      }
-      if (spData && spData.length > 0) {
-        setSponsors(spData);
-      } else if (localSponsors && localSponsors.length > 0) {
-        setSponsors(localSponsors);
-      } else {
-        setSponsors(DEFAULT_SPONSORS);
-      }
-    } catch {}
+        const { data: memData } = await supabase.from("members").select("*").order("created_at", { ascending: false });
+        if (memData) setMembers(memData);
 
-    // 3. Media Items
-    try {
-      const { data: medData } = await supabase.from("media_items").select("*").order("order_index", { ascending: true });
-      if (medData && medData.length > 0) setMediaList(medData);
-    } catch {}
+        const { data: expData } = await supabase.from("club_expenses").select("*").order("expense_date", { ascending: false });
+        if (expData) setExpenses(expData);
 
-    // 4. Alumni
-    try {
-      const { data: aData } = await supabase.from("alumni").select("*").order("order_index", { ascending: true });
-      if (aData && aData.length > 0) {
-        setAlumniList(
-          aData.map((item: any) => ({
-            ...item,
-            role_name: item.role_name || item.current_role || "",
-            current_role: item.role_name || item.current_role || "",
-          }))
-        );
-      }
-    } catch {}
+        const { data: recData } = await supabase.from("recruitment_applications").select("*").order("created_at", { ascending: false });
+        if (recData) setRecruits(recData);
 
-    // 5. Members
-    try {
-      const { data: memData } = await supabase.from("members").select("*").order("created_at", { ascending: false });
-      if (memData && memData.length > 0) {
-        const formatted = memData.map((m: any) => {
-          let yearOfStudy = m.year_of_study;
-          if (!yearOfStudy && m.year) {
-            if (m.year.includes("4th") || (m.year.includes("Final") && !m.year.includes("Pre-Final"))) yearOfStudy = "4th Year";
-            else if (m.year.includes("3rd") || m.year.includes("Pre-Final")) yearOfStudy = "3rd Year";
-            else if (m.year.includes("2nd")) yearOfStudy = "2nd Year";
-            else if (m.year.includes("1st")) yearOfStudy = "1st Year";
-            else yearOfStudy = m.year;
-          }
-          return {
-            ...m,
-            year_of_study: yearOfStudy || "3rd Year",
-          };
-        });
-        setMembers(formatted);
-        if (typeof window !== "undefined") {
-          try {
-            localStorage.setItem("vr_members", JSON.stringify(formatted));
-          } catch {}
-        }
-      }
-    } catch {}
+        const { data: medData } = await supabase.from("media_items").select("*").order("order_index", { ascending: true });
+        if (medData) setMediaList(medData);
 
-    // 6. Club Expenses
-    try {
-      const { data: expData } = await supabase.from("club_expenses").select("*").order("expense_date", { ascending: false });
-      let localExp: ClubExpense[] | null = null;
-      if (typeof window !== "undefined") {
-        try {
-          const raw = localStorage.getItem("vr_club_expenses");
-          if (raw) localExp = JSON.parse(raw);
-        } catch {}
-      }
-      if (expData && expData.length > 0) {
-        setExpenses(expData);
-      } else if (localExp !== null) {
-        setExpenses(localExp);
-      }
-    } catch {}
+        const { data: aData } = await supabase.from("alumni").select("*").order("order_index", { ascending: true });
+        if (aData) setAlumniList(aData);
 
-    // 7. Recruitment Applications
-    try {
-      const { data: recData } = await supabase.from("recruitment_applications").select("*").order("created_at", { ascending: false });
-      let localRec: RecruitmentApplication[] | null = null;
-      if (typeof window !== "undefined") {
-        try {
-          const raw = localStorage.getItem("vr_recruitment_applications");
-          if (raw) localRec = JSON.parse(raw);
-        } catch {}
-      }
-      if (recData && recData.length > 0) {
-        setRecruits(recData);
-      } else if (localRec !== null) {
-        setRecruits(localRec);
-      }
-    } catch {}
-
-    // 8. Custom Databases
-    try {
-      const { data: cdbData } = await supabase.from("custom_databases").select("*").order("created_at", { ascending: true });
-      let localCdbs: CustomDatabaseRecord[] | null = null;
-      if (typeof window !== "undefined") {
-        try {
-          const raw = localStorage.getItem("vr_custom_databases");
-          if (raw) localCdbs = JSON.parse(raw);
-        } catch {}
-      }
-      if (cdbData && cdbData.length > 0) {
-        setCustomDbs(cdbData);
-      } else if (localCdbs !== null) {
-        setCustomDbs(localCdbs);
-      }
-    } catch {}
-
-    // 9. Achievements & Hall of Fame
-    try {
-      let loadedAchievements: CompetitionAchievement[] | null = null;
-      if (typeof window !== "undefined") {
-        try {
-          const raw = localStorage.getItem("vr_achievements");
-          if (raw) loadedAchievements = JSON.parse(raw);
-        } catch {}
-      }
-      if (loadedAchievements && loadedAchievements.length > 0) {
-        setAchievements(loadedAchievements);
-      } else {
-        setAchievements(DEFAULT_ACHIEVEMENTS);
-      }
-    } catch {}
+        const { data: cdbData } = await supabase.from("custom_databases").select("*").order("created_at", { ascending: true });
+        if (cdbData) setCustomDbs(cdbData);
+      } catch {}
+    }
   };
 
   const handleLogout = async () => {
@@ -499,8 +375,8 @@ export default function AdminDashboard() {
     e.preventDefault();
     setSavingSettings(true);
     try {
-      const { data: existing } = await supabase.from("site_settings").select("id").limit(1).maybeSingle();
       const settingsPayload: any = {
+        ...siteSettings,
         hero_title: siteSettings.hero_title || DEFAULT_SITE_SETTINGS.hero_title,
         hero_subtitle: siteSettings.hero_subtitle || DEFAULT_SITE_SETTINGS.hero_subtitle,
         recruitment_cta_label: siteSettings.recruitment_cta_label,
@@ -516,6 +392,7 @@ export default function AdminDashboard() {
         recruitment_instructions: siteSettings.recruitment_instructions || DEFAULT_SITE_SETTINGS.recruitment_instructions,
         recruitment_eligibility: siteSettings.recruitment_eligibility || DEFAULT_SITE_SETTINGS.recruitment_eligibility,
         recruitment_question_prompt: siteSettings.recruitment_question_prompt || DEFAULT_SITE_SETTINGS.recruitment_question_prompt,
+        recruitment_custom_questions: siteSettings.recruitment_custom_questions || [],
         onboarding_email_subject: siteSettings.onboarding_email_subject || DEFAULT_SITE_SETTINGS.onboarding_email_subject,
         whatsapp_recruit_link: siteSettings.whatsapp_recruit_link || "https://chat.whatsapp.com/veerracerss-recruits-2026",
         onboarding_email_template: siteSettings.onboarding_email_template,
@@ -527,61 +404,26 @@ export default function AdminDashboard() {
         updated_at: new Date().toISOString()
       };
 
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem("vr_site_settings_extended", JSON.stringify({
-            hero_title: siteSettings.hero_title || DEFAULT_SITE_SETTINGS.hero_title,
-            hero_subtitle: siteSettings.hero_subtitle || DEFAULT_SITE_SETTINGS.hero_subtitle,
-            recruitment_open: siteSettings.recruitment_open !== false && siteSettings.recruitment_form_enabled !== false,
-            recruitment_form_enabled: siteSettings.recruitment_open !== false && siteSettings.recruitment_form_enabled !== false,
-          }));
-          localStorage.setItem("vr_about_settings", JSON.stringify({
-            about_image_url: siteSettings.about_image_url || DEFAULT_SITE_SETTINGS.about_image_url,
-            about_title: siteSettings.about_title || DEFAULT_SITE_SETTINGS.about_title,
-            about_subtitle: siteSettings.about_subtitle || DEFAULT_SITE_SETTINGS.about_subtitle,
-            about_description: siteSettings.about_description || DEFAULT_SITE_SETTINGS.about_description,
-          }));
-          if (siteSettings.telemetry_stats) {
-            localStorage.setItem("vr_telemetry_stats", JSON.stringify(siteSettings.telemetry_stats));
-          }
-        } catch {}
+      const res = await fetch("/api/admin/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save_settings",
+          payload: settingsPayload,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error || "Failed to sync settings with cloud");
       }
 
-      const stripExtended = (payload: any) => {
-        const clean = { ...payload };
-        delete clean.hero_title;
-        delete clean.hero_subtitle;
-        delete clean.recruitment_open;
-        delete clean.recruitment_custom_questions;
-        delete clean.recruitment_instructions;
-        delete clean.recruitment_eligibility;
-        delete clean.recruitment_question_prompt;
-        delete clean.onboarding_email_subject;
-        delete clean.about_image_url;
-        delete clean.about_title;
-        delete clean.about_subtitle;
-        delete clean.about_description;
-        delete clean.telemetry_stats;
-        return clean;
-      };
-
-      let res;
-      if (existing) {
-        res = await supabase.from("site_settings").update(settingsPayload).eq("id", existing.id);
-        if (res.error && (res.error.message?.includes("column") || res.error.code === "PGRST204" || res.error.code === "42703")) {
-          // Fallback if extended columns not yet run in supabase
-          res = await supabase.from("site_settings").update(stripExtended(settingsPayload)).eq("id", existing.id);
-        }
-      } else {
-        res = await supabase.from("site_settings").insert([settingsPayload]);
-        if (res.error && (res.error.message?.includes("column") || res.error.code === "PGRST204" || res.error.code === "42703")) {
-          res = await supabase.from("site_settings").insert([stripExtended(settingsPayload)]);
-        }
-      }
-      if (res.error) throw res.error;
-      showToast("Hero, About & Telemetry Settings updated successfully!");
+      setSiteSettings(settingsPayload);
+      broadcastSync();
+      setSyncStatus("synced");
+      setLastSyncedAt(new Date());
+      showToast("Hero, About & Telemetry Settings updated and synced across all tabs!");
     } catch (err: any) {
-      showError(err.message || "Failed to save settings. If table doesn't exist, execute supabase-cms-setup.sql.");
+      showError(err.message || "Failed to save settings.");
     } finally {
       setSavingSettings(false);
     }
@@ -637,44 +479,27 @@ export default function AdminDashboard() {
         updated_at: new Date().toISOString()
       };
 
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem("vr_machine_extended", JSON.stringify({
-            ...payload,
-            cad_model_url: cadModelUrl,
-          }));
-          localStorage.setItem("vr_featured_machine", JSON.stringify({
-            ...payload,
-            cad_model_url: cadModelUrl,
-          }));
-          window.dispatchEvent(new CustomEvent("vr_spotlight_changed", { detail: payload }));
-        } catch {}
+      const res = await fetch("/api/admin/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save_machine",
+          payload,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error || "Failed to sync car details to cloud");
       }
-
-      const { data: existing } = await supabase.from("featured_machine").select("id").limit(1).maybeSingle();
-      let res;
-      if (existing) {
-        res = await supabase.from("featured_machine").update(payload).eq("id", existing.id);
-        if (res.error && res.error.message?.includes("column")) {
-          const fallback = { ...payload };
-          delete (fallback as any).cad_model_url;
-          res = await supabase.from("featured_machine").update(fallback).eq("id", existing.id);
-        }
-      } else {
-        res = await supabase.from("featured_machine").insert([payload]);
-        if (res.error && res.error.message?.includes("column")) {
-          const fallback = { ...payload };
-          delete (fallback as any).cad_model_url;
-          res = await supabase.from("featured_machine").insert([fallback]);
-        }
-      }
-      if (res.error) throw res.error;
 
       setMachine(payload);
       setCadFile(null);
       setTrackFile(null);
       setCadModelFile(null);
-      showToast("The Car spotlight specs and photos updated successfully!");
+      broadcastSync();
+      setSyncStatus("synced");
+      setLastSyncedAt(new Date());
+      showToast("Car spotlight specs & 3D model updated and synced across all tabs!");
     } catch (err: any) {
       showError(err.message || "Failed to save car details.");
     } finally {
@@ -684,151 +509,83 @@ export default function AdminDashboard() {
 
   // 2c. Vehicles Fleet & Auto-Spotlight Sync Handlers
   const handleSaveVehicles = async (updatedVehicles: VehicleRecord[]) => {
-    const deletedVehicles = vehicles.filter((v) => !updatedVehicles.some((u) => u.id === v.id));
     setVehicles(updatedVehicles);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("vr_vehicles", JSON.stringify(updatedVehicles));
-      } catch {}
-    }
-
-    try {
-      for (const del of deletedVehicles) {
-        if (isValidUUID(del.id)) {
-          await supabase.from("vehicles").delete().eq("id", del.id);
-        }
-      }
-      for (const v of updatedVehicles) {
-        await supabase.from("vehicles").upsert(v);
-      }
-    } catch (e) {
-      console.warn("Supabase vehicles upsert notice:", e);
-    }
-
-    // Automatically sync newest / spotlight car into Homepage Featured Machine
     const extractedSpotlight = extractSpotlightFromVehicles(updatedVehicles);
     setMachine(extractedSpotlight);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("vr_machine_extended", JSON.stringify(extractedSpotlight));
-        localStorage.setItem("vr_featured_machine", JSON.stringify(extractedSpotlight));
-        window.dispatchEvent(new CustomEvent("vr_spotlight_changed", { detail: extractedSpotlight }));
-      } catch {}
-    }
 
-    // 1. Sync to Supabase featured_machine table (safe sanitized payload without missing columns)
     try {
-      const sanitizedPayload = {
-        car_name: extractedSpotlight.car_name || DEFAULT_FEATURED_MACHINE.car_name,
-        season_tag: extractedSpotlight.season_tag || DEFAULT_FEATURED_MACHINE.season_tag,
-        description: extractedSpotlight.description || DEFAULT_FEATURED_MACHINE.description,
-        cad_image_url: extractedSpotlight.cad_image_url || DEFAULT_FEATURED_MACHINE.cad_image_url,
-        track_image_url: extractedSpotlight.track_image_url || DEFAULT_FEATURED_MACHINE.track_image_url,
-        top_speed_val: String(extractedSpotlight.top_speed_val || DEFAULT_FEATURED_MACHINE.top_speed_val),
-        accel_val: String(extractedSpotlight.accel_val || DEFAULT_FEATURED_MACHINE.accel_val),
-        voltage_val: String(extractedSpotlight.voltage_val || DEFAULT_FEATURED_MACHINE.voltage_val),
-        weight_val: String(extractedSpotlight.weight_val || DEFAULT_FEATURED_MACHINE.weight_val),
-        powertrain_headline: extractedSpotlight.powertrain_headline || DEFAULT_FEATURED_MACHINE.powertrain_headline,
-        powertrain_specs: extractedSpotlight.powertrain_specs || DEFAULT_FEATURED_MACHINE.powertrain_specs,
-        accumulator_headline: extractedSpotlight.accumulator_headline || DEFAULT_FEATURED_MACHINE.accumulator_headline,
-        accumulator_specs: extractedSpotlight.accumulator_specs || DEFAULT_FEATURED_MACHINE.accumulator_specs,
-        chassis_headline: extractedSpotlight.chassis_headline || DEFAULT_FEATURED_MACHINE.chassis_headline,
-        chassis_specs: extractedSpotlight.chassis_specs || DEFAULT_FEATURED_MACHINE.chassis_specs,
-        aero_headline: extractedSpotlight.aero_headline || DEFAULT_FEATURED_MACHINE.aero_headline,
-        aero_specs: extractedSpotlight.aero_specs || DEFAULT_FEATURED_MACHINE.aero_specs,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { data: existing } = await supabase.from("featured_machine").select("id").limit(1).maybeSingle();
-      if (existing) {
-        const { error: updErr } = await supabase.from("featured_machine").update(sanitizedPayload).eq("id", existing.id);
-        if (updErr) console.warn("Supabase featured_machine update error:", updErr);
-      } else {
-        const { error: insErr } = await supabase.from("featured_machine").insert([sanitizedPayload]);
-        if (insErr) console.warn("Supabase featured_machine insert error:", insErr);
+      const res = await fetch("/api/admin/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save_vehicles",
+          payload: updatedVehicles,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error || "Failed to sync vehicles to cloud");
       }
-    } catch (e) {
-      console.warn("Supabase featured_machine sync notice:", e);
-    }
 
-    // 2. Sync to Supabase custom_databases "Fleet & Vehicles"
-    try {
-      const { data: existingDb } = await supabase
-        .from("custom_databases")
-        .select("id")
-        .eq("db_name", "Fleet & Vehicles")
-        .maybeSingle();
-
-      if (existingDb) {
-        await supabase
-          .from("custom_databases")
-          .update({
-            records: updatedVehicles as any,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", existingDb.id);
-      } else {
-        await supabase
-          .from("custom_databases")
-          .insert([{
-            db_name: "Fleet & Vehicles",
-            description: "Official Formula Student race cars and active spotlight selection",
-            schema_definition: [],
-            records: updatedVehicles as any,
-          }]);
-      }
-    } catch (e) {
-      console.warn("Supabase fleet db sync notice:", e);
+      broadcastSync();
+      setSyncStatus("synced");
+      setLastSyncedAt(new Date());
+      showToast("Fleet & spotlight car updated and synced across all sessions!");
+    } catch (err: any) {
+      showError(err.message || "Failed to sync vehicles to cloud.");
     }
   };
 
   const handleSaveSponsors = async (updatedSponsors: SponsorRecord[]) => {
-    const deletedSponsors = sponsors.filter((s) => !updatedSponsors.some((u) => u.id === s.id));
     setSponsors(updatedSponsors);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("vr_sponsors", JSON.stringify(updatedSponsors));
-      } catch {}
-    }
+
     try {
-      for (const del of deletedSponsors) {
-        if (isValidUUID(del.id)) {
-          await supabase.from("sponsors").delete().eq("id", del.id);
-        }
+      const res = await fetch("/api/admin/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save_sponsors",
+          payload: updatedSponsors,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error || "Failed to sync sponsors to cloud");
       }
-      for (const sp of updatedSponsors) {
-        await supabase.from("sponsors").upsert(sp);
-      }
-    } catch (e) {
-      console.warn("Supabase sponsors upsert notice:", e);
+
+      broadcastSync();
+      setSyncStatus("synced");
+      setLastSyncedAt(new Date());
+      showToast("Corporate sponsors updated and synced across all sessions!");
+    } catch (err: any) {
+      showError(err.message || "Failed to sync sponsors to cloud.");
     }
   };
 
   const handleSaveAchievements = async (updatedAchievements: CompetitionAchievement[]) => {
     setAchievements(updatedAchievements);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("vr_achievements", JSON.stringify(updatedAchievements));
-      } catch {}
-    }
-    // Also try saving to custom_databases or Supabase if available
-    try {
-      const { data: existingDb } = await supabase
-        .from("custom_databases")
-        .select("id")
-        .eq("db_name", "Hall of Fame & Achievements")
-        .maybeSingle();
 
-      if (existingDb) {
-        await supabase
-          .from("custom_databases")
-          .update({
-            records: updatedAchievements as any,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", existingDb.id);
+    try {
+      const res = await fetch("/api/admin/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save_achievements",
+          payload: updatedAchievements,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error || "Failed to sync achievements to cloud");
       }
-    } catch {}
+
+      broadcastSync();
+      setSyncStatus("synced");
+      setLastSyncedAt(new Date());
+      showToast("Achievements updated and synced across all sessions!");
+    } catch (err: any) {
+      showError(err.message || "Failed to sync achievements to cloud.");
+    }
   };
 
   // 3. Media Items: Open Modals
@@ -1619,81 +1376,26 @@ export default function AdminDashboard() {
   // 7. Recruitment Handlers
   const handleUpdateSettings = async (newSettings: Partial<SiteSettings>) => {
     try {
-      if (typeof window !== "undefined") {
-        try {
-          const raw = localStorage.getItem("vr_site_settings_extended");
-          const existingLocal = raw ? JSON.parse(raw) : {};
-          localStorage.setItem("vr_site_settings_extended", JSON.stringify({ ...existingLocal, ...newSettings }));
-          if (newSettings.recruitment_custom_questions) {
-            localStorage.setItem("vr_recruitment_custom_questions", JSON.stringify(newSettings.recruitment_custom_questions));
-          }
-        } catch {}
-      }
-      const { data: existing } = await supabase.from("site_settings").select("id").limit(1).maybeSingle();
-      if (existing) {
-        const syncSettings: any = { ...newSettings };
-        if (syncSettings.recruitment_open !== undefined && syncSettings.recruitment_form_enabled === undefined) {
-          syncSettings.recruitment_form_enabled = syncSettings.recruitment_open;
-        } else if (syncSettings.recruitment_form_enabled !== undefined && syncSettings.recruitment_open === undefined) {
-          syncSettings.recruitment_open = syncSettings.recruitment_form_enabled;
-        }
+      const merged = { ...siteSettings, ...newSettings };
+      setSiteSettings(merged);
 
-        const allowedColumns = [
-          "recruitment_open",
-          "recruitment_form_enabled",
-          "recruitment_custom_questions",
-          "recruitment_cta_enabled",
-          "announcement_badge_enabled",
-          "recruitment_cta_label",
-          "recruitment_cta_url",
-          "announcement_badge_text",
-          "contact_email",
-          "recruitment_form_title",
-          "recruitment_form_deadline",
-          "whatsapp_recruit_link",
-          "onboarding_email_template",
-          "hero_title",
-          "hero_subtitle",
-          "updated_at",
-        ];
-        const dbPayload: any = { updated_at: new Date().toISOString() };
-        for (const key of allowedColumns) {
-          if (key in syncSettings) {
-            dbPayload[key] = syncSettings[key];
-          }
-        }
-        let { error: updateErr } = await supabase.from("site_settings").update(dbPayload).eq("id", existing.id);
-        if (updateErr && (updateErr.message?.includes("column") || updateErr.code === "PGRST204" || updateErr.code === "42703")) {
-          // If extended columns are not yet in DB schema, safely fallback to core table columns
-          const coreColumns = [
-            "recruitment_cta_label",
-            "recruitment_cta_url",
-            "recruitment_cta_enabled",
-            "announcement_badge_text",
-            "announcement_badge_enabled",
-            "contact_email",
-            "recruitment_form_enabled",
-            "recruitment_form_title",
-            "recruitment_form_deadline",
-            "whatsapp_recruit_link",
-            "onboarding_email_template",
-            "updated_at",
-          ];
-          const fallbackPayload: any = { updated_at: new Date().toISOString() };
-          for (const key of coreColumns) {
-            if (key in syncSettings) {
-              fallbackPayload[key] = syncSettings[key];
-            }
-          }
-          const retryRes = await supabase.from("site_settings").update(fallbackPayload).eq("id", existing.id);
-          updateErr = retryRes.error;
-        }
-        if (updateErr) {
-          console.warn("Supabase update notice:", updateErr);
-        }
+      const res = await fetch("/api/admin/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save_settings",
+          payload: merged,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.error || "Failed to sync settings with cloud");
       }
-      setSiteSettings((prev) => ({ ...prev, ...newSettings }));
-      showToast("Settings updated!");
+
+      broadcastSync();
+      setSyncStatus("synced");
+      setLastSyncedAt(new Date());
+      showToast("Recruitment settings updated and synced across all tabs!");
     } catch (err: any) {
       showError(err.message || "Failed to update settings.");
     }
@@ -1829,6 +1531,7 @@ export default function AdminDashboard() {
           localStorage.setItem("vr_custom_databases", JSON.stringify(updated));
         } catch {}
       }
+      broadcastSync();
       showToast(`Database "${newDb.db_name}" created!`);
     } catch (err: any) {
       showError(err.message || "Failed to create database. Ensure supabase-operations-setup.sql is executed.");
@@ -1851,6 +1554,7 @@ export default function AdminDashboard() {
           localStorage.setItem("vr_custom_databases", JSON.stringify(updated));
         } catch {}
       }
+      broadcastSync();
       showToast(`Database "${name}" deleted.`);
     } catch (err: any) {
       showError(err.message || "Failed to delete database.");
@@ -1879,6 +1583,7 @@ export default function AdminDashboard() {
           localStorage.setItem("vr_custom_databases", JSON.stringify(updated));
         } catch {}
       }
+      broadcastSync();
       showToast("Record added to database.");
     } catch (err: any) {
       showError(err.message || "Failed to add record.");
@@ -1907,6 +1612,7 @@ export default function AdminDashboard() {
           localStorage.setItem("vr_custom_databases", JSON.stringify(updated));
         } catch {}
       }
+      broadcastSync();
       showToast("Record deleted.");
     } catch (err: any) {
       showError(err.message || "Failed to delete record.");
@@ -1937,6 +1643,7 @@ export default function AdminDashboard() {
           localStorage.setItem("vr_custom_databases", JSON.stringify(updated));
         } catch {}
       }
+      broadcastSync();
       showToast("Record updated successfully!");
     } catch (err: any) {
       showError(err.message || "Failed to update record.");
@@ -1968,6 +1675,24 @@ export default function AdminDashboard() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            {/* Live Cloud Status & Instant Refresh */}
+            <button
+              onClick={() => fetchAllData(true)}
+              disabled={syncStatus === "syncing"}
+              className={`flex items-center gap-1.5 text-xs font-mono font-bold px-3.5 py-2 border transition-all uppercase tracking-wider ${
+                syncStatus === "syncing"
+                  ? "bg-amber-500/10 border-amber-500/40 text-amber-400 animate-pulse"
+                  : syncStatus === "error"
+                  ? "bg-red-500/10 border-red-500/40 text-red-400 hover:bg-red-500/20"
+                  : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+              }`}
+              title={lastSyncedAt ? `Cloud connected. Last synced at ${lastSyncedAt.toLocaleTimeString()}` : "Cloud synchronization status"}
+            >
+              <span className={`w-2 h-2 rounded-full ${syncStatus === "syncing" ? "bg-amber-400 animate-ping" : syncStatus === "error" ? "bg-red-500" : "bg-emerald-400 shadow-[0_0_8px_#10b981]"}`} />
+              <span>{syncStatus === "syncing" ? "Syncing..." : "Cloud Live"}</span>
+              <RefreshCw className={`w-3.5 h-3.5 ml-0.5 ${syncStatus === "syncing" ? "animate-spin" : ""}`} />
+            </button>
+
             <button
               onClick={() => setShowSecurityModal(true)}
               className="flex items-center gap-1.5 text-xs font-mono font-bold text-cyan-400 hover:text-white bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 px-3.5 py-2 transition-colors uppercase tracking-wider"

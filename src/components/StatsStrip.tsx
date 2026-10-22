@@ -55,6 +55,19 @@ export function StatsStrip() {
         const supabase = createClient();
         const { data } = await supabase.from("site_settings").select("*").limit(1).maybeSingle();
 
+        // Query cloud extended settings from custom_databases
+        let cloudTelemetry: any = null;
+        try {
+          const { data: dbData } = await supabase
+            .from("custom_databases")
+            .select("records")
+            .eq("db_name", "System Settings Extended")
+            .maybeSingle();
+          if (dbData?.records && Array.isArray(dbData.records) && dbData.records[0]?.telemetry_stats) {
+            cloudTelemetry = dbData.records[0].telemetry_stats;
+          }
+        } catch {}
+
         let localTelemetry: any = null;
         if (typeof window !== "undefined") {
           try {
@@ -63,7 +76,7 @@ export function StatsStrip() {
           } catch {}
         }
 
-        const rawList = data?.telemetry_stats || localTelemetry || DEFAULT_SITE_SETTINGS.telemetry_stats;
+        const rawList = data?.telemetry_stats || cloudTelemetry || localTelemetry || DEFAULT_SITE_SETTINGS.telemetry_stats;
         if (Array.isArray(rawList) && rawList.length > 0) {
           const merged = rawList.map((item: any, idx: number) => ({
             icon: ICONS[idx % ICONS.length] || Trophy,
