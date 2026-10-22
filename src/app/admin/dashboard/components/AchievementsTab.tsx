@@ -268,6 +268,22 @@ export function AchievementsTab({
                 </div>
               </div>
 
+              {/* Photo Thumbnail */}
+              {item.image && (
+                <div className="relative aspect-[21/9] w-full overflow-hidden bg-black/60 border border-white/10 mb-3 group-hover:border-racing-red/40 transition-colors">
+                  <img
+                    src={item.image}
+                    alt={item.competition}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div>
+                  <div className="absolute bottom-1.5 left-2 flex items-center gap-1 bg-black/80 backdrop-blur-sm border border-white/10 px-2 py-0.5 text-[9px] font-mono text-white/80 uppercase">
+                    <Trophy className="w-2.5 h-2.5 text-racing-red" />
+                    <span>Ceremony Photo</span>
+                  </div>
+                </div>
+              )}
+
               {/* Title & Tagline */}
               <h3 className="font-display font-black text-lg text-white uppercase tracking-wide mt-1">
                 {item.competition}
@@ -524,6 +540,36 @@ export function AchievementsTab({
                     />
                   </label>
                 </div>
+
+                {editingItem.image && (
+                  <div className="mt-2.5 p-2 bg-[#121318] border border-white/10 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-16 h-12 bg-black border border-white/10 overflow-hidden shrink-0">
+                        <img
+                          src={editingItem.image}
+                          alt="Uploaded Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider block font-bold">
+                          Attached Photo Preview
+                        </span>
+                        <span className="text-[11px] font-mono text-white/60 truncate block max-w-xs">
+                          {editingItem.image}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditingItem({ ...editingItem, image: "" })}
+                      className="p-1.5 text-white/40 hover:text-red-400 hover:bg-white/5 transition-colors"
+                      title="Remove Photo"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* AWARDS SUITE BUILDER */}

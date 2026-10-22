@@ -12,7 +12,10 @@ import {
   ChevronRight, 
   Car as CarIcon,
   Flame,
-  Star
+  Star,
+  Maximize2,
+  X,
+  Image as ImageIcon
 } from "lucide-react";
 import React, { useState, useMemo, useEffect } from "react";
 import { Partners } from "../../components/Partners";
@@ -30,6 +33,21 @@ const COMPETITION_ACHIEVEMENTS: CompetitionAchievement[] = DEFAULT_ACHIEVEMENTS;
 export function AchievementsView() {
   const [items, setItems] = useState<CompetitionAchievement[]>(DEFAULT_ACHIEVEMENTS);
   const [selectedYear, setSelectedYear] = useState<string>("ALL");
+  const [selectedPhoto, setSelectedPhoto] = useState<{ image: string; title: string; year: string } | null>(null);
+
+  // Background Scroll-Lock Effect for Photo Lightbox
+  useEffect(() => {
+    if (selectedPhoto) {
+      const prevBodyOverflow = document.body.style.overflow;
+      const prevHtmlOverflow = document.documentElement.style.overflow;
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prevBodyOverflow;
+        document.documentElement.style.overflow = prevHtmlOverflow;
+      };
+    }
+  }, [selectedPhoto]);
 
   useEffect(() => {
     async function loadAchievements() {
@@ -67,6 +85,20 @@ export function AchievementsView() {
     }
 
     loadAchievements();
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "vr_achievements") {
+        loadAchievements();
+      }
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", handleStorage);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("storage", handleStorage);
+      }
+    };
   }, []);
 
   const years = useMemo(() => {
@@ -253,46 +285,107 @@ export function AchievementsView() {
                   </div>
                 </div>
 
-                {/* Main Competition Heading */}
-                <h2 className="font-display font-black text-2xl sm:text-3xl md:text-4xl text-white uppercase tracking-tight mb-3 group-hover:text-racing-red transition-colors">
-                  {item.competition}
-                </h2>
-
-                {/* Brief Summary */}
-                <p className="text-white/60 font-sans text-xs sm:text-sm font-light leading-relaxed mb-6 max-w-4xl">
-                  {item.summary}
-                </p>
-
-                {/* Official Awards Grid */}
-                <div className="space-y-2.5 sm:space-y-3">
-                  <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-white/40 block mb-2">
-                    OFFICIAL RECOGNITIONS & PODIUM RANKS
-                  </span>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {item.awards.map((award, aIdx) => (
+                {/* Main Content Layout: Photo Showcase + Editorial Details */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start mb-6">
+                  
+                  {/* Photo Showcase Frame */}
+                  <div className="lg:col-span-5 xl:col-span-4 w-full">
+                    {item.image ? (
                       <div 
-                        key={aIdx}
-                        className={`flex items-center gap-2.5 px-3.5 py-3 border transition-all duration-300 ${getAwardBadgeStyle(award.type)}`}
+                        onClick={() => setSelectedPhoto({ image: item.image!, title: item.competition, year: item.year })}
+                        className="relative aspect-[16/10] sm:aspect-[16/9] lg:aspect-[4/3] w-full overflow-hidden bg-black/80 border border-white/10 group-hover:border-racing-red/50 transition-all duration-500 shadow-xl cursor-pointer group/photo"
+                        title="Click to view full photo"
                       >
-                        {getAwardIcon(award.type)}
-                        <div className="flex flex-col min-w-0">
-                          <span className="font-display font-bold text-xs uppercase tracking-wide truncate">
-                            {award.title}
+                        <img
+                          src={item.image}
+                          alt={`${item.competition} Ceremony & Podium`}
+                          className="w-full h-full object-cover object-center group-hover/photo:scale-105 transition-transform duration-700 ease-out"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none"></div>
+
+                        {/* Hover Zoom Hint */}
+                        <div className="absolute top-2.5 right-2.5 bg-black/80 backdrop-blur-md border border-white/15 p-1.5 opacity-0 group-hover/photo:opacity-100 transition-opacity duration-300">
+                          <Maximize2 className="w-3.5 h-3.5 text-white" />
+                        </div>
+
+                        {/* Bottom Tag Bar */}
+                        <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between text-[10px] font-mono">
+                          <span className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md border border-white/15 px-2 py-0.5 text-white/90 uppercase">
+                            <Trophy className="w-3 h-3 text-racing-red" />
+                            <span>OFFICIAL ARCHIVE</span>
                           </span>
-                          {award.category && (
-                            <span className="text-[9px] font-mono uppercase tracking-wider opacity-70">
-                              {award.category}
-                            </span>
-                          )}
+                          <span className="text-white/60 text-[9px] uppercase tracking-wider hidden sm:inline">
+                            EXPAND PHOTO
+                          </span>
                         </div>
                       </div>
-                    ))}
+                    ) : (
+                      /* Branded Telemetry Placeholder Frame */
+                      <div className="relative aspect-[16/10] sm:aspect-[16/9] lg:aspect-[4/3] w-full overflow-hidden bg-[#0c0d12] border border-white/10 flex flex-col items-center justify-center p-6 text-center group-hover:border-white/20 transition-colors">
+                        <div className="absolute inset-0 telemetry-grid opacity-15 pointer-events-none"></div>
+                        <div className="w-12 h-12 rounded-full bg-racing-red/10 border border-racing-red/30 flex items-center justify-center text-racing-red mb-3">
+                          <Trophy className="w-6 h-6" />
+                        </div>
+                        <span className="font-display font-bold text-xs uppercase tracking-wider text-white">
+                          VEERRACERSS ARCHIVE
+                        </span>
+                        <span className="text-[10px] font-mono text-white/40 uppercase mt-1">
+                          {item.competition} • {item.year}
+                        </span>
+                        <span className="mt-3 text-[9px] font-mono uppercase tracking-widest text-racing-red/80 bg-racing-red/10 border border-racing-red/30 px-2 py-0.5">
+                          VERIFIED CAMPAIGN
+                        </span>
+                      </div>
+                    )}
                   </div>
+
+                  {/* Details Column: Title, Summary & Awards Grid */}
+                  <div className="lg:col-span-7 xl:col-span-8 flex flex-col justify-between w-full">
+                    <div>
+                      {/* Main Competition Heading */}
+                      <h2 className="font-display font-black text-2xl sm:text-3xl md:text-4xl text-white uppercase tracking-tight mb-3 group-hover:text-racing-red transition-colors">
+                        {item.competition}
+                      </h2>
+
+                      {/* Brief Summary */}
+                      <p className="text-white/70 font-sans text-xs sm:text-sm font-light leading-relaxed mb-6">
+                        {item.summary}
+                      </p>
+                    </div>
+
+                    {/* Official Awards Grid */}
+                    <div className="space-y-2.5 sm:space-y-3">
+                      <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-white/40 block mb-2 font-bold">
+                        OFFICIAL RECOGNITIONS & PODIUM RANKS
+                      </span>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
+                        {item.awards.map((award, aIdx) => (
+                          <div 
+                            key={aIdx}
+                            className={`flex items-center gap-2.5 px-3 py-2.5 border transition-all duration-300 ${getAwardBadgeStyle(award.type)}`}
+                          >
+                            {getAwardIcon(award.type)}
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-display font-bold text-xs uppercase tracking-wide truncate">
+                                {award.title}
+                              </span>
+                              {award.category && (
+                                <span className="text-[9px] font-mono uppercase tracking-wider opacity-70">
+                                  {award.category}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
 
                 {/* Bottom Status strip */}
-                <div className="mt-8 pt-4 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-white/40 uppercase">
+                <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-white/40 uppercase">
                   <span className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-racing-red"></span>
                     National Formula Student Campaign
@@ -307,6 +400,46 @@ export function AchievementsView() {
         </AnimatePresence>
 
       </main>
+
+      {/* Interactive Fullscreen Photo Lightbox Modal */}
+      {selectedPhoto && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 md:p-10 animate-in fade-in"
+          onClick={() => setSelectedPhoto(null)}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
+          <div
+            className="relative max-w-5xl w-full max-h-[90vh] flex flex-col bg-[#0b0c10] border border-white/20 p-4 sm:p-6 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Lightbox Header */}
+            <div className="w-full flex items-center justify-between pb-3 border-b border-white/10 text-xs font-mono shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <Trophy className="w-4 h-4 text-racing-red shrink-0" />
+                <span className="text-white font-bold uppercase truncate">{selectedPhoto.title}</span>
+                <span className="text-white/50 shrink-0">({selectedPhoto.year})</span>
+              </div>
+              <button
+                onClick={() => setSelectedPhoto(null)}
+                className="p-1 text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+                title="Close Photo Preview"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* High-Res Photo Container */}
+            <div className="mt-4 flex-1 overflow-hidden flex items-center justify-center bg-black/60 border border-white/5 p-2">
+              <img
+                src={selectedPhoto.image}
+                alt={selectedPhoto.title}
+                className="max-h-[72vh] w-auto max-w-full object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Official Sponsors & Backers Footer Section */}
       <Partners />
