@@ -5,6 +5,24 @@ import { ArrowLeft, Scale, Award, Cpu, AlertTriangle, ExternalLink, Mail, CheckC
 export const metadata: Metadata = {
   title: "Terms of Service // VeerRacerss Electric",
   description: "Terms and conditions of use for VeerRacerss Electric web portal and Formula Student candidate applications.",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: 'https://veerracerss-official-web.vercel.app/terms',
+  },
+  openGraph: {
+    title: 'Terms of Service // VeerRacerss Electric',
+    description: 'Terms and conditions of use for VeerRacerss Electric web portal and Formula Student candidate applications.',
+    url: 'https://veerracerss-official-web.vercel.app/terms',
+    images: [{ url: 'https://veerracerss-official-web.vercel.app/og-image.png', width: 1200, height: 630, alt: 'VeerRacerss Terms of Service' }]
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Terms of Service // VeerRacerss Electric',
+    description: 'Terms and conditions of use for VeerRacerss Electric web portal and Formula Student candidate applications.',
+  }
 };
 
 export default function TermsPage() {

@@ -13,9 +13,15 @@ export const metadata: Metadata = {
     'Lightweight design award formula student'
   ],
   robots: {
-    index: false,
-    follow: false,
-    nocache: true,
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   alternates: {
     canonical: 'https://veerracerss-official-web.vercel.app/achievements',
@@ -25,6 +31,12 @@ export const metadata: Metadata = {
     description: 'National podiums and awards won by VeerRacerss Electric across Formula Bharat, Formula Imperial, and SAE India.',
     url: 'https://veerracerss-official-web.vercel.app/achievements',
     images: [{ url: 'https://veerracerss-official-web.vercel.app/og-image.png', width: 1200, height: 630, alt: 'VeerRacerss Hall of Fame' }]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Competitive Achievements & Hall of Fame | VeerRacerss Electric',
+    description: 'National podiums and awards won by VeerRacerss Electric across Formula Bharat, Formula Imperial, and SAE India.',
+    images: ['https://veerracerss-official-web.vercel.app/og-image.png'],
   }
 };
 

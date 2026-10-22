@@ -17,9 +17,15 @@ export const metadata: Metadata = {
     'Student formula car engineering Odisha'
   ],
   robots: {
-    index: false,
-    follow: false,
-    nocache: true,
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   alternates: {
     canonical: 'https://veerracerss-official-web.vercel.app/cars',
@@ -29,6 +35,12 @@ export const metadata: Metadata = {
     description: 'Explore AETHER and our historical Formula Student racing fleet engineered at VSSUT Burla, Odisha.',
     url: 'https://veerracerss-official-web.vercel.app/cars',
     images: [{ url: 'https://veerracerss-official-web.vercel.app/og-image.png', width: 1200, height: 630, alt: 'VeerRacerss Fleet' }]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Formula Student Race Cars & Fleet | VeerRacerss Electric',
+    description: 'Explore AETHER and our historical Formula Student racing fleet engineered at VSSUT Burla, Odisha.',
+    images: ['https://veerracerss-official-web.vercel.app/og-image.png'],
   }
 };
 

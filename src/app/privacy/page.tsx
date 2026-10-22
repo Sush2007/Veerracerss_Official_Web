@@ -5,6 +5,24 @@ import { ArrowLeft, Shield, Lock, Eye, Database, Server, RefreshCw, Mail } from 
 export const metadata: Metadata = {
   title: "Privacy Policy // VeerRacerss Electric",
   description: "Official Privacy Policy for VeerRacerss Electric, Formula Student collegiate team of VSSUT Burla.",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: 'https://veerracerss-official-web.vercel.app/privacy',
+  },
+  openGraph: {
+    title: 'Privacy Policy // VeerRacerss Electric',
+    description: 'Official Privacy Policy for VeerRacerss Electric, Formula Student collegiate team of VSSUT Burla.',
+    url: 'https://veerracerss-official-web.vercel.app/privacy',
+    images: [{ url: 'https://veerracerss-official-web.vercel.app/og-image.png', width: 1200, height: 630, alt: 'VeerRacerss Privacy Policy' }]
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Privacy Policy // VeerRacerss Electric',
+    description: 'Official Privacy Policy for VeerRacerss Electric, Formula Student collegiate team of VSSUT Burla.',
+  }
 };
 
 export default function PrivacyPage() {

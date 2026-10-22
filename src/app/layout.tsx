@@ -69,7 +69,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: '4utN8IareDBUNPzl05SNbzh5iO6zjeeo1AOwMth2vhs',
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '4utN8IareDBUNPzl05SNbzh5iO6zjeeo1AOwMth2vhs',
   },
   other: {
     'geo.region': GEO_COORDINATES.region,

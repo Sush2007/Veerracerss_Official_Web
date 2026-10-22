@@ -9,8 +9,42 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Recruitment 2026 // VeerRacerss Electric",
-  description: "Official Formula Student induction application portal for VeerRacerss Electric, VSSUT Burla.",
+  title: "Recruitment 2026 // VeerRacerss Electric | Join VSSUT Formula Student",
+  description: "Official Formula Student induction application portal for VeerRacerss Electric, VSSUT Burla. Join the team building Odisha's premier electric racing car.",
+  keywords: [
+    'VeerRacerss recruitment',
+    'VSSUT formula student recruitment',
+    'join VeerRacerss electric',
+    'formula student team induction',
+    'VSSUT automotive club join',
+    'EV racing team recruitment 2026'
+  ],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: 'https://veerracerss-official-web.vercel.app/recruitment',
+  },
+  openGraph: {
+    title: 'Recruitment 2026 // VeerRacerss Electric | Join VSSUT Formula Student',
+    description: 'Official Formula Student induction application portal for VeerRacerss Electric, VSSUT Burla.',
+    url: 'https://veerracerss-official-web.vercel.app/recruitment',
+    images: [{ url: 'https://veerracerss-official-web.vercel.app/og-image.png', width: 1200, height: 630, alt: 'VeerRacerss Recruitment' }]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Recruitment 2026 // VeerRacerss Electric | Join VSSUT Formula Student',
+    description: 'Official Formula Student induction application portal for VeerRacerss Electric, VSSUT Burla.',
+    images: ['https://veerracerss-official-web.vercel.app/og-image.png'],
+  }
 };
 
 export default async function RecruitmentPage() {
@@ -38,8 +72,35 @@ export default async function RecruitmentPage() {
     // Fallback active
   }
 
+  const recruitmentSchema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://veerracerss-official-web.vercel.app"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Recruitment",
+            "item": "https://veerracerss-official-web.vercel.app/recruitment"
+          }
+        ]
+      }
+    ]
+  };
+
   return (
     <div className="min-h-screen bg-[#070709] text-white pt-24 sm:pt-28 pb-20 relative">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(recruitmentSchema) }}
+      />
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 md:px-12 lg:px-16">
         
         {/* Back Link */}

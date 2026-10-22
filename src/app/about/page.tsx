@@ -13,9 +13,15 @@ export const metadata: Metadata = {
     'VSSUT motorsports club'
   ],
   robots: {
-    index: false,
-    follow: false,
-    nocache: true,
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   alternates: {
     canonical: 'https://veerracerss-official-web.vercel.app/about',
@@ -25,6 +31,12 @@ export const metadata: Metadata = {
     description: 'Learn about VeerRacerss Electric, our student-led engineering philosophy, and our journey at VSSUT Burla.',
     url: 'https://veerracerss-official-web.vercel.app/about',
     images: [{ url: 'https://veerracerss-official-web.vercel.app/og-image.png', width: 1200, height: 630, alt: 'About VeerRacerss' }]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Inside Team VeerRacerss | Mission, Philosophy & Heritage',
+    description: 'Learn the origin, engineering philosophy, and mission of VeerRacerss Electric at VSSUT Burla.',
+    images: ['https://veerracerss-official-web.vercel.app/og-image.png'],
   }
 };
 

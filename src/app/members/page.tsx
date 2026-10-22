@@ -13,9 +13,15 @@ export const metadata: Metadata = {
     'VSSUT automotive club members'
   ],
   robots: {
-    index: false,
-    follow: false,
-    nocache: true,
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   alternates: {
     canonical: 'https://veerracerss-official-web.vercel.app/members',
@@ -25,6 +31,12 @@ export const metadata: Metadata = {
     description: 'Meet the official student council, executive heads, and faculty advisors powering Odisha\'s premier Formula Student EV.',
     url: 'https://veerracerss-official-web.vercel.app/members',
     images: [{ url: 'https://veerracerss-official-web.vercel.app/og-image.png', width: 1200, height: 630, alt: 'VeerRacerss Team' }]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'The Racing Squad & Council Leadership | VeerRacerss Electric VSSUT',
+    description: 'Meet the official student council, executive heads, and faculty advisors powering Odisha\'s premier Formula Student EV.',
+    images: ['https://veerracerss-official-web.vercel.app/og-image.png'],
   }
 };
 

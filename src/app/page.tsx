@@ -17,6 +17,17 @@ export const revalidate = 0;
 export const metadata: Metadata = {
   title: 'VeerRacerss Electric | The Official Student Formula Racing Club | VSSUT Burla',
   description: 'Official website of VeerRacerss Electric, VSSUT Burla. Odisha\'s premier Formula Student EV racing team designing, manufacturing, and racing high-performance electric formula racecars in Formula Bharat & Formula Imperial.',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   alternates: {
     canonical: 'https://veerracerss-official-web.vercel.app',
   },
@@ -33,6 +44,12 @@ export const metadata: Metadata = {
         alt: 'VeerRacerss Electric Official Flagship',
       },
     ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'VeerRacerss Electric | The Official Student Formula Racing Club | VSSUT Burla',
+    description: 'Official website of VeerRacerss Electric, VSSUT Burla. Odisha\'s premier Formula Student EV racing team.',
+    images: ['https://veerracerss-official-web.vercel.app/og-image.png'],
   },
 };
 
