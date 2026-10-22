@@ -14,277 +14,74 @@ import {
   Flame,
   Star
 } from "lucide-react";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Partners } from "../../components/Partners";
+import {
+  DEFAULT_ACHIEVEMENTS,
+  CompetitionAchievement,
+  AwardItem,
+} from "@/src/data/cms_defaults";
+import { createClient } from "@/src/lib/supabase/client";
 
-export interface AwardItem {
-  title: string;
-  rank?: string;
-  category?: string;
-  type: "champion" | "runner_up" | "podium" | "top10" | "special";
-}
+export type { AwardItem, CompetitionAchievement };
 
-export interface CompetitionAchievement {
-  id: string;
-  year: string;
-  competition: string;
-  tagline: string;
-  location: string;
-  carName?: string;
-  image?: string;
-  isChampion?: boolean;
-  featured?: boolean;
-  awards: AwardItem[];
-  summary: string;
-}
-
-const COMPETITION_ACHIEVEMENTS: CompetitionAchievement[] = [
-  {
-    id: "supra-sae-2026",
-    year: "2026",
-    competition: "SUPRA SAE INDIA 2026",
-    tagline: "National Top-10 Design & Social Excellence",
-    location: "Formula Student India Track",
-    featured: true,
-    awards: [
-      {
-        title: "BEST SOCIAL MEDIA AWARD",
-        category: "Media & Outreach",
-        type: "special"
-      },
-      {
-        title: "AIR-9 IN BUSINESS PRESENTATION",
-        rank: "AIR 9",
-        category: "Static Event",
-        type: "top10"
-      },
-      {
-        title: "AIR-10 IN DESIGN PRESENTATION",
-        rank: "AIR 10",
-        category: "Engineering Design",
-        type: "top10"
-      },
-      {
-        title: "AIR-11 IN COST PRESENTATION",
-        rank: "AIR 11",
-        category: "Manufacturing & Cost",
-        type: "top10"
-      }
-    ],
-    summary: "Delivered standout static engineering evaluations at SUPRA SAE India, penetrating the national top-10 across Business & Design while capturing the Best Social Media honor nationwide."
-  },
-  {
-    id: "formula-imperial-2025",
-    year: "2025",
-    competition: "FORMULA IMPERIAL 2025",
-    tagline: "National Champions in Lightweight Chassis & EV Runner-Up",
-    location: "Buddh International Circuit, Greater Noida",
-    isChampion: true,
-    featured: true,
-    awards: [
-      {
-        title: "AIR-1 IN LIGHTEST WEIGHT",
-        rank: "AIR 1",
-        category: "Structural Dynamics",
-        type: "champion"
-      },
-      {
-        title: "AIR-2 IN EV CATEGORY",
-        rank: "AIR 2",
-        category: "Overall Electric",
-        type: "runner_up"
-      },
-      {
-        title: "AIR-2 IN BUSINESS PLAN",
-        rank: "AIR 2",
-        category: "Commercial Scalability",
-        type: "runner_up"
-      },
-      {
-        title: "BEST WOMEN PARTICIPATION",
-        category: "Diversity & Inclusion",
-        type: "special"
-      }
-    ],
-    summary: "Dominated Buddh International Circuit with an ultralight carbon-tubular architecture, capturing All India Rank 1 in Lightest Weight alongside 2nd overall in the Electric Vehicle division."
-  },
-  {
-    id: "formula-imperial-2024",
-    year: "2024",
-    competition: "FORMULA IMPERIAL 2024",
-    tagline: "National Podium Finish in Electric Class",
-    location: "Buddh International Circuit, Greater Noida",
-    carName: "AETHER",
-    awards: [
-      {
-        title: "AIR-3 IN EV CATEGORY",
-        rank: "AIR 3",
-        category: "Overall Electric",
-        type: "podium"
-      }
-    ],
-    summary: "Campaigned AETHER—Odisha's first collegiate Formula Student EV—powered by a custom 72V battery pack and PMSM drive to seize the 3rd place National EV podium at BIC."
-  },
-  {
-    id: "formula-imperial-2023",
-    year: "2023",
-    competition: "FORMULA IMPERIAL 2023",
-    tagline: "Double All India Rank 1 & Endurance Champions",
-    location: "Formula Imperial Circuit",
-    carName: "ZEUS 1.0",
-    isChampion: true,
-    featured: true,
-    awards: [
-      {
-        title: "AIR-1 IN EV CATEGORY",
-        rank: "AIR 1",
-        category: "Championship Winner",
-        type: "champion"
-      },
-      {
-        title: "AIR-1 IN ENDURANCE (EV)",
-        rank: "AIR 1",
-        category: "Dynamic Reliability",
-        type: "champion"
-      },
-      {
-        title: "AIR-2 IN ENDURANCE (OVERALL)",
-        rank: "AIR 2",
-        category: "EV + Combustion Overall",
-        type: "runner_up"
-      },
-      {
-        title: "AIR-3 IN OVERALL CHAMPIONSHIP",
-        rank: "AIR 3",
-        category: "National Grand Total",
-        type: "podium"
-      }
-    ],
-    summary: "Historic national breakthrough: vehicle ZEUS 1.0 completed a flawless 22km endurance run, crowning VeerRacerss as the All India Rank 1 Electric Champions and Endurance Champions."
-  },
-  {
-    id: "pi-ev-2022",
-    year: "2022",
-    competition: "PI-EV 2022",
-    tagline: "National Leadership in Team Governance",
-    location: "Formula Bharat Virtual",
-    awards: [
-      {
-        title: "AIR-4 IN TEAM MANAGEMENT",
-        rank: "AIR 4",
-        category: "Project Governance",
-        type: "top10"
-      }
-    ],
-    summary: "Awarded 4th in India for executive engineering management, financial allocation, and comprehensive supply chain planning."
-  },
-  {
-    id: "ffs-india-2019",
-    year: "2019",
-    competition: "FFS INDIA 2019",
-    tagline: "National Cost Podium & Top-10 Design",
-    location: "Kari Motor Speedway, Coimbatore",
-    carName: "VENTUS 5.0",
-    awards: [
-      {
-        title: "AIR-3 IN COST",
-        rank: "AIR 3",
-        category: "Cost & Manufacturing",
-        type: "podium"
-      },
-      {
-        title: "AIR-4 IN DESIGN",
-        rank: "AIR 4",
-        category: "Engineering Design",
-        type: "top10"
-      },
-      {
-        title: "AIR-7 OVERALL",
-        rank: "AIR 7",
-        category: "National Grand Total",
-        type: "top10"
-      }
-    ],
-    summary: "Conquered Kari Motor Speedway with Ventus 5.0, achieving a top-3 podium in manufacturing cost optimization and finishing 7th overall nationally."
-  },
-  {
-    id: "formula-bharat-2019",
-    year: "2019",
-    competition: "FORMULA BHARAT 2019",
-    tagline: "National Contender at Kari Motor Speedway",
-    location: "Kari Motor Speedway, Coimbatore",
-    awards: [
-      {
-        title: "SECURED AIR 22/70 TEAMS",
-        rank: "AIR 22/70",
-        category: "Overall Championship",
-        type: "top10"
-      }
-    ],
-    summary: "Competed at Kari Motor Speedway against 70 top engineering collegiate teams across the nation, securing All India Rank 22 overall."
-  },
-  {
-    id: "supra-sae-2018",
-    year: "2018",
-    competition: "SUPRA SAE INDIA 2018",
-    tagline: "AIR 9/112 Teams - Most Successful Season in VSSUT Formula SAE History",
-    location: "Madras Motor Race Track (MMRT), Chennai",
-    carName: "VENTUS 4.0",
-    awards: [
-      {
-        title: "AIR-9 / 112 TEAMS OVERALL",
-        rank: "AIR 9/112",
-        category: "Overall Championship",
-        type: "top10"
-      },
-      {
-        title: "AIR-7 / 112 IN ENDURANCE EVENT",
-        rank: "AIR 7/112",
-        category: "Dynamic Endurance",
-        type: "top10"
-      },
-      {
-        title: "2ND RUNNERS UP IN ENGINEERING DESIGN",
-        rank: "AIR 3",
-        category: "Engineering Design",
-        type: "podium"
-      },
-      {
-        title: "AIR-7 IN BUSINESS COST EVENT",
-        rank: "AIR 7",
-        category: "Business Cost",
-        type: "top10"
-      }
-    ],
-    summary: "The most successful season ever in the history of VSSUT Formula SAE at MMRT Chennai: captured AIR 9 out of 112 teams overall, finished AIR 7 in Endurance, seized 2nd Runners Up in Engineering Design, and placed AIR 7 in the Business Cost Event."
-  },
-  {
-    id: "formula-bharat-2018",
-    year: "2018",
-    competition: "FORMULA BHARAT 2018",
-    tagline: "National Engineering Design Contender",
-    location: "Kari Motor Speedway, Coimbatore",
-    awards: [
-      {
-        title: "SECURED AIR 15/55 IN ENGINEERING DESIGN",
-        rank: "AIR 15/55",
-        category: "Engineering Design",
-        type: "top10"
-      }
-    ],
-    summary: "Evaluated by veteran automotive industry judges in rigorous static design evaluations, capturing All India Rank 15 out of 55 teams in Engineering Design."
-  }
-];
+const COMPETITION_ACHIEVEMENTS: CompetitionAchievement[] = DEFAULT_ACHIEVEMENTS;
 
 export function AchievementsView() {
+  const [items, setItems] = useState<CompetitionAchievement[]>(DEFAULT_ACHIEVEMENTS);
   const [selectedYear, setSelectedYear] = useState<string>("ALL");
 
-  const filteredAchievements = useMemo(() => {
-    if (selectedYear === "ALL") return COMPETITION_ACHIEVEMENTS;
-    return COMPETITION_ACHIEVEMENTS.filter(item => item.year === selectedYear);
-  }, [selectedYear]);
+  useEffect(() => {
+    async function loadAchievements() {
+      // 1. Try localStorage
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("vr_achievements");
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setItems(parsed);
+            }
+          }
+        } catch {}
+      }
 
-  const years = ["ALL", "2026", "2025", "2024", "2023", "2022", "2019", "2018"];
+      // 2. Try Supabase
+      try {
+        const supabase = createClient();
+        const { data: dbData } = await supabase
+          .from("custom_databases")
+          .select("records")
+          .eq("db_name", "Hall of Fame & Achievements")
+          .maybeSingle();
+
+        if (dbData && Array.isArray(dbData.records) && dbData.records.length > 0) {
+          setItems(dbData.records as CompetitionAchievement[]);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("vr_achievements", JSON.stringify(dbData.records));
+            } catch {}
+          }
+        }
+      } catch {}
+    }
+
+    loadAchievements();
+  }, []);
+
+  const years = useMemo(() => {
+    const set = new Set<string>();
+    items.forEach((item) => {
+      if (item.year) set.add(item.year);
+    });
+    const sorted = Array.from(set).sort((a, b) => b.localeCompare(a));
+    return ["ALL", ...sorted];
+  }, [items]);
+
+  const filteredAchievements = useMemo(() => {
+    if (selectedYear === "ALL") return items;
+    return items.filter((item) => item.year === selectedYear);
+  }, [selectedYear, items]);
 
   const getAwardBadgeStyle = (type: AwardItem["type"]) => {
     switch (type) {

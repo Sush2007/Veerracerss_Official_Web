@@ -31,6 +31,7 @@ import {
   HardDrive,
   Shield,
   Award,
+  Trophy,
 } from "lucide-react";
 import {
   DEFAULT_SITE_SETTINGS,
@@ -42,6 +43,7 @@ import {
   DEFAULT_CUSTOM_DATABASES,
   DEFAULT_VEHICLES,
   DEFAULT_SPONSORS,
+  DEFAULT_ACHIEVEMENTS,
   SiteSettings,
   FeaturedMachine,
   MediaItem,
@@ -52,6 +54,7 @@ import {
   CustomDatabaseRecord,
   VehicleRecord,
   SponsorRecord,
+  CompetitionAchievement,
   extractSpotlightFromVehicles,
 } from "@/src/data/cms_defaults";
 import { exportTableToExcel, exportMultiSheetExcel } from "@/src/lib/exportToExcel";
@@ -63,13 +66,14 @@ import { CustomDbsTab } from "./components/CustomDbsTab";
 import { AdminSecurityModal } from "./components/AdminSecurityModal";
 import { VehiclesTab } from "./components/VehiclesTab";
 import { SponsorsTab } from "./components/SponsorsTab";
+import { AchievementsTab } from "./components/AchievementsTab";
 
 export default function AdminDashboard() {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
-    "hero" | "vehicles" | "sponsors" | "machine" | "media" | "alumni" | "members" | "expenses" | "recruitment" | "custom_dbs"
+    "hero" | "vehicles" | "sponsors" | "achievements" | "machine" | "media" | "alumni" | "members" | "expenses" | "recruitment" | "custom_dbs"
   >("hero");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -82,6 +86,7 @@ export default function AdminDashboard() {
   // 2. Vehicles Fleet & Auto-Spotlight Sync State
   const [vehicles, setVehicles] = useState<VehicleRecord[]>(DEFAULT_VEHICLES);
   const [sponsors, setSponsors] = useState<SponsorRecord[]>(DEFAULT_SPONSORS);
+  const [achievements, setAchievements] = useState<CompetitionAchievement[]>(DEFAULT_ACHIEVEMENTS);
 
   // 2b. Featured Machine State
   const [machine, setMachine] = useState<FeaturedMachine>(DEFAULT_FEATURED_MACHINE);
@@ -425,6 +430,22 @@ export default function AdminDashboard() {
         setCustomDbs(localCdbs);
       }
     } catch {}
+
+    // 9. Achievements & Hall of Fame
+    try {
+      let loadedAchievements: CompetitionAchievement[] | null = null;
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("vr_achievements");
+          if (raw) loadedAchievements = JSON.parse(raw);
+        } catch {}
+      }
+      if (loadedAchievements && loadedAchievements.length > 0) {
+        setAchievements(loadedAchievements);
+      } else {
+        setAchievements(DEFAULT_ACHIEVEMENTS);
+      }
+    } catch {}
   };
 
   const handleLogout = async () => {
@@ -708,6 +729,33 @@ export default function AdminDashboard() {
     } catch (e) {
       console.warn("Supabase sponsors upsert notice:", e);
     }
+  };
+
+  const handleSaveAchievements = async (updatedAchievements: CompetitionAchievement[]) => {
+    setAchievements(updatedAchievements);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("vr_achievements", JSON.stringify(updatedAchievements));
+      } catch {}
+    }
+    // Also try saving to custom_databases or Supabase if available
+    try {
+      const { data: existingDb } = await supabase
+        .from("custom_databases")
+        .select("id")
+        .eq("db_name", "Hall of Fame & Achievements")
+        .maybeSingle();
+
+      if (existingDb) {
+        await supabase
+          .from("custom_databases")
+          .update({
+            records: updatedAchievements as any,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existingDb.id);
+      }
+    } catch {}
   };
 
   // 3. Media Items: Open Modals
@@ -1934,6 +1982,16 @@ export default function AdminDashboard() {
           </button>
 
           <button
+            onClick={() => setActiveTab("achievements")}
+            className={`shrink-0 whitespace-nowrap px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+              activeTab === "achievements" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
+            }`}
+          >
+            <Trophy className="w-3.5 h-3.5 text-yellow-400" />
+            <span>Achievements ({achievements.length})</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab("media")}
             className={`shrink-0 whitespace-nowrap px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
               activeTab === "media" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
@@ -2340,6 +2398,19 @@ export default function AdminDashboard() {
             sponsors={sponsors}
             onSaveSponsors={handleSaveSponsors}
             onUploadImage={(file) => uploadToStorage(file, "member-images", "sponsors")}
+            showToast={showToast}
+            showError={showError}
+          />
+        )}
+
+        {/* =========================================================================
+            TAB 3B: COMPETITIVE ACHIEVEMENTS & HALL OF FAME
+        ========================================================================= */}
+        {activeTab === "achievements" && (
+          <AchievementsTab
+            achievements={achievements}
+            onSaveAchievements={handleSaveAchievements}
+            onUploadImage={(file) => uploadToStorage(file, "member-images", "achievements")}
             showToast={showToast}
             showError={showError}
           />
