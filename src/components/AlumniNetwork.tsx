@@ -122,17 +122,19 @@ export function AlumniNetwork() {
                 </p>
               </div>
 
-              {/* LinkedIn Connect Button */}
-              <a
-                href={alumnus.linkedin_url || "https://www.linkedin.com/company/veerracerss-electric/"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 bg-[#121216] border border-white/10 hover:border-racing-red hover:bg-racing-red/20 text-white font-mono text-xs uppercase tracking-wider py-2.5 px-3 transition-colors duration-200"
-              >
-                <Linkedin className="w-3.5 h-3.5 text-[#0077B5] group-hover:text-white" />
-                <span>CONNECT</span>
-                <ArrowUpRight className="w-3 h-3 text-white/50 group-hover:text-white" />
-              </a>
+              {/* LinkedIn Connect Button (Optional) */}
+              {alumnus.linkedin_url && alumnus.linkedin_url.trim() && alumnus.linkedin_url !== "#" && (
+                <a
+                  href={alumnus.linkedin_url.startsWith("http") ? alumnus.linkedin_url : `https://${alumnus.linkedin_url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 bg-[#121216] border border-white/10 hover:border-racing-red hover:bg-racing-red/20 text-white font-mono text-xs uppercase tracking-wider py-2.5 px-3 transition-colors duration-200"
+                >
+                  <Linkedin className="w-3.5 h-3.5 text-[#0077B5] group-hover:text-white" />
+                  <span>CONNECT</span>
+                  <ArrowUpRight className="w-3 h-3 text-white/50 group-hover:text-white" />
+                </a>
+              )}
 
             </motion.div>
           ))}

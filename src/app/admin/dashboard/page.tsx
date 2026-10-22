@@ -720,7 +720,7 @@ export default function AdminDashboard() {
     setAlumniFormerRole("");
     setAlumniCompany("");
     setAlumniCurrentRole("");
-    setAlumniLinkedin("https://www.linkedin.com/company/veerracerss-electric/");
+    setAlumniLinkedin("");
     setAlumniMentorshipDomain("");
     setAlumniBio("");
     setAlumniFile(null);
@@ -736,12 +736,12 @@ export default function AdminDashboard() {
     setAlumniFormerRole(item.former_role);
     setAlumniCompany(item.current_company);
     setAlumniCurrentRole(item.role_name || item.current_role || "");
-    setAlumniLinkedin(item.linkedin_url);
+    setAlumniLinkedin(item.linkedin_url && item.linkedin_url !== "#" ? item.linkedin_url : "");
     setAlumniMentorshipDomain(item.mentorship_domain);
     setAlumniBio(item.bio || "");
     setAlumniFile(null);
     setAlumniDirectUrl(item.image_url);
-    setAlumniPhotoSource(item.image_url.startsWith("http") ? "url" : "upload");
+    setAlumniPhotoSource("upload");
     setShowAlumniModal(true);
   };
 
@@ -758,6 +758,13 @@ export default function AdminDashboard() {
       }
 
       const roleVal = alumniCurrentRole;
+      const cleanUrl = (val: string) => {
+        const trimmed = (val || "").trim();
+        if (!trimmed || trimmed === "#") return "";
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/")) return trimmed;
+        return `https://${trimmed}`;
+      };
+      const cleanedLinkedin = cleanUrl(alumniLinkedin);
 
       if (editingAlumni) {
         const updatePayload: any = {
@@ -767,7 +774,7 @@ export default function AdminDashboard() {
           current_company: alumniCompany,
           role_name: roleVal,
           image_url: imgUrl,
-          linkedin_url: alumniLinkedin,
+          linkedin_url: cleanedLinkedin,
           mentorship_domain: alumniMentorshipDomain,
           bio: alumniBio,
         };
@@ -796,6 +803,7 @@ export default function AdminDashboard() {
         setAlumniList(alumniList.map((a) => (a.id === editingAlumni.id ? updatedItem : a)));
         setShowAlumniModal(false);
         setEditingAlumni(null);
+        broadcastSync();
         showToast("Alumni profile updated successfully!");
       } else {
         const newAlumnusPayload: any = {
@@ -805,7 +813,7 @@ export default function AdminDashboard() {
           current_company: alumniCompany,
           role_name: alumniCurrentRole,
           image_url: imgUrl,
-          linkedin_url: alumniLinkedin,
+          linkedin_url: cleanedLinkedin,
           mentorship_domain: alumniMentorshipDomain,
           bio: alumniBio,
           order_index: alumniList.length + 1,
@@ -838,6 +846,7 @@ export default function AdminDashboard() {
         setAlumniBio("");
         setAlumniFile(null);
         setAlumniDirectUrl("");
+        broadcastSync();
         showToast("Alumni profile added successfully!");
       }
     } catch (err: any) {
@@ -883,13 +892,20 @@ export default function AdminDashboard() {
     setUploading(true);
     try {
       const imgUrl = await uploadToStorage(memberFile, "member-images", "domain-members");
+      const cleanUrl = (val: string) => {
+        const trimmed = (val || "").trim();
+        if (!trimmed || trimmed === "#") return "";
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/")) return trimmed;
+        return `https://${trimmed}`;
+      };
+
       const newMemberPayload: any = {
         name: memberName,
         role: memberRole,
         department: memberDepartment,
         image_url: imgUrl,
-        linkedin: memberLinkedin || "#",
-        instagram: memberInstagram || "#",
+        linkedin: cleanUrl(memberLinkedin),
+        instagram: cleanUrl(memberInstagram),
         year_of_study: memberYearOfStudy,
         academic_branch: memberBranch,
         blood_group: memberBloodGroup,
@@ -913,8 +929,8 @@ export default function AdminDashboard() {
           role: memberRole,
           department: memberDepartment,
           image_url: imgUrl,
-          linkedin: memberLinkedin || "#",
-          instagram: memberInstagram || "#",
+          linkedin: cleanUrl(memberLinkedin),
+          instagram: cleanUrl(memberInstagram),
         };
         const res = await supabase.from("members").insert([simplePayload]);
         error = res.error;
@@ -927,6 +943,7 @@ export default function AdminDashboard() {
       setMemberFile(null);
       setMemberLinkedin("");
       setMemberInstagram("");
+      broadcastSync();
       fetchAllData();
       showToast("Member added successfully!");
     } catch (err: any) {
@@ -957,6 +974,7 @@ export default function AdminDashboard() {
           localStorage.setItem("vr_members", JSON.stringify(updated));
         } catch {}
       }
+      broadcastSync();
       showToast(`Member "${deleteConfirmMember.name}" removed.`);
     } catch (err: any) {
       showError(err.message || "Failed to delete member.");
@@ -980,7 +998,9 @@ export default function AdminDashboard() {
           phone: updated.phone,
           pr_domain_skills: updated.pr_domain_skills,
           joining_year: updated.joining_year,
-          linkedin: updated.linkedin,
+          linkedin: updated.linkedin || "",
+          instagram: updated.instagram || "",
+          image_url: updated.image_url,
         })
         .eq("id", updated.id);
 
@@ -991,7 +1011,9 @@ export default function AdminDashboard() {
             name: updated.name,
             role: updated.role,
             department: updated.department,
-            linkedin: updated.linkedin,
+            linkedin: updated.linkedin || "",
+            instagram: updated.instagram || "",
+            image_url: updated.image_url,
           })
           .eq("id", updated.id);
         if (basicErr) throw basicErr;
@@ -1006,9 +1028,10 @@ export default function AdminDashboard() {
           localStorage.setItem("vr_members", JSON.stringify(updatedList));
         } catch {}
       }
-      showToast(`Datasheet for ${updated.name} updated successfully!`);
+      broadcastSync();
+      showToast(`${updated.name}'s details & photo updated successfully!`);
     } catch (err: any) {
-      showError(err.message || "Failed to update member datasheet.");
+      showError(err.message || "Failed to update member.");
     }
   };
 
@@ -2692,12 +2715,14 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">LinkedIn Profile URL</label>
+                  <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">
+                    LinkedIn Profile URL <span className="text-white/30 lowercase">(optional)</span>
+                  </label>
                   <input
-                    type="url"
+                    type="text"
                     value={alumniLinkedin}
                     onChange={(e) => setAlumniLinkedin(e.target.value)}
-                    placeholder="https://www.linkedin.com/in/..."
+                    placeholder="https://www.linkedin.com/in/... or leave blank"
                     className="w-full bg-[#15161c] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
                   />
                 </div>
@@ -2713,57 +2738,90 @@ export default function AdminDashboard() {
                   />
                 </div>
 
-                {/* Photo Source Selection: Upload vs URL */}
-                <div>
-                  <label className="text-[11px] uppercase text-white/50 mb-1.5 block font-mono">Profile Headshot Photo</label>
-                  <div className="flex gap-2 mb-2">
-                    <button
-                      type="button"
-                      onClick={() => setAlumniPhotoSource("upload")}
-                      className={`flex-1 py-1 text-xs font-mono uppercase border transition-all ${
-                        alumniPhotoSource === "upload"
-                          ? "bg-racing-red text-white border-racing-red font-bold"
-                          : "bg-white/5 text-white/50 border-white/10 hover:text-white"
-                      }`}
-                    >
-                      Upload File
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAlumniPhotoSource("url")}
-                      className={`flex-1 py-1 text-xs font-mono uppercase border transition-all ${
-                        alumniPhotoSource === "url"
-                          ? "bg-racing-red text-white border-racing-red font-bold"
-                          : "bg-white/5 text-white/50 border-white/10 hover:text-white"
-                      }`}
-                    >
-                      Direct Image URL
-                    </button>
+                {/* Photo Headshot: Preview & Upload */}
+                <div className="bg-[#121318] border border-white/10 p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] uppercase text-racing-red font-bold font-mono flex items-center gap-1.5">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Profile Headshot Photo</span>
+                    </label>
+                    <span className="text-[10px] text-white/40 font-mono">
+                      JPG, PNG or WEBP (Max 15MB)
+                    </span>
                   </div>
 
-                  {alumniPhotoSource === "upload" ? (
-                    <div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setAlumniFile(e.target.files?.[0] || null)}
-                        className="w-full text-xs text-white/60 file:mr-2 file:py-1.5 file:px-3 file:border-0 file:bg-white/10 file:text-white file:text-xs file:font-mono file:cursor-pointer"
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-16 h-16 shrink-0 border border-white/20 bg-[#0b0c10] overflow-hidden">
+                      <img
+                        src={
+                          alumniFile
+                            ? URL.createObjectURL(alumniFile)
+                            : (editingAlumni?.image_url || alumniDirectUrl || "/alumni/default-alumni.jpg")
+                        }
+                        alt="Alumnus Headshot"
+                        className="w-full h-full object-cover object-top"
                       />
                       {alumniFile && (
-                        <span className="text-[11px] text-emerald-400 block mt-1">Ready: {alumniFile.name}</span>
+                        <span className="absolute bottom-0 inset-x-0 bg-racing-red text-[8px] text-center font-mono font-bold text-white uppercase py-0.5">
+                          New
+                        </span>
                       )}
                     </div>
-                  ) : (
-                    <div>
-                      <input
-                        type="text"
-                        value={alumniDirectUrl}
-                        onChange={(e) => setAlumniDirectUrl(e.target.value)}
-                        placeholder="e.g. /alumni/photo.jpg or https://..."
-                        className="w-full bg-[#15161c] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
-                      />
+
+                    <div className="flex-1 space-y-2">
+                      <div className="flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setAlumniPhotoSource("upload")}
+                          className={`text-[10px] font-mono uppercase px-2.5 py-1 border transition-all ${
+                            alumniPhotoSource === "upload"
+                              ? "bg-racing-red text-white border-racing-red font-bold"
+                              : "bg-white/5 text-white/50 border-white/10 hover:text-white"
+                          }`}
+                        >
+                          Upload File
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAlumniPhotoSource("url")}
+                          className={`text-[10px] font-mono uppercase px-2.5 py-1 border transition-all ${
+                            alumniPhotoSource === "url"
+                              ? "bg-racing-red text-white border-racing-red font-bold"
+                              : "bg-white/5 text-white/50 border-white/10 hover:text-white"
+                          }`}
+                        >
+                          Direct Image URL
+                        </button>
+                      </div>
+
+                      {alumniPhotoSource === "upload" ? (
+                        <div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setAlumniFile(e.target.files?.[0] || null)}
+                            className="w-full text-xs text-white/70 file:mr-2 file:py-1 file:px-2.5 file:border-0 file:bg-white/10 file:text-white file:text-xs file:font-mono file:cursor-pointer hover:file:bg-white/20"
+                          />
+                          <p className="text-[10px] text-white/40 font-mono mt-1">
+                            {editingAlumni ? "Select file to change photo, or leave untouched to keep current headshot." : "Select headshot file."}
+                          </p>
+                          {alumniFile && (
+                            <span className="text-[10px] text-emerald-400 font-mono block mt-0.5">Ready: {alumniFile.name} ({(alumniFile.size / 1024).toFixed(0)} KB)</span>
+                          )}
+                        </div>
+                      ) : (
+                        <div>
+                          <input
+                            type="text"
+                            value={alumniDirectUrl}
+                            onChange={(e) => setAlumniDirectUrl(e.target.value)}
+                            placeholder="e.g. /alumni/photo.jpg or https://..."
+                            className="w-full bg-[#0b0c10] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 </div>
@@ -2991,21 +3049,27 @@ export default function AdminDashboard() {
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">LinkedIn URL</label>
+                        <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">
+                          LinkedIn URL <span className="text-white/30 lowercase">(optional)</span>
+                        </label>
                         <input
-                          type="url"
+                          type="text"
                           value={memberLinkedin}
                           onChange={(e) => setMemberLinkedin(e.target.value)}
-                          className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white"
+                          placeholder="https://linkedin.com/in/... or leave blank"
+                          className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
                         />
                       </div>
                       <div>
-                        <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">Instagram URL</label>
+                        <label className="text-[11px] uppercase text-white/50 mb-1 block font-mono">
+                          Instagram URL <span className="text-white/30 lowercase">(optional)</span>
+                        </label>
                         <input
-                          type="url"
+                          type="text"
                           value={memberInstagram}
                           onChange={(e) => setMemberInstagram(e.target.value)}
-                          className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white"
+                          placeholder="https://instagram.com/... or leave blank"
+                          className="w-full bg-[#111115] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
                         />
                       </div>
                     </div>
