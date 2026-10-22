@@ -310,7 +310,23 @@ export default function AdminDashboard() {
       } else if (localVehicles && localVehicles.length > 0) {
         setVehicles(localVehicles);
       } else {
-        setVehicles(DEFAULT_VEHICLES);
+        // Fallback to custom_databases Fleet & Vehicles
+        const { data: fleetDb } = await supabase
+          .from("custom_databases")
+          .select("records")
+          .eq("db_name", "Fleet & Vehicles")
+          .maybeSingle();
+
+        if (fleetDb && Array.isArray(fleetDb.records) && fleetDb.records.length > 0) {
+          setVehicles(fleetDb.records);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("vr_vehicles", JSON.stringify(fleetDb.records));
+            } catch {}
+          }
+        } else {
+          setVehicles(DEFAULT_VEHICLES);
+        }
       }
     } catch {}
 
@@ -624,8 +640,14 @@ export default function AdminDashboard() {
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem("vr_machine_extended", JSON.stringify({
+            ...payload,
             cad_model_url: cadModelUrl,
           }));
+          localStorage.setItem("vr_featured_machine", JSON.stringify({
+            ...payload,
+            cad_model_url: cadModelUrl,
+          }));
+          window.dispatchEvent(new CustomEvent("vr_spotlight_changed", { detail: payload }));
         } catch {}
       }
 
@@ -689,23 +711,74 @@ export default function AdminDashboard() {
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem("vr_machine_extended", JSON.stringify(extractedSpotlight));
+        localStorage.setItem("vr_featured_machine", JSON.stringify(extractedSpotlight));
+        window.dispatchEvent(new CustomEvent("vr_spotlight_changed", { detail: extractedSpotlight }));
       } catch {}
     }
+
+    // 1. Sync to Supabase featured_machine table (safe sanitized payload without missing columns)
     try {
+      const sanitizedPayload = {
+        car_name: extractedSpotlight.car_name || DEFAULT_FEATURED_MACHINE.car_name,
+        season_tag: extractedSpotlight.season_tag || DEFAULT_FEATURED_MACHINE.season_tag,
+        description: extractedSpotlight.description || DEFAULT_FEATURED_MACHINE.description,
+        cad_image_url: extractedSpotlight.cad_image_url || DEFAULT_FEATURED_MACHINE.cad_image_url,
+        track_image_url: extractedSpotlight.track_image_url || DEFAULT_FEATURED_MACHINE.track_image_url,
+        top_speed_val: String(extractedSpotlight.top_speed_val || DEFAULT_FEATURED_MACHINE.top_speed_val),
+        accel_val: String(extractedSpotlight.accel_val || DEFAULT_FEATURED_MACHINE.accel_val),
+        voltage_val: String(extractedSpotlight.voltage_val || DEFAULT_FEATURED_MACHINE.voltage_val),
+        weight_val: String(extractedSpotlight.weight_val || DEFAULT_FEATURED_MACHINE.weight_val),
+        powertrain_headline: extractedSpotlight.powertrain_headline || DEFAULT_FEATURED_MACHINE.powertrain_headline,
+        powertrain_specs: extractedSpotlight.powertrain_specs || DEFAULT_FEATURED_MACHINE.powertrain_specs,
+        accumulator_headline: extractedSpotlight.accumulator_headline || DEFAULT_FEATURED_MACHINE.accumulator_headline,
+        accumulator_specs: extractedSpotlight.accumulator_specs || DEFAULT_FEATURED_MACHINE.accumulator_specs,
+        chassis_headline: extractedSpotlight.chassis_headline || DEFAULT_FEATURED_MACHINE.chassis_headline,
+        chassis_specs: extractedSpotlight.chassis_specs || DEFAULT_FEATURED_MACHINE.chassis_specs,
+        aero_headline: extractedSpotlight.aero_headline || DEFAULT_FEATURED_MACHINE.aero_headline,
+        aero_specs: extractedSpotlight.aero_specs || DEFAULT_FEATURED_MACHINE.aero_specs,
+        updated_at: new Date().toISOString(),
+      };
+
       const { data: existing } = await supabase.from("featured_machine").select("id").limit(1).maybeSingle();
       if (existing) {
-        await supabase.from("featured_machine").update({
-          ...extractedSpotlight,
-          updated_at: new Date().toISOString(),
-        }).eq("id", existing.id);
+        const { error: updErr } = await supabase.from("featured_machine").update(sanitizedPayload).eq("id", existing.id);
+        if (updErr) console.warn("Supabase featured_machine update error:", updErr);
       } else {
-        await supabase.from("featured_machine").insert([{
-          ...extractedSpotlight,
-          updated_at: new Date().toISOString(),
-        }]);
+        const { error: insErr } = await supabase.from("featured_machine").insert([sanitizedPayload]);
+        if (insErr) console.warn("Supabase featured_machine insert error:", insErr);
       }
     } catch (e) {
       console.warn("Supabase featured_machine sync notice:", e);
+    }
+
+    // 2. Sync to Supabase custom_databases "Fleet & Vehicles"
+    try {
+      const { data: existingDb } = await supabase
+        .from("custom_databases")
+        .select("id")
+        .eq("db_name", "Fleet & Vehicles")
+        .maybeSingle();
+
+      if (existingDb) {
+        await supabase
+          .from("custom_databases")
+          .update({
+            records: updatedVehicles as any,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existingDb.id);
+      } else {
+        await supabase
+          .from("custom_databases")
+          .insert([{
+            db_name: "Fleet & Vehicles",
+            description: "Official Formula Student race cars and active spotlight selection",
+            schema_definition: [],
+            records: updatedVehicles as any,
+          }]);
+      }
+    } catch (e) {
+      console.warn("Supabase fleet db sync notice:", e);
     }
   };
 

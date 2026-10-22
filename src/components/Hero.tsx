@@ -128,6 +128,32 @@ export function Hero({ title, subtitle, modelUrl, initialSettings }: HeroProps =
       }
     }
     loadSettings();
+
+    const handleSpotlightChange = (e: any) => {
+      if (e.detail?.cad_model_url) {
+        setCadModelUrl(e.detail.cad_model_url);
+      }
+    };
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "vr_machine_extended" && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed.cad_model_url) setCadModelUrl(parsed.cad_model_url);
+        } catch {}
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("vr_spotlight_changed", handleSpotlightChange);
+      window.addEventListener("storage", handleStorageChange);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("vr_spotlight_changed", handleSpotlightChange);
+        window.removeEventListener("storage", handleStorageChange);
+      }
+    };
   }, []);
 
   const activeTitle = title || settings.hero_title || DEFAULT_SITE_SETTINGS.hero_title || "VEERRACERSS ELECTRIC";

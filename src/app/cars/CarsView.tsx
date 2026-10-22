@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "motion/react";
-import { Zap, Orbit, Trophy } from "lucide-react";
+import { Zap, Orbit, Trophy, Star } from "lucide-react";
 import React, { useRef, useState, useEffect } from "react";
 import { Partners } from "../../components/Partners";
 import { createClient } from "@/src/lib/supabase/client";
@@ -45,6 +45,22 @@ export function CarsView() {
               localStorage.setItem("vr_vehicles", JSON.stringify(data));
             } catch {}
           }
+        } else {
+          // Fallback to custom_databases Fleet & Vehicles
+          const { data: fleetDb } = await supabase
+            .from("custom_databases")
+            .select("records")
+            .eq("db_name", "Fleet & Vehicles")
+            .maybeSingle();
+
+          if (fleetDb && Array.isArray(fleetDb.records) && fleetDb.records.length > 0) {
+            setFleet(fleetDb.records);
+            if (typeof window !== "undefined") {
+              try {
+                localStorage.setItem("vr_vehicles", JSON.stringify(fleetDb.records));
+              } catch {}
+            }
+          }
         }
       } catch {
         // Fallback to defaults already loaded
@@ -52,6 +68,25 @@ export function CarsView() {
     }
 
     loadFleet();
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "vr_vehicles") {
+        loadFleet();
+      }
+    };
+    const handleSpotlight = () => loadFleet();
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", handleStorage);
+      window.addEventListener("vr_spotlight_changed", handleSpotlight);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("storage", handleStorage);
+        window.removeEventListener("vr_spotlight_changed", handleSpotlight);
+      }
+    };
   }, []);
 
   return (
@@ -120,6 +155,12 @@ export function CarsView() {
                     </div>
                     {/* Category & Year Badge */}
                     <div className="absolute top-0 right-0 bg-[#0A0A0A]/90 backdrop-blur-sm border-b border-l border-white/10 px-2.5 py-1 sm:px-4 sm:py-2 flex items-center gap-2 sm:gap-3">
+                      {car.is_spotlight && (
+                        <span className="flex items-center gap-1 text-[9px] sm:text-[10px] font-mono text-racing-red font-bold uppercase tracking-wider mr-1">
+                          <Star className="w-3 h-3 fill-racing-red" />
+                          <span className="hidden sm:inline">Spotlight</span>
+                        </span>
+                      )}
                       <span className={`text-[9px] sm:text-[10px] font-sans font-bold tracking-[0.15em] sm:tracking-[0.2em] uppercase px-1.5 py-0.5 ${car.category === 'EV' ? 'bg-racing-red text-white' : 'bg-white/10 text-white/70'}`}>
                         {car.category}
                       </span>

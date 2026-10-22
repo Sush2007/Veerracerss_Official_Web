@@ -18,7 +18,8 @@ import {
   Weight,
   Cpu,
   Eye,
-  RotateCcw
+  RotateCcw,
+  Loader2
 } from "lucide-react";
 import { VehicleRecord, extractSpotlightFromVehicles } from "@/src/data/cms_defaults";
 
@@ -42,6 +43,7 @@ export function VehiclesTab({
   const [deleteConfirmVehicle, setDeleteConfirmVehicle] = useState<VehicleRecord | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
+  const [settingSpotlightId, setSettingSpotlightId] = useState<string | null>(null);
 
   // Form Fields
   const [name, setName] = useState("");
@@ -166,6 +168,7 @@ export function VehiclesTab({
 
   const handleSetSpotlight = async (vehicleId: string) => {
     try {
+      setSettingSpotlightId(vehicleId);
       const updated = vehicles.map((v) => ({
         ...v,
         is_spotlight: v.id === vehicleId,
@@ -174,6 +177,8 @@ export function VehiclesTab({
       showToast("Homepage Car Spotlight updated successfully!");
     } catch (err: any) {
       showError(err.message || "Failed to update spotlight vehicle.");
+    } finally {
+      setSettingSpotlightId(null);
     }
   };
 
@@ -421,12 +426,23 @@ export function VehiclesTab({
                 <div className="flex items-center justify-between gap-2 mt-5 pt-4 border-t border-white/10">
                   {!isSpotlightCar ? (
                     <button
+                      type="button"
                       onClick={() => handleSetSpotlight(car.id)}
-                      className="flex items-center gap-1.5 text-[10px] font-mono text-white/70 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-2.5 py-1.5 transition-colors uppercase tracking-wider"
+                      disabled={settingSpotlightId === car.id}
+                      className="flex items-center gap-1.5 text-[10px] font-mono text-white/70 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-2.5 py-1.5 transition-colors uppercase tracking-wider disabled:opacity-50"
                       title="Set as homepage spotlight"
                     >
-                      <Star className="w-3 h-3 text-white/50" />
-                      <span>Set Spotlight</span>
+                      {settingSpotlightId === car.id ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin text-racing-red" />
+                          <span>Setting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Star className="w-3 h-3 text-white/50" />
+                          <span>Set Spotlight</span>
+                        </>
+                      )}
                     </button>
                   ) : (
                     <span className="flex items-center gap-1 text-[10px] font-mono text-racing-red font-bold uppercase">

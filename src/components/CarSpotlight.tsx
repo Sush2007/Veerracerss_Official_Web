@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Zap, Battery, Shield, Wind, ArrowRight } from "lucide-react";
 import { createClient } from "@/src/lib/supabase/client";
-import { DEFAULT_FEATURED_MACHINE, FeaturedMachine } from "@/src/data/cms_defaults";
+import { DEFAULT_FEATURED_MACHINE, FeaturedMachine, extractSpotlightFromVehicles } from "@/src/data/cms_defaults";
 
 export function CarSpotlight() {
   const [machine, setMachine] = useState<FeaturedMachine>(DEFAULT_FEATURED_MACHINE);
@@ -13,7 +13,44 @@ export function CarSpotlight() {
   const [activeSubsystem, setActiveSubsystem] = useState<"powertrain" | "accumulator" | "chassis" | "aero">("powertrain");
 
   useEffect(() => {
+    function applyData(data: any) {
+      if (!data) return;
+      setMachine({
+        car_name: data.car_name || DEFAULT_FEATURED_MACHINE.car_name,
+        season_tag: data.season_tag || DEFAULT_FEATURED_MACHINE.season_tag,
+        description: data.description || DEFAULT_FEATURED_MACHINE.description,
+        cad_model_url: data.cad_model_url || DEFAULT_FEATURED_MACHINE.cad_model_url,
+        cad_image_url: data.cad_image_url || DEFAULT_FEATURED_MACHINE.cad_image_url,
+        track_image_url: data.track_image_url || DEFAULT_FEATURED_MACHINE.track_image_url,
+        top_speed_val: String(data.top_speed_val || DEFAULT_FEATURED_MACHINE.top_speed_val),
+        accel_val: String(data.accel_val || DEFAULT_FEATURED_MACHINE.accel_val),
+        voltage_val: String(data.voltage_val || DEFAULT_FEATURED_MACHINE.voltage_val),
+        weight_val: String(data.weight_val || DEFAULT_FEATURED_MACHINE.weight_val),
+        powertrain_headline: data.powertrain_headline || DEFAULT_FEATURED_MACHINE.powertrain_headline,
+        powertrain_specs: data.powertrain_specs || DEFAULT_FEATURED_MACHINE.powertrain_specs,
+        accumulator_headline: data.accumulator_headline || DEFAULT_FEATURED_MACHINE.accumulator_headline,
+        accumulator_specs: data.accumulator_specs || DEFAULT_FEATURED_MACHINE.accumulator_specs,
+        chassis_headline: data.chassis_headline || DEFAULT_FEATURED_MACHINE.chassis_headline,
+        chassis_specs: data.chassis_specs || DEFAULT_FEATURED_MACHINE.chassis_specs,
+        aero_headline: data.aero_headline || DEFAULT_FEATURED_MACHINE.aero_headline,
+        aero_specs: data.aero_specs || DEFAULT_FEATURED_MACHINE.aero_specs,
+      });
+    }
+
     async function loadMachine() {
+      // 1. Immediate optimistic hydration from localStorage if available
+      if (typeof window !== "undefined") {
+        try {
+          const mFeat = localStorage.getItem("vr_featured_machine");
+          const mExt = localStorage.getItem("vr_machine_extended");
+          const cached = mFeat ? JSON.parse(mFeat) : (mExt ? JSON.parse(mExt) : null);
+          if (cached && cached.car_name) {
+            applyData(cached);
+          }
+        } catch {}
+      }
+
+      // 2. Fetch fresh data from Supabase featured_machine table
       try {
         const supabase = createClient();
         const { data, error } = await supabase
@@ -23,31 +60,57 @@ export function CarSpotlight() {
           .maybeSingle();
 
         if (data && !error) {
-          setMachine({
-            car_name: data.car_name || DEFAULT_FEATURED_MACHINE.car_name,
-            season_tag: data.season_tag || DEFAULT_FEATURED_MACHINE.season_tag,
-            description: data.description || DEFAULT_FEATURED_MACHINE.description,
-            cad_image_url: data.cad_image_url || DEFAULT_FEATURED_MACHINE.cad_image_url,
-            track_image_url: data.track_image_url || DEFAULT_FEATURED_MACHINE.track_image_url,
-            top_speed_val: data.top_speed_val || DEFAULT_FEATURED_MACHINE.top_speed_val,
-            accel_val: data.accel_val || DEFAULT_FEATURED_MACHINE.accel_val,
-            voltage_val: data.voltage_val || DEFAULT_FEATURED_MACHINE.voltage_val,
-            weight_val: data.weight_val || DEFAULT_FEATURED_MACHINE.weight_val,
-            powertrain_headline: data.powertrain_headline || DEFAULT_FEATURED_MACHINE.powertrain_headline,
-            powertrain_specs: data.powertrain_specs || DEFAULT_FEATURED_MACHINE.powertrain_specs,
-            accumulator_headline: data.accumulator_headline || DEFAULT_FEATURED_MACHINE.accumulator_headline,
-            accumulator_specs: data.accumulator_specs || DEFAULT_FEATURED_MACHINE.accumulator_specs,
-            chassis_headline: data.chassis_headline || DEFAULT_FEATURED_MACHINE.chassis_headline,
-            chassis_specs: data.chassis_specs || DEFAULT_FEATURED_MACHINE.chassis_specs,
-            aero_headline: data.aero_headline || DEFAULT_FEATURED_MACHINE.aero_headline,
-            aero_specs: data.aero_specs || DEFAULT_FEATURED_MACHINE.aero_specs,
-          });
+          applyData(data);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("vr_featured_machine", JSON.stringify(data));
+            } catch {}
+          }
+        } else {
+          // Fallback to custom_databases Fleet & Vehicles if featured_machine is empty
+          const { data: fleetDb } = await supabase
+            .from("custom_databases")
+            .select("records")
+            .eq("db_name", "Fleet & Vehicles")
+            .maybeSingle();
+
+          if (fleetDb && Array.isArray(fleetDb.records) && fleetDb.records.length > 0) {
+            const spotlight = extractSpotlightFromVehicles(fleetDb.records);
+            applyData(spotlight);
+          }
         }
       } catch {
         // Fallback remains active
       }
     }
+
     loadMachine();
+
+    // Real-time synchronization: listen for custom event and storage event
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "vr_featured_machine" || e.key === "vr_machine_extended" || e.key === "vr_vehicles") {
+        loadMachine();
+      }
+    };
+    const handleCustom = (e: any) => {
+      if (e.detail) {
+        applyData(e.detail);
+      } else {
+        loadMachine();
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", handleStorage);
+      window.addEventListener("vr_spotlight_changed", handleCustom);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("storage", handleStorage);
+        window.removeEventListener("vr_spotlight_changed", handleCustom);
+      }
+    };
   }, []);
 
   const subsystems = [
