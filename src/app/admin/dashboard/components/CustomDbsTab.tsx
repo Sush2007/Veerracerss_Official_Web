@@ -451,6 +451,18 @@ export function CustomDbsTab({
           <p className="text-xs font-mono text-white/50 max-w-2xl mt-0.5">
             Centralized storage space for VeerRacerss team documents, Formula Bharat rulebooks, CAD drawings, Excel spreadsheets, sponsorship MoUs, and testing data.
           </p>
+
+          {/* Supported File Extensions Reference Badges */}
+          <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-white/5">
+            <span className="text-[10px] font-mono uppercase text-racing-red font-bold">Supported Formats:</span>
+            <span className="text-[10px] font-mono text-white/70 bg-white/5 px-2 py-0.5 border border-white/10">PDF (.pdf)</span>
+            <span className="text-[10px] font-mono text-white/70 bg-white/5 px-2 py-0.5 border border-white/10">Excel (.xlsx, .xls, .csv)</span>
+            <span className="text-[10px] font-mono text-white/70 bg-white/5 px-2 py-0.5 border border-white/10">Word (.docx, .doc)</span>
+            <span className="text-[10px] font-mono text-white/70 bg-white/5 px-2 py-0.5 border border-white/10">PPT (.pptx, .ppt)</span>
+            <span className="text-[10px] font-mono text-white/70 bg-white/5 px-2 py-0.5 border border-white/10">CAD (.step, .stp, .dwg, .stl)</span>
+            <span className="text-[10px] font-mono text-white/70 bg-white/5 px-2 py-0.5 border border-white/10">Images (.png, .jpg, .webp)</span>
+            <span className="text-[10px] font-mono text-white/70 bg-white/5 px-2 py-0.5 border border-white/10">Archives (.zip, .rar, .7z)</span>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
@@ -974,6 +986,7 @@ export function CustomDbsTab({
                       <input
                         ref={fileInputRef}
                         type="file"
+                        accept="*/*"
                         onChange={(e) => {
                           if (e.target.files && e.target.files[0]) {
                             handleFileSelected(e.target.files[0]);
@@ -997,14 +1010,54 @@ export function CustomDbsTab({
                         </div>
                       ) : (
                         <div className="space-y-1">
-                          <p className="text-xs font-mono text-white/80">
+                          <p className="text-xs font-mono text-white/80 font-bold">
                             Click to browse or drag & drop any file here
                           </p>
                           <p className="text-[10px] font-mono text-white/40">
-                            PDF, Excel (.xlsx/.csv), Word, Images, CAD (.step/.dwg), ZIP archives
+                            Maximum upload size: 30 MB per file
                           </p>
                         </div>
                       )}
+                    </div>
+
+                    {/* Supported File Types & Extensions Detail Box */}
+                    <div className="mt-3 bg-[#121318] border border-white/10 p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono uppercase text-racing-red font-bold flex items-center gap-1.5">
+                          <FileCheck className="w-3.5 h-3.5" />
+                          <span>Supported File Types & Extensions</span>
+                        </span>
+                        <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 border border-emerald-500/20">
+                          Max 30 MB
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[10px] font-mono">
+                        <div className="bg-black/40 p-2 border border-white/5">
+                          <span className="text-red-400 font-bold block mb-0.5">Documents:</span>
+                          <span className="text-white/70 font-sans text-[10px]">.pdf, .doc, .docx, .txt, .md, .rtf</span>
+                        </div>
+                        <div className="bg-black/40 p-2 border border-white/5">
+                          <span className="text-emerald-400 font-bold block mb-0.5">Spreadsheets:</span>
+                          <span className="text-white/70 font-sans text-[10px]">.xlsx, .xls, .csv, .ods</span>
+                        </div>
+                        <div className="bg-black/40 p-2 border border-white/5">
+                          <span className="text-amber-400 font-bold block mb-0.5">Presentations:</span>
+                          <span className="text-white/70 font-sans text-[10px]">.pptx, .ppt, .odp</span>
+                        </div>
+                        <div className="bg-black/40 p-2 border border-white/5">
+                          <span className="text-cyan-400 font-bold block mb-0.5">CAD & 3D:</span>
+                          <span className="text-white/70 font-sans text-[10px]">.step, .stp, .dwg, .dxf, .stl</span>
+                        </div>
+                        <div className="bg-black/40 p-2 border border-white/5">
+                          <span className="text-yellow-400 font-bold block mb-0.5">Archives:</span>
+                          <span className="text-white/70 font-sans text-[10px]">.zip, .rar, .7z, .tar, .gz</span>
+                        </div>
+                        <div className="bg-black/40 p-2 border border-white/5">
+                          <span className="text-purple-400 font-bold block mb-0.5">Images & Media:</span>
+                          <span className="text-white/70 font-sans text-[10px]">.png, .jpg, .webp, .svg, .mp4</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ) : (
