@@ -103,6 +103,7 @@ export interface CustomDatabaseRecord {
   description?: string;
   schema_definition: CustomDatabaseColumn[];
   records: Record<string, any>[];
+  parent_id?: string | null;
   created_at?: string;
   updated_at?: string;
 }

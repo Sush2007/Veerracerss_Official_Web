@@ -1575,9 +1575,100 @@ export default function AdminDashboard() {
         } catch {}
       }
       broadcastSync();
-      showToast(`Database "${name}" deleted.`);
+      showToast(`Folder "${name}" deleted.`);
     } catch (err: any) {
       showError(err.message || "Failed to delete database.");
+    }
+  };
+
+  const handleUpdateDatabase = async (id: string, updates: Partial<CustomDatabaseRecord>) => {
+    try {
+      if (isValidUUID(id)) {
+        const { error } = await supabase
+          .from("custom_databases")
+          .update({ ...updates, updated_at: new Date().toISOString() })
+          .eq("id", id);
+        if (error && error.code !== "22P02") {
+          console.warn("Supabase update db note:", error.message);
+        }
+      }
+      const updated = customDbs.map((db) => (db.id === id ? { ...db, ...updates } : db));
+      setCustomDbs(updated);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_custom_databases", JSON.stringify(updated));
+        } catch {}
+      }
+      broadcastSync();
+      showToast("Folder updated successfully.");
+    } catch (err: any) {
+      showError(err.message || "Failed to update folder.");
+    }
+  };
+
+  const handleMoveFile = async (sourceDbId: string, targetDbId: string, fileId: string) => {
+    try {
+      const sourceDb = customDbs.find((db) => db.id === sourceDbId);
+      const targetDb = customDbs.find((db) => db.id === targetDbId);
+      if (!sourceDb || !targetDb || sourceDbId === targetDbId) return;
+
+      const fileToMove = (sourceDb.records || []).find((r: any) => r.id === fileId);
+      if (!fileToMove) return;
+
+      const updatedSourceRecords = (sourceDb.records || []).filter((r: any) => r.id !== fileId);
+      const updatedTargetRecords = [...(targetDb.records || []), { ...fileToMove, folder_id: targetDbId }];
+
+      if (isValidUUID(sourceDbId)) {
+        await supabase
+          .from("custom_databases")
+          .update({ records: updatedSourceRecords, updated_at: new Date().toISOString() })
+          .eq("id", sourceDbId);
+      }
+      if (isValidUUID(targetDbId)) {
+        await supabase
+          .from("custom_databases")
+          .update({ records: updatedTargetRecords, updated_at: new Date().toISOString() })
+          .eq("id", targetDbId);
+      }
+
+      const updated = customDbs.map((db) => {
+        if (db.id === sourceDbId) return { ...db, records: updatedSourceRecords };
+        if (db.id === targetDbId) return { ...db, records: updatedTargetRecords };
+        return db;
+      });
+      setCustomDbs(updated);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_custom_databases", JSON.stringify(updated));
+        } catch {}
+      }
+      broadcastSync();
+      showToast(`File moved to "${targetDb.db_name}".`);
+    } catch (err: any) {
+      showError(err.message || "Failed to move file.");
+    }
+  };
+
+  const handleMoveFolder = async (folderId: string, newParentId: string | null) => {
+    try {
+      if (folderId === newParentId) return;
+      if (isValidUUID(folderId)) {
+        await supabase
+          .from("custom_databases")
+          .update({ parent_id: newParentId, updated_at: new Date().toISOString() })
+          .eq("id", folderId);
+      }
+      const updated = customDbs.map((db) => (db.id === folderId ? { ...db, parent_id: newParentId } : db));
+      setCustomDbs(updated);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vr_custom_databases", JSON.stringify(updated));
+        } catch {}
+      }
+      broadcastSync();
+      showToast("Folder branch updated.");
+    } catch (err: any) {
+      showError(err.message || "Failed to move folder.");
     }
   };
 
@@ -3273,9 +3364,12 @@ export default function AdminDashboard() {
             databases={customDbs}
             onCreateDatabase={handleCreateDatabase}
             onDeleteDatabase={handleDeleteDatabase}
+            onUpdateDatabase={handleUpdateDatabase}
             onAddRecord={handleAddCustomDbRecord}
             onDeleteRecord={handleDeleteCustomDbRecord}
             onUpdateRecord={handleUpdateCustomDbRecord}
+            onMoveFile={handleMoveFile}
+            onMoveFolder={handleMoveFolder}
             onUploadFile={async (file: File) => {
               try {
                 return await uploadToStorage(file, "member-images", "storage-vault");
