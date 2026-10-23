@@ -353,16 +353,16 @@ export default function AdminDashboard() {
 
   // Helper: Sanitize & upload file to Supabase storage
   const uploadToStorage = async (file: File, bucket: string, folder: string = ""): Promise<string> => {
-    if (file.size > 15 * 1024 * 1024) {
-      throw new Error("File exceeds maximum allowed size (15 MB)");
+    if (file.size > 30 * 1024 * 1024) {
+      throw new Error("File exceeds maximum allowed size (30 MB)");
     }
-    const cleanExt = (file.name.split('.').pop() || "png").toLowerCase();
+    const cleanExt = (file.name.split('.').pop() || "bin").toLowerCase();
     const cleanName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${cleanExt}`;
     const storagePath = folder ? `${folder}/${cleanName}` : cleanName;
 
     const { error } = await supabase.storage.from(bucket).upload(storagePath, file, {
       upsert: true,
-      contentType: file.type || "image/png"
+      contentType: file.type || "application/octet-stream"
     });
     if (error) throw error;
 
@@ -1279,32 +1279,29 @@ export default function AdminDashboard() {
       },
     ];
 
-    // Include all custom databases as individual worksheets
-    const usedSheetNames = new Set(sheets.map((s) => s.sheetName.toLowerCase()));
-    customDbs.forEach((db, i) => {
-      const dbRows = (db.records || []).map((row) => {
-        const cleanRow: Record<string, any> = {};
-        (db.schema_definition || []).forEach((col) => {
-          cleanRow[col.label] = row[col.key] !== undefined && row[col.key] !== null ? row[col.key] : "";
+    // Include all storage space files into a Storage Space Files worksheet
+    const storageFileRows: Record<string, any>[] = [];
+    customDbs.forEach((db) => {
+      (db.records || []).forEach((r: any) => {
+        storageFileRows.push({
+          "Storage Space": db.db_name || "General",
+          "File Name": r.file_name || r.name || r.item_name || r.tool_name || r.company_name || "File",
+          "File Type": (r.file_type || r.type || "FILE").toString().toUpperCase(),
+          "Size": r.file_size || "-",
+          "Category": r.category || db.db_name || "-",
+          "Uploaded Date": r.uploaded_at ? new Date(r.uploaded_at).toLocaleDateString() : "-",
+          "Description / Notes": r.description || "-",
+          "File URL": r.file_url || r.url || "",
         });
-        return cleanRow;
-      });
-
-      let safeSheetName = (db.db_name || `Custom DB ${i + 1}`)
-        .replace(/[\\/?*:[\]]/g, "")
-        .trim()
-        .substring(0, 31) || `Custom DB ${i + 1}`;
-
-      if (usedSheetNames.has(safeSheetName.toLowerCase())) {
-        safeSheetName = safeSheetName.substring(0, 27) + ` (${i + 1})`;
-      }
-      usedSheetNames.add(safeSheetName.toLowerCase());
-
-      sheets.push({
-        sheetName: safeSheetName,
-        data: dbRows,
       });
     });
+
+    if (storageFileRows.length > 0) {
+      sheets.push({
+        sheetName: "Storage Space Files",
+        data: storageFileRows,
+      });
+    }
 
     exportMultiSheetExcel(sheets, "veerracerss-master-club-backup");
   };
@@ -1869,8 +1866,8 @@ export default function AdminDashboard() {
               activeTab === "custom_dbs" ? "bg-racing-red text-white shadow-md" : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
-            <Layers className="w-3.5 h-3.5 text-blue-400" />
-            <span>Custom DBs ({customDbs.length})</span>
+            <HardDrive className="w-3.5 h-3.5 text-blue-400" />
+            <span>Storage & Files ({customDbs.reduce((acc, db) => acc + (db.records?.length || 0), 0)})</span>
           </button>
         </div>
 
@@ -3269,7 +3266,7 @@ export default function AdminDashboard() {
         )}
 
         {/* =========================================================================
-            TAB 8: CUSTOM CLUB DATABASES (WITH EXCEL EXPORT)
+            TAB 8: CLUB STORAGE SPACE & FILE VAULT
         ========================================================================= */}
         {activeTab === "custom_dbs" && (
           <CustomDbsTab
@@ -3279,6 +3276,13 @@ export default function AdminDashboard() {
             onAddRecord={handleAddCustomDbRecord}
             onDeleteRecord={handleDeleteCustomDbRecord}
             onUpdateRecord={handleUpdateCustomDbRecord}
+            onUploadFile={async (file: File) => {
+              try {
+                return await uploadToStorage(file, "member-images", "storage-vault");
+              } catch {
+                return await uploadToStorage(file, "member-images");
+              }
+            }}
           />
         )}
 

@@ -1075,37 +1075,103 @@ export const DEFAULT_RECRUITS: RecruitmentApplication[] = [
 export const DEFAULT_CUSTOM_DATABASES: CustomDatabaseRecord[] = [
   {
     id: "cdb-1",
-    db_name: "Workshop Tools & Equipment Registry",
-    description: "Inventory of mechanical fabrication tools, electrical multimeters, and dyno instruments",
-    schema_definition: [
-      { key: "tool_name", label: "Tool / Equipment Name", type: "text" },
-      { key: "domain", label: "Assigned Domain", type: "text" },
-      { key: "quantity", label: "Quantity", type: "number" },
-      { key: "condition", label: "Current Condition", type: "text" },
-      { key: "storage_bay", label: "Storage Bay", type: "text" },
-    ],
+    db_name: "Rulebooks & Technical Regulations",
+    description: "Official Formula Bharat, Formula Imperial, and EV compliance documents and rulebooks",
+    schema_definition: [],
     records: [
-      { id: "1", tool_name: "TIG Welding Torch & Argon Regulator", domain: "Chassis & Fabrication", quantity: 2, condition: "Operational - Calibrated", storage_bay: "Bay A - Metal Fabrication" },
-      { id: "2", tool_name: "Keysight 2-Channel Digital Oscilloscope", domain: "Powertrain & Electronics", quantity: 1, condition: "Operational", storage_bay: "Bay B - Electrical Lab Bench" },
-      { id: "3", tool_name: "Mitutoyo Digital Vernier Caliper (300mm)", domain: "Suspension & Wheel Assembly", quantity: 3, condition: "Good", storage_bay: "Tool Chest #2" },
-      { id: "4", tool_name: "Digital Tyre Pressure Gauge & Pyrometer", domain: "Track Vehicle Dynamics", quantity: 2, condition: "Field Ready", storage_bay: "Pit Flight Case" },
-    ],
+      {
+        id: "f-1",
+        file_name: "Formula_Bharat_2026_Rules_Rev2.pdf",
+        file_url: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/storage-vault/Formula_Bharat_2026_Rules_Rev2.pdf",
+        file_size: "3.4 MB",
+        file_type: "pdf",
+        category: "Regulations & Rulebooks",
+        description: "Official Formula Bharat 2026 rulebook covering EV tractive system rules & SES template",
+        uploaded_at: "2026-03-10T10:30:00Z",
+        uploaded_by: "Admin"
+      },
+      {
+        id: "f-2",
+        file_name: "Formula_Imperial_EV_Technical_Guidance.pdf",
+        file_url: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/storage-vault/Formula_Imperial_EV_Technical_Guidance.pdf",
+        file_size: "2.1 MB",
+        file_type: "pdf",
+        category: "Regulations & Rulebooks",
+        description: "ISIE India Electric Category scrutiny checklist and EV powertrain requirements",
+        uploaded_at: "2026-03-12T14:15:00Z",
+        uploaded_by: "Admin"
+      }
+    ]
   },
   {
     id: "cdb-2",
-    db_name: "Sponsorship & Corporate Outreach Pipeline",
-    description: "Status of technical partnerships, raw material sponsors, and industrial support",
-    schema_definition: [
-      { key: "company_name", label: "Company / Partner", type: "text" },
-      { key: "tier", label: "Sponsorship Tier", type: "text" },
-      { key: "poc_name", label: "POC / Contact Person", type: "text" },
-      { key: "status", label: "Discussion Status", type: "text" },
-      { key: "contribution_value", label: "Support / Valuation", type: "text" },
-    ],
+    db_name: "CAD & Engineering Datasets",
+    description: "Chassis simulation reports, battery pack CAD packages, and dyno test run spreadsheets",
+    schema_definition: [],
     records: [
-      { id: "1", company_name: "Hindalco Industries", tier: "Title Partner", poc_name: "CSR & Technical Relations Desk", status: "Confirmed / MoU Signed", contribution_value: "Raw Aluminium & Fabrication Grants" },
-      { id: "2", company_name: "Ansys Academic Program", tier: "Technical Software Partner", poc_name: "University Lead", status: "Active License", contribution_value: "25 CFD & FEA Simulation Seats" },
-      { id: "3", company_name: "MCL (Mahanadi Coalfields)", tier: "Principal CSR Sponsor", poc_name: "Public Relations Office", status: "Proposal Under Final Review", contribution_value: "₹3,50,000 EV Battery Research Grant" },
-    ],
+      {
+        id: "f-3",
+        file_name: "AETHER_Chassis_Torsional_Stiffness_FEA.pdf",
+        file_url: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/storage-vault/AETHER_Chassis_Torsional_Stiffness_FEA.pdf",
+        file_size: "4.8 MB",
+        file_type: "pdf",
+        category: "Chassis & Aero FEA",
+        description: "Finite element analysis on tubular chromoly spaceframe torsional rigidity",
+        uploaded_at: "2026-03-15T09:45:00Z",
+        uploaded_by: "Admin"
+      },
+      {
+        id: "f-4",
+        file_name: "PMSM_Motor_Dyno_Torque_Speed_Curve.xlsx",
+        file_url: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/storage-vault/PMSM_Motor_Dyno_Torque_Speed_Curve.xlsx",
+        file_size: "820 KB",
+        file_type: "xlsx",
+        category: "Powertrain Dyno Data",
+        description: "Bench dyno torque and rpm test curves for 10kW motor controller tuning",
+        uploaded_at: "2026-03-18T16:20:00Z",
+        uploaded_by: "Admin"
+      },
+      {
+        id: "f-5",
+        file_name: "Li-Ion_72V_Battery_Pack_CAD_Package.zip",
+        file_url: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/storage-vault/Li-Ion_72V_Battery_Pack_CAD_Package.zip",
+        file_size: "14.2 MB",
+        file_type: "zip",
+        category: "High Voltage CAD",
+        description: "Enclosure STEP files, busbar laser cut DXFs, and cooling duct drawings",
+        uploaded_at: "2026-03-22T11:00:00Z",
+        uploaded_by: "Admin"
+      }
+    ]
   },
+  {
+    id: "cdb-3",
+    db_name: "Sponsorship & MoUs",
+    description: "Corporate sponsorship proposals, Signed MoUs, and technical partner agreements",
+    schema_definition: [],
+    records: [
+      {
+        id: "f-6",
+        file_name: "VeerRacerss_Electric_Sponsorship_Brochure_2026.pdf",
+        file_url: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/storage-vault/VeerRacerss_Electric_Sponsorship_Brochure_2026.pdf",
+        file_size: "6.5 MB",
+        file_type: "pdf",
+        category: "Pitch Decks",
+        description: "Official partnership deck for corporate CSR and technical component sponsors",
+        uploaded_at: "2026-03-25T13:10:00Z",
+        uploaded_by: "Admin"
+      },
+      {
+        id: "f-7",
+        file_name: "Corporate_Outreach_Pipeline_Q1_2026.xlsx",
+        file_url: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/storage-vault/Corporate_Outreach_Pipeline_Q1_2026.xlsx",
+        file_size: "340 KB",
+        file_type: "xlsx",
+        category: "Sponsorship Tracker",
+        description: "Track contacts, meeting dates, deliverables, and sponsorship status",
+        uploaded_at: "2026-04-01T15:00:00Z",
+        uploaded_by: "Admin"
+      }
+    ]
+  }
 ];
