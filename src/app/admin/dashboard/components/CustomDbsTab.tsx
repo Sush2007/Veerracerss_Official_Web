@@ -7,7 +7,6 @@ import {
   UploadCloud,
   FileText,
   FileSpreadsheet,
-  FileCode,
   Image as ImageIcon,
   Archive,
   Box,
@@ -22,12 +21,7 @@ import {
   Grid,
   List,
   X,
-  Sparkles,
   HardDrive,
-  FileCheck,
-  Tag,
-  Clock,
-  Layers,
   Paperclip,
   Film
 } from "lucide-react";
@@ -65,7 +59,7 @@ export function CustomDbsTab({
   onUpdateRecord,
   onUploadFile,
 }: CustomDbsTabProps) {
-  // Navigation / Filter State
+  // Navigation & Filter State
   const [activeSpaceId, setActiveSpaceId] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>("ALL");
@@ -102,7 +96,7 @@ export function CustomDbsTab({
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Lock body scroll whenever any storage modal is open
+  // Prevent background scrolling while modal is open
   useEffect(() => {
     const isAnyModalOpen = Boolean(showUploadModal || showCreateSpaceModal || editingFile);
     if (isAnyModalOpen) {
@@ -127,7 +121,6 @@ export function CustomDbsTab({
 
     databases.forEach((db) => {
       (db.records || []).forEach((rec: any) => {
-        // Adapt record to standard StorageFileRecord
         const fileRecord: StorageFileRecord = {
           id: rec.id || `${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
           file_name: rec.file_name || rec.name || rec.item_name || rec.tool_name || rec.company_name || "Document",
@@ -151,128 +144,71 @@ export function CustomDbsTab({
     return files;
   }, [databases]);
 
-  // Filtered files according to space, search, and type
+  // Filtered files
   const filteredFiles = useMemo(() => {
     return allStoredFiles.filter(({ spaceId, file }) => {
-      // Space filter
-      if (activeSpaceId !== "ALL" && spaceId !== activeSpaceId) {
-        return false;
-      }
+      if (activeSpaceId !== "ALL" && spaceId !== activeSpaceId) return false;
 
-      // Type filter
       if (selectedTypeFilter !== "ALL") {
         const ext = (file.file_name.split(".").pop() || file.file_type || "").toLowerCase();
         if (selectedTypeFilter === "PDF" && ext !== "pdf") return false;
         if (selectedTypeFilter === "EXCEL" && !["xlsx", "xls", "csv"].includes(ext)) return false;
-        if (selectedTypeFilter === "WORD" && !["doc", "docx"].includes(ext)) return false;
-        if (selectedTypeFilter === "IMAGE" && !["png", "jpg", "jpeg", "webp", "svg", "gif"].includes(ext)) return false;
-        if (selectedTypeFilter === "CAD" && !["step", "stp", "dwg", "dxf", "stl", "iges", "igs"].includes(ext)) return false;
+        if (selectedTypeFilter === "DOC" && !["doc", "docx", "txt", "md"].includes(ext)) return false;
+        if (selectedTypeFilter === "IMAGE" && !["png", "jpg", "jpeg", "webp", "svg"].includes(ext)) return false;
+        if (selectedTypeFilter === "CAD" && !["step", "stp", "dwg", "dxf", "stl"].includes(ext)) return false;
         if (selectedTypeFilter === "ZIP" && !["zip", "rar", "7z", "tar", "gz"].includes(ext)) return false;
       }
 
-      // Search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchesName = file.file_name.toLowerCase().includes(q);
         const matchesCategory = (file.category || "").toLowerCase().includes(q);
         const matchesDesc = (file.description || "").toLowerCase().includes(q);
-        const matchesType = (file.file_type || "").toLowerCase().includes(q);
-        if (!matchesName && !matchesCategory && !matchesDesc && !matchesType) {
-          return false;
-        }
+        if (!matchesName && !matchesCategory && !matchesDesc) return false;
       }
 
       return true;
     });
   }, [allStoredFiles, activeSpaceId, selectedTypeFilter, searchQuery]);
 
-  // Helper: Format byte size
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
   };
 
-  // Helper: File Type Metadata & Icon badge
   const getFileIconInfo = (fileName: string, rawType?: string) => {
     const ext = (fileName.split(".").pop() || rawType || "").toLowerCase();
 
     if (ext === "pdf") {
-      return {
-        badge: "PDF",
-        badgeBg: "bg-red-500/15 text-red-400 border-red-500/30",
-        icon: FileText,
-        color: "text-red-400",
-      };
+      return { badge: "PDF", bg: "bg-red-500/15 text-red-400 border-red-500/30", icon: FileText, color: "text-red-400" };
     }
     if (["xlsx", "xls", "csv"].includes(ext)) {
-      return {
-        badge: ext.toUpperCase(),
-        badgeBg: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-        icon: FileSpreadsheet,
-        color: "text-emerald-400",
-      };
+      return { badge: ext.toUpperCase(), bg: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30", icon: FileSpreadsheet, color: "text-emerald-400" };
     }
-    if (["doc", "docx"].includes(ext)) {
-      return {
-        badge: "DOC",
-        badgeBg: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-        icon: FileText,
-        color: "text-blue-400",
-      };
+    if (["doc", "docx", "txt", "md"].includes(ext)) {
+      return { badge: "DOC", bg: "bg-blue-500/15 text-blue-400 border-blue-500/30", icon: FileText, color: "text-blue-400" };
     }
     if (["ppt", "pptx"].includes(ext)) {
-      return {
-        badge: "PPT",
-        badgeBg: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-        icon: FileText,
-        color: "text-amber-400",
-      };
+      return { badge: "PPT", bg: "bg-amber-500/15 text-amber-400 border-amber-500/30", icon: FileText, color: "text-amber-400" };
     }
-    if (["png", "jpg", "jpeg", "webp", "svg", "gif"].includes(ext)) {
-      return {
-        badge: "IMG",
-        badgeBg: "bg-purple-500/15 text-purple-400 border-purple-500/30",
-        icon: ImageIcon,
-        color: "text-purple-400",
-      };
+    if (["png", "jpg", "jpeg", "webp", "svg"].includes(ext)) {
+      return { badge: "IMG", bg: "bg-purple-500/15 text-purple-400 border-purple-500/30", icon: ImageIcon, color: "text-purple-400" };
     }
-    if (["step", "stp", "dwg", "dxf", "stl", "iges", "igs"].includes(ext)) {
-      return {
-        badge: "CAD",
-        badgeBg: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
-        icon: Box,
-        color: "text-cyan-400",
-      };
+    if (["step", "stp", "dwg", "dxf", "stl"].includes(ext)) {
+      return { badge: "CAD", bg: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30", icon: Box, color: "text-cyan-400" };
     }
     if (["zip", "rar", "7z", "tar", "gz"].includes(ext)) {
-      return {
-        badge: "ZIP",
-        badgeBg: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
-        icon: Archive,
-        color: "text-yellow-400",
-      };
+      return { badge: "ZIP", bg: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30", icon: Archive, color: "text-yellow-400" };
     }
-    if (["mp4", "mov", "avi", "mkv"].includes(ext)) {
-      return {
-        badge: "VIDEO",
-        badgeBg: "bg-rose-500/15 text-rose-400 border-rose-500/30",
-        icon: Film,
-        color: "text-rose-400",
-      };
+    if (["mp4", "mov"].includes(ext)) {
+      return { badge: "VIDEO", bg: "bg-rose-500/15 text-rose-400 border-rose-500/30", icon: Film, color: "text-rose-400" };
     }
-
-    return {
-      badge: (ext.substring(0, 4) || "FILE").toUpperCase(),
-      badgeBg: "bg-white/10 text-white/70 border-white/20",
-      icon: Paperclip,
-      color: "text-white/70",
-    };
+    return { badge: (ext.substring(0, 4) || "FILE").toUpperCase(), bg: "bg-white/10 text-white/70 border-white/20", icon: Paperclip, color: "text-white/70" };
   };
 
-  // Drag and Drop File Handlers
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -297,14 +233,13 @@ export function CustomDbsTab({
     setUploadError(null);
   };
 
-  // Submit Upload File
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setUploadError(null);
 
     const targetSpace = databases.find((db) => db.id === targetSpaceId) || databases[0];
     if (!targetSpace) {
-      setUploadError("Please select a target storage space first.");
+      setUploadError("Please select a target folder.");
       return;
     }
 
@@ -330,9 +265,7 @@ export function CustomDbsTab({
         if (onUploadFile) {
           finalUrl = await onUploadFile(selectedFile, "storage-vault");
         } else {
-          // Fallback Supabase upload
           const supabase = createClient();
-          const cleanExt = (selectedFile.name.split(".").pop() || "bin").toLowerCase();
           const safeName = selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
           const storagePath = `storage-vault/${Date.now()}-${safeName}`;
 
@@ -344,8 +277,6 @@ export function CustomDbsTab({
             });
 
           if (uploadErr) {
-            console.warn("Storage upload note:", uploadErr.message);
-            // Fallback for smaller files: convert to base64 data URI
             if (selectedFile.size < 4 * 1024 * 1024) {
               const base64 = await new Promise<string>((resolve, reject) => {
                 const reader = new FileReader();
@@ -355,7 +286,7 @@ export function CustomDbsTab({
               });
               finalUrl = base64;
             } else {
-              throw new Error(uploadErr.message || "Failed to upload file to storage.");
+              throw new Error(uploadErr.message || "Failed to upload file.");
             }
           } else {
             const { data: pub } = supabase.storage.from("member-images").getPublicUrl(storagePath);
@@ -368,10 +299,10 @@ export function CustomDbsTab({
 
       const newRecord: StorageFileRecord = {
         id: `${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        file_name: fileName.trim() || selectedFile?.name || "Uploaded Document",
+        file_name: fileName.trim() || selectedFile?.name || "Document",
         file_url: finalUrl,
         file_size: sizeStr,
-        file_type: ext || (selectedFile?.type ? selectedFile.type.split("/").pop() : "file"),
+        file_type: ext || "file",
         category: fileCategory.trim() || targetSpace.db_name,
         description: fileDescription.trim(),
         uploaded_at: new Date().toISOString(),
@@ -380,7 +311,6 @@ export function CustomDbsTab({
 
       await onAddRecord(targetSpace.id, newRecord);
 
-      // Reset Form
       setShowUploadModal(false);
       setSelectedFile(null);
       setFileName("");
@@ -388,13 +318,12 @@ export function CustomDbsTab({
       setFileDescription("");
       setFileCategory("General");
     } catch (err: any) {
-      setUploadError(err.message || "Failed to upload file. Please try again.");
+      setUploadError(err.message || "Upload failed. Please try again.");
     } finally {
       setIsUploading(false);
     }
   };
 
-  // Submit Create New Storage Space
   const handleCreateSpaceSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSpaceName.trim()) return;
@@ -411,7 +340,6 @@ export function CustomDbsTab({
     setNewSpaceDesc("");
   };
 
-  // Submit Edit File
   const handleEditFileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingFile || !onUpdateRecord) return;
@@ -426,52 +354,45 @@ export function CustomDbsTab({
     setEditingFile(null);
   };
 
-  // Copy URL to Clipboard
   const handleCopyUrl = (id: string, url: string) => {
     if (!url) return;
     navigator.clipboard.writeText(url);
     setCopiedId(id);
-    setTimeout(() => {
-      setCopiedId(null);
-    }, 2000);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner & Quick Controls */}
-      <div className="bg-[#0b0c10] border border-white/10 p-5 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 mb-1 text-[10px] font-mono uppercase text-racing-red font-bold">
-            <HardDrive className="w-3.5 h-3.5 text-racing-red" />
-            <span>CLOUD STORAGE VAULT & OPERATIONS REPOSITORY</span>
+    <div className="space-y-4">
+      {/* 1. COMPACT UNIFIED TOP BAR */}
+      <div className="bg-[#0b0c10] border border-white/10 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-racing-red/10 border border-racing-red/20 text-racing-red shrink-0">
+            <HardDrive className="w-5 h-5" />
           </div>
-          <h2 className="text-xl sm:text-2xl font-display font-black uppercase text-white">
-            Club File Storage Space
-          </h2>
-          <p className="text-xs font-mono text-white/50 max-w-2xl mt-0.5">
-            Centralized storage space for VeerRacerss team documents, Formula Bharat rulebooks, CAD drawings, Excel spreadsheets, sponsorship MoUs, and testing data.
-          </p>
-
-          {/* Supported File Extensions Reference Badges */}
-          <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-white/5">
-            <span className="text-[10px] font-mono uppercase text-racing-red font-bold">Supported Formats:</span>
-            <span className="text-[10px] font-mono text-white/70 bg-white/5 px-2 py-0.5 border border-white/10">PDF (.pdf)</span>
-            <span className="text-[10px] font-mono text-white/70 bg-white/5 px-2 py-0.5 border border-white/10">Excel (.xlsx, .xls, .csv)</span>
-            <span className="text-[10px] font-mono text-white/70 bg-white/5 px-2 py-0.5 border border-white/10">Word (.docx, .doc)</span>
-            <span className="text-[10px] font-mono text-white/70 bg-white/5 px-2 py-0.5 border border-white/10">PPT (.pptx, .ppt)</span>
-            <span className="text-[10px] font-mono text-white/70 bg-white/5 px-2 py-0.5 border border-white/10">CAD (.step, .stp, .dwg, .stl)</span>
-            <span className="text-[10px] font-mono text-white/70 bg-white/5 px-2 py-0.5 border border-white/10">Images (.png, .jpg, .webp)</span>
-            <span className="text-[10px] font-mono text-white/70 bg-white/5 px-2 py-0.5 border border-white/10">Archives (.zip, .rar, .7z)</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-display font-black uppercase text-white tracking-wide">
+                Storage Vault
+              </h2>
+              <span className="text-[10px] font-mono bg-white/10 text-white/70 px-2 py-0.5 rounded-full font-bold">
+                {allStoredFiles.length} files
+              </span>
+            </div>
+            <p className="text-xs font-mono text-white/50">
+              PDFs, Excel sheets, CAD models, images & documents (up to 30 MB)
+            </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           <button
             onClick={() => setShowCreateSpaceModal(true)}
-            className="px-3.5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/15 text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
+            className="px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
+            title="Create a new folder or category"
           >
-            <Folder className="w-4 h-4 text-racing-red" />
-            <span>New Space / Folder</span>
+            <Folder className="w-3.5 h-3.5 text-racing-red" />
+            <span>New Folder</span>
           </button>
 
           <button
@@ -479,7 +400,7 @@ export function CustomDbsTab({
               setShowUploadModal(true);
               setUploadError(null);
             }}
-            className="px-4 py-2.5 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all shadow-md"
+            className="px-4 py-2 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm"
           >
             <UploadCloud className="w-4 h-4" />
             <span>Upload File</span>
@@ -487,63 +408,48 @@ export function CustomDbsTab({
         </div>
       </div>
 
-      {/* Storage Spaces / Folders Filter Bar */}
-      <div className="bg-[#0b0c10] border border-white/10 p-4">
-        <div className="flex items-center justify-between gap-3 mb-3 pb-2 border-b border-white/5">
-          <span className="text-[11px] font-mono uppercase text-white/50 font-bold flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-racing-red" />
-            <span>Storage Spaces ({databases.length})</span>
-          </span>
-          <span className="text-[11px] font-mono text-white/40">
-            Total Files Stored: <strong className="text-white">{allStoredFiles.length}</strong>
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
+      {/* 2. SLIM CONTROLS BAR: Folders, Search, Filters & View Toggle */}
+      <div className="bg-[#0b0c10] border border-white/10 p-3 space-y-3">
+        {/* Folder Navigation Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
           <button
             onClick={() => setActiveSpaceId("ALL")}
-            className={`px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${
+            className={`shrink-0 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1.5 ${
               activeSpaceId === "ALL"
-                ? "bg-white/15 text-white border-b-2 border-racing-red"
+                ? "bg-racing-red text-white"
                 : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
-            <FolderArchive className="w-3.5 h-3.5 text-racing-red" />
-            <span>All Spaces & Files</span>
-            <span className="text-[10px] bg-black/60 px-1.5 py-0.2 rounded font-normal text-white/50">
-              {allStoredFiles.length}
-            </span>
+            <FolderArchive className="w-3 h-3" />
+            <span>All Files</span>
+            <span className="text-[10px] opacity-75">({allStoredFiles.length})</span>
           </button>
 
           {databases.map((db) => {
             const count = (db.records || []).length;
             const isSelected = activeSpaceId === db.id;
-
             return (
-              <div key={db.id} className="relative group flex items-center">
+              <div key={db.id} className="relative group shrink-0 flex items-center">
                 <button
                   onClick={() => setActiveSpaceId(db.id)}
-                  className={`px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${
+                  className={`px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1.5 ${
                     isSelected
-                      ? "bg-white/15 text-white border-b-2 border-racing-red"
+                      ? "bg-racing-red text-white"
                       : "bg-white/5 text-white/60 hover:text-white"
                   }`}
                 >
-                  <Folder className="w-3.5 h-3.5 text-racing-red" />
-                  <span className="max-w-[180px] truncate">{db.db_name}</span>
-                  <span className="text-[10px] bg-black/60 px-1.5 py-0.2 rounded font-normal text-white/50">
-                    {count}
-                  </span>
+                  <Folder className="w-3 h-3" />
+                  <span className="max-w-[140px] truncate">{db.db_name}</span>
+                  <span className="text-[10px] opacity-75">({count})</span>
                 </button>
-
                 {databases.length > 1 && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onDeleteDatabase(db.id, db.db_name);
                     }}
-                    className="ml-1 p-1 text-white/30 hover:text-red-400 opacity-60 hover:opacity-100 transition-opacity"
-                    title={`Delete Space "${db.db_name}"`}
+                    className="ml-0.5 p-1 text-white/30 hover:text-red-400 transition-colors"
+                    title={`Delete folder "${db.db_name}"`}
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
@@ -552,105 +458,101 @@ export function CustomDbsTab({
             );
           })}
         </div>
+
+        {/* Search, Filter Pills & View Toggle */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t border-white/5">
+          {/* Quick Search */}
+          <div className="relative flex-1 max-w-sm">
+            <Search className="w-3.5 h-3.5 text-white/40 absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Filter by file name or notes..."
+              className="w-full bg-[#121318] border border-white/10 pl-8 pr-7 py-1.5 text-xs font-mono text-white placeholder-white/40 focus:border-racing-red outline-none rounded-none"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between sm:justify-end gap-2 overflow-x-auto">
+            {/* Format Type Filters */}
+            <div className="flex items-center gap-1 text-[11px] font-mono">
+              {[
+                { id: "ALL", label: "All" },
+                { id: "PDF", label: "PDF" },
+                { id: "EXCEL", label: "Excel" },
+                { id: "CAD", label: "CAD" },
+                { id: "DOC", label: "Docs" },
+                { id: "ZIP", label: "ZIP" },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setSelectedTypeFilter(t.id)}
+                  className={`px-2 py-1 uppercase rounded-none transition-all ${
+                    selectedTypeFilter === t.id
+                      ? "bg-white/20 text-white font-bold"
+                      : "text-white/40 hover:text-white"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="flex items-center border border-white/10 bg-[#121318]">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-1.5 transition-colors ${
+                  viewMode === "grid" ? "bg-racing-red text-white" : "text-white/40 hover:text-white"
+                }`}
+                title="Grid View"
+              >
+                <Grid className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-1.5 transition-colors ${
+                  viewMode === "list" ? "bg-racing-red text-white" : "text-white/40 hover:text-white"
+                }`}
+                title="Table View"
+              >
+                <List className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Search, Filter Pills & View Mode Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-[#0b0c10] border border-white/10 p-3.5">
-        {/* Search Input */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search files by name, type, or notes..."
-            className="w-full bg-[#121318] border border-white/10 pl-9 pr-3 py-2 text-xs font-mono text-white placeholder-white/40 focus:border-racing-red outline-none"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-
-        {/* File Type Filter Pills */}
-        <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar">
-          {[
-            { id: "ALL", label: "All" },
-            { id: "PDF", label: "PDFs" },
-            { id: "EXCEL", label: "Excel / CSV" },
-            { id: "WORD", label: "Word Docs" },
-            { id: "IMAGE", label: "Images" },
-            { id: "CAD", label: "CAD / 3D" },
-            { id: "ZIP", label: "Archives" },
-          ].map((type) => (
-            <button
-              key={type.id}
-              onClick={() => setSelectedTypeFilter(type.id)}
-              className={`px-2.5 py-1 text-[11px] font-mono uppercase tracking-wider rounded transition-all ${
-                selectedTypeFilter === type.id
-                  ? "bg-racing-red text-white font-bold"
-                  : "bg-white/5 text-white/60 hover:text-white hover:bg-white/10"
-              }`}
-            >
-              {type.label}
-            </button>
-          ))}
-        </div>
-
-        {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 border border-white/10 p-1 bg-[#121318] self-end md:self-auto">
-          <button
-            onClick={() => setViewMode("grid")}
-            className={`p-1.5 transition-colors ${
-              viewMode === "grid" ? "bg-racing-red text-white" : "text-white/40 hover:text-white"
-            }`}
-            title="Grid View"
-          >
-            <Grid className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setViewMode("list")}
-            className={`p-1.5 transition-colors ${
-              viewMode === "list" ? "bg-racing-red text-white" : "text-white/40 hover:text-white"
-            }`}
-            title="Table / List View"
-          >
-            <List className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Main Files Display Area */}
+      {/* 3. MAIN FILES CONTENT: COMPACT GRID OR SLEEK TABLE */}
       {filteredFiles.length === 0 ? (
-        <div className="bg-[#0b0c10] border border-white/10 p-12 text-center space-y-4">
-          <div className="w-14 h-14 mx-auto rounded-full bg-white/5 flex items-center justify-center text-white/40">
-            <UploadCloud className="w-7 h-7" />
-          </div>
-          <div>
-            <h3 className="text-base font-display font-black uppercase text-white">No Files Found</h3>
-            <p className="text-xs font-mono text-white/50 max-w-md mx-auto mt-1">
-              {searchQuery || selectedTypeFilter !== "ALL"
-                ? "No uploaded files match your active search and filter criteria."
-                : "No files have been uploaded to this storage space yet. Upload any PDF, Excel spreadsheet, CAD model, or document."}
-            </p>
-          </div>
+        <div className="bg-[#0b0c10] border border-white/10 p-8 text-center space-y-3">
+          <UploadCloud className="w-8 h-8 text-white/30 mx-auto" />
+          <p className="text-xs font-mono text-white/50">
+            {searchQuery || selectedTypeFilter !== "ALL"
+              ? "No files match active filters."
+              : "No documents stored here yet."}
+          </p>
           <button
             onClick={() => {
               setShowUploadModal(true);
               setUploadError(null);
             }}
-            className="px-4 py-2 bg-racing-red hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase transition-all"
+            className="px-3.5 py-1.5 bg-racing-red text-white text-xs font-mono font-bold uppercase"
           >
-            Upload First File
+            Upload File
           </button>
         </div>
       ) : viewMode === "grid" ? (
-        /* GRID VIEW */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        /* SLEEK COMPACT CARDS (Clean horizontal rows with high information density) */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
           {filteredFiles.map(({ spaceId, spaceName, file }) => {
             const iconInfo = getFileIconInfo(file.file_name, file.file_type);
             const IconComponent = iconInfo.icon;
@@ -659,147 +561,113 @@ export function CustomDbsTab({
             return (
               <div
                 key={`${spaceId}-${file.id}`}
-                className="bg-[#0b0c10] border border-white/10 hover:border-racing-red/60 p-4 flex flex-col justify-between transition-all group hover:shadow-lg relative"
+                className="bg-[#0b0c10] border border-white/10 hover:border-racing-red/60 p-3 flex items-center justify-between gap-3 transition-colors group"
               >
-                {/* Card Top: Type Badge & Actions */}
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span
-                      className={`text-[10px] font-mono font-bold px-2 py-0.5 border ${iconInfo.badgeBg}`}
+                {/* File Icon & Info */}
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className={`p-2 border shrink-0 ${iconInfo.bg}`}>
+                    <IconComponent className={`w-4 h-4 ${iconInfo.color}`} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <h4
+                      className="text-xs font-mono font-bold text-white group-hover:text-racing-red truncate transition-colors"
+                      title={file.file_name}
                     >
-                      {iconInfo.badge}
-                    </span>
-
-                    <span className="text-[10px] font-mono text-white/40 truncate max-w-[130px]">
-                      {spaceName}
-                    </span>
-                  </div>
-
-                  {/* File Icon & Title */}
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="p-2.5 bg-[#121318] border border-white/5 text-white shrink-0 group-hover:scale-105 transition-transform">
-                      <IconComponent className={`w-5 h-5 ${iconInfo.color}`} />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <h4
-                        className="text-xs font-mono font-bold text-white group-hover:text-racing-red transition-colors break-words line-clamp-2"
-                        title={file.file_name}
-                      >
-                        {file.file_name}
-                      </h4>
-                      <p className="text-[11px] font-mono text-white/40 mt-0.5">
-                        {file.file_size || "N/A"}
-                      </p>
+                      {file.file_name}
+                    </h4>
+                    <div className="flex items-center gap-2 text-[10px] font-mono text-white/40 mt-0.5 truncate">
+                      <span>{file.file_size || "N/A"}</span>
+                      <span>•</span>
+                      <span className="truncate max-w-[100px]">{spaceName}</span>
+                      {file.uploaded_at && (
+                        <>
+                          <span>•</span>
+                          <span>{new Date(file.uploaded_at).toLocaleDateString()}</span>
+                        </>
+                      )}
                     </div>
                   </div>
-
-                  {/* Description / Notes if present */}
-                  {file.description && (
-                    <p className="text-[11px] font-sans text-white/60 font-light line-clamp-2 mb-3 bg-black/30 p-2 border border-white/5">
-                      {file.description}
-                    </p>
-                  )}
-
-                  {/* Category Tag */}
-                  {file.category && (
-                    <div className="inline-flex items-center gap-1 text-[10px] font-mono text-white/50 mb-4 bg-white/5 px-2 py-0.5">
-                      <Tag className="w-3 h-3 text-racing-red" />
-                      <span className="truncate max-w-[160px]">{file.category}</span>
-                    </div>
-                  )}
                 </div>
 
-                {/* Card Footer: Action Buttons */}
-                <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5">
-                    {/* Open / Preview Button */}
-                    {file.file_url && (
-                      <a
-                        href={file.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-2.5 py-1.5 bg-racing-red hover:bg-white hover:text-black text-white text-[11px] font-mono font-bold uppercase flex items-center gap-1 transition-colors"
-                        title="Open or View File"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        <span>Open</span>
-                      </a>
-                    )}
-
-                    {/* Direct Download */}
-                    {file.file_url && (
-                      <a
-                        href={file.file_url}
-                        download={file.file_name}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1.5 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white transition-colors"
-                        title="Download File"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </a>
-                    )}
-
-                    {/* Copy Link */}
-                    {file.file_url && (
-                      <button
-                        onClick={() => handleCopyUrl(file.id, file.file_url)}
-                        className={`p-1.5 transition-colors ${
-                          isCopied
-                            ? "bg-emerald-500/20 text-emerald-400"
-                            : "bg-white/5 hover:bg-white/15 text-white/70 hover:text-white"
-                        }`}
-                        title={isCopied ? "Link Copied!" : "Copy Public Link"}
-                      >
-                        {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Edit & Delete Controls */}
-                  <div className="flex items-center gap-1">
-                    {onUpdateRecord && (
-                      <button
-                        onClick={() => {
-                          setEditingFile({ spaceId, file });
-                          setEditFileName(file.file_name);
-                          setEditFileCategory(file.category || "");
-                          setEditFileDesc(file.description || "");
-                        }}
-                        className="p-1.5 text-white/40 hover:text-white transition-colors"
-                        title="Edit file details"
-                      >
-                        <Edit2 className="w-3 h-3" />
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => onDeleteRecord(spaceId, file.id)}
-                      className="p-1.5 text-red-400 hover:text-red-300 transition-colors"
-                      title="Delete file"
+                {/* Quick Action Icons */}
+                <div className="flex items-center gap-1 shrink-0">
+                  {file.file_url && (
+                    <a
+                      href={file.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+                      title="Open or View"
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+
+                  {file.file_url && (
+                    <a
+                      href={file.file_url}
+                      download={file.file_name}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+                      title="Download"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+
+                  {file.file_url && (
+                    <button
+                      onClick={() => handleCopyUrl(file.id, file.file_url)}
+                      className={`p-1.5 transition-colors ${
+                        isCopied ? "text-emerald-400" : "text-white/50 hover:text-white hover:bg-white/10"
+                      }`}
+                      title={isCopied ? "Copied!" : "Copy link"}
+                    >
+                      {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
-                  </div>
+                  )}
+
+                  {onUpdateRecord && (
+                    <button
+                      onClick={() => {
+                        setEditingFile({ spaceId, file });
+                        setEditFileName(file.file_name);
+                        setEditFileCategory(file.category || "");
+                        setEditFileDesc(file.description || "");
+                      }}
+                      className="p-1.5 text-white/30 hover:text-white transition-colors"
+                      title="Edit"
+                    >
+                      <Edit2 className="w-3 h-3" />
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => onDeleteRecord(spaceId, file.id)}
+                    className="p-1.5 text-red-400/60 hover:text-red-400 transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
       ) : (
-        /* LIST / TABLE VIEW */
+        /* COMPACT LIST / TABLE VIEW */
         <div className="bg-[#0b0c10] border border-white/10 overflow-x-auto">
           <table className="w-full text-left text-xs font-mono">
-            <thead className="bg-[#121318] text-white/70 uppercase border-b border-white/10">
+            <thead className="bg-[#121318] text-white/60 uppercase border-b border-white/10 text-[11px]">
               <tr>
-                <th className="px-4 py-3 font-bold">Type</th>
-                <th className="px-4 py-3 font-bold">File Name</th>
-                <th className="px-4 py-3 font-bold">Space / Folder</th>
-                <th className="px-4 py-3 font-bold">Category</th>
-                <th className="px-4 py-3 font-bold">Size</th>
-                <th className="px-4 py-3 font-bold">Uploaded</th>
-                <th className="px-4 py-3 text-right font-bold">Actions</th>
+                <th className="px-3.5 py-2.5">Format</th>
+                <th className="px-3.5 py-2.5">Name</th>
+                <th className="px-3.5 py-2.5">Folder</th>
+                <th className="px-3.5 py-2.5">Size</th>
+                <th className="px-3.5 py-2.5">Date</th>
+                <th className="px-3.5 py-2.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -810,41 +678,33 @@ export function CustomDbsTab({
 
                 return (
                   <tr key={`${spaceId}-${file.id}`} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-4 py-3">
-                      <span
-                        className={`text-[10px] font-mono font-bold px-1.5 py-0.5 border ${iconInfo.badgeBg}`}
-                      >
+                    <td className="px-3.5 py-2">
+                      <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 border ${iconInfo.bg}`}>
                         {iconInfo.badge}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3.5 py-2">
                       <div className="flex items-center gap-2">
-                        <IconComponent className={`w-4 h-4 shrink-0 ${iconInfo.color}`} />
-                        <span className="font-bold text-white max-w-xs truncate" title={file.file_name}>
+                        <IconComponent className={`w-3.5 h-3.5 shrink-0 ${iconInfo.color}`} />
+                        <span className="font-bold text-white truncate max-w-sm" title={file.file_name}>
                           {file.file_name}
                         </span>
                       </div>
-                      {file.description && (
-                        <p className="text-[11px] text-white/50 font-sans truncate max-w-sm mt-0.5">
-                          {file.description}
-                        </p>
-                      )}
                     </td>
-                    <td className="px-4 py-3 text-white/60">{spaceName}</td>
-                    <td className="px-4 py-3 text-white/60">{file.category || "-"}</td>
-                    <td className="px-4 py-3 text-white/70">{file.file_size || "N/A"}</td>
-                    <td className="px-4 py-3 text-white/50 text-[11px]">
+                    <td className="px-3.5 py-2 text-white/60">{spaceName}</td>
+                    <td className="px-3.5 py-2 text-white/60">{file.file_size || "N/A"}</td>
+                    <td className="px-3.5 py-2 text-white/40 text-[11px]">
                       {file.uploaded_at ? new Date(file.uploaded_at).toLocaleDateString() : "-"}
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="px-3.5 py-2 text-right">
+                      <div className="flex items-center justify-end gap-1">
                         {file.file_url && (
                           <a
                             href={file.file_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1.5 bg-racing-red text-white hover:bg-white hover:text-black transition-colors"
-                            title="Open File"
+                            className="p-1 text-white/50 hover:text-white"
+                            title="Open"
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
                           </a>
@@ -853,11 +713,7 @@ export function CustomDbsTab({
                         {file.file_url && (
                           <button
                             onClick={() => handleCopyUrl(file.id, file.file_url)}
-                            className={`p-1.5 transition-colors ${
-                              isCopied
-                                ? "bg-emerald-500/20 text-emerald-400"
-                                : "bg-white/5 hover:bg-white/15 text-white/70 hover:text-white"
-                            }`}
+                            className={`p-1 ${isCopied ? "text-emerald-400" : "text-white/50 hover:text-white"}`}
                             title="Copy link"
                           >
                             {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -872,19 +728,19 @@ export function CustomDbsTab({
                               setEditFileCategory(file.category || "");
                               setEditFileDesc(file.description || "");
                             }}
-                            className="p-1.5 text-white/40 hover:text-white transition-colors"
-                            title="Edit details"
+                            className="p-1 text-white/40 hover:text-white"
+                            title="Edit"
                           >
-                            <Edit2 className="w-3.5 h-3.5" />
+                            <Edit2 className="w-3 h-3" />
                           </button>
                         )}
 
                         <button
                           onClick={() => onDeleteRecord(spaceId, file.id)}
-                          className="p-1.5 text-red-400 hover:text-red-300 transition-colors"
-                          title="Delete file"
+                          className="p-1 text-red-400 hover:text-red-300"
+                          title="Delete"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
                     </td>
@@ -897,66 +753,64 @@ export function CustomDbsTab({
       )}
 
       {/* =========================================================================
-          MODAL 1: UPLOAD FILE (DRAG & DROP OR BROWSE)
+          MODAL 1: CLEAN, UNCLUTTERED UPLOAD MODAL
       ========================================================================= */}
       {showUploadModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain animate-in fade-in">
           <div className="bg-[#0b0c10] border border-white/20 w-full max-w-lg max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
-            {/* Modal Header */}
-            <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
-              <h3 className="text-base sm:text-lg font-display font-black uppercase text-white flex items-center gap-2">
-                <UploadCloud className="w-5 h-5 text-racing-red" />
-                <span>Upload Document / File to Storage</span>
+            <div className="shrink-0 p-4 sm:p-5 border-b border-white/10 flex items-center justify-between">
+              <h3 className="text-base font-display font-black uppercase text-white flex items-center gap-2">
+                <UploadCloud className="w-4 h-4 text-racing-red" />
+                <span>Upload Document / File</span>
               </h3>
               <button
                 onClick={() => setShowUploadModal(false)}
-                className="text-white/50 hover:text-white transition-colors"
+                className="text-white/50 hover:text-white"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Modal Body */}
             <form onSubmit={handleUploadSubmit} className="flex flex-col flex-1 overflow-hidden">
-              <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
+              <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-3.5">
                 {uploadError && (
-                  <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono">
+                  <div className="p-2.5 bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono">
                     {uploadError}
                   </div>
                 )}
 
-                {/* Upload Mode Selector */}
-                <div className="flex border border-white/10 p-1 bg-[#121318] gap-1">
+                {/* Upload Mode Toggle */}
+                <div className="flex border border-white/10 p-0.5 bg-[#121318] text-xs font-mono">
                   <button
                     type="button"
                     onClick={() => setUploadMode("file")}
-                    className={`flex-1 py-1.5 text-xs font-mono uppercase font-bold transition-all ${
+                    className={`flex-1 py-1 uppercase font-bold transition-all ${
                       uploadMode === "file" ? "bg-racing-red text-white" : "text-white/50 hover:text-white"
                     }`}
                   >
-                    Direct File Upload (Any Type)
+                    Direct Upload
                   </button>
                   <button
                     type="button"
                     onClick={() => setUploadMode("link")}
-                    className={`flex-1 py-1.5 text-xs font-mono uppercase font-bold transition-all ${
+                    className={`flex-1 py-1 uppercase font-bold transition-all ${
                       uploadMode === "link" ? "bg-racing-red text-white" : "text-white/50 hover:text-white"
                     }`}
                   >
-                    External Link / Cloud URL
+                    Cloud Link (Drive/Dropbox)
                   </button>
                 </div>
 
-                {/* Target Storage Space */}
+                {/* Folder Selector */}
                 <div>
-                  <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
-                    Target Storage Space / Folder <span className="text-racing-red">*</span>
+                  <label className="text-[10px] font-mono uppercase text-white/50 mb-1 block">
+                    Folder / Space
                   </label>
                   <select
                     value={targetSpaceId}
                     onChange={(e) => setTargetSpaceId(e.target.value)}
                     required
-                    className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white outline-none focus:border-racing-red"
+                    className="w-full bg-[#121318] border border-white/10 px-3 py-1.5 text-xs font-mono text-white outline-none focus:border-racing-red"
                   >
                     {databases.map((db) => (
                       <option key={db.id} value={db.id}>
@@ -967,20 +821,16 @@ export function CustomDbsTab({
                 </div>
 
                 {uploadMode === "file" ? (
-                  /* Drag and Drop Zone */
                   <div>
-                    <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
-                      Choose File <span className="text-racing-red">*</span>
-                    </label>
                     <div
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
                       onClick={() => fileInputRef.current?.click()}
-                      className={`border-2 border-dashed p-6 text-center cursor-pointer transition-all ${
+                      className={`border border-dashed p-5 text-center cursor-pointer transition-all ${
                         isDragging
                           ? "border-racing-red bg-racing-red/10"
-                          : "border-white/15 hover:border-white/30 bg-[#121318]/50"
+                          : "border-white/20 hover:border-white/40 bg-[#121318]/50"
                       }`}
                     >
                       <input
@@ -995,76 +845,33 @@ export function CustomDbsTab({
                         className="hidden"
                       />
 
-                      <div className="w-10 h-10 mx-auto rounded-full bg-white/5 flex items-center justify-center text-racing-red mb-2">
-                        <UploadCloud className="w-5 h-5" />
-                      </div>
+                      <UploadCloud className="w-6 h-6 text-racing-red mx-auto mb-1.5" />
 
                       {selectedFile ? (
-                        <div className="space-y-1">
-                          <p className="text-xs font-mono font-bold text-white break-words">
+                        <div>
+                          <p className="text-xs font-mono font-bold text-white truncate max-w-xs mx-auto">
                             {selectedFile.name}
                           </p>
-                          <p className="text-[10px] font-mono text-emerald-400">
-                            {formatBytes(selectedFile.size)} • Ready for upload
+                          <p className="text-[10px] font-mono text-emerald-400 mt-0.5">
+                            {formatBytes(selectedFile.size)} • Ready to upload
                           </p>
                         </div>
                       ) : (
-                        <div className="space-y-1">
-                          <p className="text-xs font-mono text-white/80 font-bold">
-                            Click to browse or drag & drop any file here
+                        <div>
+                          <p className="text-xs font-mono text-white font-bold">
+                            Drop file here or click to browse
                           </p>
-                          <p className="text-[10px] font-mono text-white/40">
-                            Maximum upload size: 30 MB per file
+                          <p className="text-[10px] font-mono text-white/40 mt-0.5">
+                            Supports PDF, Excel (.xlsx/.csv), Word, CAD (.step/.dwg), ZIP, Images (up to 30 MB)
                           </p>
                         </div>
                       )}
                     </div>
-
-                    {/* Supported File Types & Extensions Detail Box */}
-                    <div className="mt-3 bg-[#121318] border border-white/10 p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono uppercase text-racing-red font-bold flex items-center gap-1.5">
-                          <FileCheck className="w-3.5 h-3.5" />
-                          <span>Supported File Types & Extensions</span>
-                        </span>
-                        <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 border border-emerald-500/20">
-                          Max 30 MB
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[10px] font-mono">
-                        <div className="bg-black/40 p-2 border border-white/5">
-                          <span className="text-red-400 font-bold block mb-0.5">Documents:</span>
-                          <span className="text-white/70 font-sans text-[10px]">.pdf, .doc, .docx, .txt, .md, .rtf</span>
-                        </div>
-                        <div className="bg-black/40 p-2 border border-white/5">
-                          <span className="text-emerald-400 font-bold block mb-0.5">Spreadsheets:</span>
-                          <span className="text-white/70 font-sans text-[10px]">.xlsx, .xls, .csv, .ods</span>
-                        </div>
-                        <div className="bg-black/40 p-2 border border-white/5">
-                          <span className="text-amber-400 font-bold block mb-0.5">Presentations:</span>
-                          <span className="text-white/70 font-sans text-[10px]">.pptx, .ppt, .odp</span>
-                        </div>
-                        <div className="bg-black/40 p-2 border border-white/5">
-                          <span className="text-cyan-400 font-bold block mb-0.5">CAD & 3D:</span>
-                          <span className="text-white/70 font-sans text-[10px]">.step, .stp, .dwg, .dxf, .stl</span>
-                        </div>
-                        <div className="bg-black/40 p-2 border border-white/5">
-                          <span className="text-yellow-400 font-bold block mb-0.5">Archives:</span>
-                          <span className="text-white/70 font-sans text-[10px]">.zip, .rar, .7z, .tar, .gz</span>
-                        </div>
-                        <div className="bg-black/40 p-2 border border-white/5">
-                          <span className="text-purple-400 font-bold block mb-0.5">Images & Media:</span>
-                          <span className="text-white/70 font-sans text-[10px]">.png, .jpg, .webp, .svg, .mp4</span>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 ) : (
-                  /* External URL Input */
                   <div>
-                    <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
-                      File / Document URL <span className="text-racing-red">*</span>
+                    <label className="text-[10px] font-mono uppercase text-white/50 mb-1 block">
+                      URL Link
                     </label>
                     <input
                       type="url"
@@ -1072,15 +879,15 @@ export function CustomDbsTab({
                       value={fileUrl}
                       onChange={(e) => setFileUrl(e.target.value)}
                       placeholder="https://drive.google.com/... or https://..."
-                      className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                      className="w-full bg-[#121318] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
                     />
                   </div>
                 )}
 
-                {/* Display Name */}
+                {/* File Title */}
                 <div>
-                  <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
-                    File Display Title <span className="text-racing-red">*</span>
+                  <label className="text-[10px] font-mono uppercase text-white/50 mb-1 block">
+                    File Title
                   </label>
                   <input
                     type="text"
@@ -1088,64 +895,47 @@ export function CustomDbsTab({
                     value={fileName}
                     onChange={(e) => setFileName(e.target.value)}
                     placeholder="e.g. Formula_Bharat_Rulebook_2026.pdf"
-                    className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                    className="w-full bg-[#121318] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
                   />
                 </div>
 
-                {/* Category / Tag */}
+                {/* Optional Description / Notes */}
                 <div>
-                  <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
-                    Category / Tag
+                  <label className="text-[10px] font-mono uppercase text-white/50 mb-1 block">
+                    Notes (Optional)
                   </label>
                   <input
                     type="text"
-                    value={fileCategory}
-                    onChange={(e) => setFileCategory(e.target.value)}
-                    placeholder="e.g. Rulebooks, FEA Analysis, Sponsorship, Invoices"
-                    className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                  />
-                </div>
-
-                {/* Notes / Description */}
-                <div>
-                  <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
-                    Description / Purpose / Notes
-                  </label>
-                  <textarea
-                    rows={2}
                     value={fileDescription}
                     onChange={(e) => setFileDescription(e.target.value)}
-                    placeholder="Brief notes or engineering context for this document..."
-                    className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none resize-none"
+                    placeholder="Brief note on what this document contains..."
+                    className="w-full bg-[#121318] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
                   />
                 </div>
               </div>
 
               {/* Modal Footer */}
-              <div className="shrink-0 p-5 sm:p-6 pt-4 border-t border-white/10 flex justify-end gap-3 bg-[#0b0c10]">
+              <div className="shrink-0 p-4 sm:p-5 pt-3 border-t border-white/10 flex justify-end gap-2 bg-[#0b0c10]">
                 <button
                   type="button"
                   disabled={isUploading}
                   onClick={() => setShowUploadModal(false)}
-                  className="px-4 py-2 bg-white/10 text-white text-xs font-mono uppercase hover:bg-white/20 transition-colors"
+                  className="px-3.5 py-1.5 bg-white/10 text-white text-xs font-mono uppercase hover:bg-white/20"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isUploading}
-                  className="px-6 py-2 bg-racing-red text-white text-xs font-mono font-bold uppercase hover:bg-white hover:text-black transition-all flex items-center gap-2"
+                  className="px-5 py-1.5 bg-racing-red text-white text-xs font-mono font-bold uppercase hover:bg-white hover:text-black flex items-center gap-1.5"
                 >
                   {isUploading ? (
                     <>
-                      <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                       <span>Uploading...</span>
                     </>
                   ) : (
-                    <>
-                      <UploadCloud className="w-4 h-4" />
-                      <span>Save to Storage</span>
-                    </>
+                    <span>Save to Storage</span>
                   )}
                 </button>
               </div>
@@ -1155,67 +945,51 @@ export function CustomDbsTab({
       )}
 
       {/* =========================================================================
-          MODAL 2: CREATE NEW STORAGE SPACE / FOLDER
+          MODAL 2: CREATE FOLDER
       ========================================================================= */}
       {showCreateSpaceModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain animate-in fade-in">
-          <div className="bg-[#0b0c10] border border-white/20 w-full max-w-md max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
-            <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
+          <div className="bg-[#0b0c10] border border-white/20 w-full max-w-sm max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
+            <div className="shrink-0 p-4 border-b border-white/10 flex items-center justify-between">
               <h3 className="text-base font-display font-black uppercase text-white flex items-center gap-2">
                 <Folder className="w-4 h-4 text-racing-red" />
-                <span>Create New Storage Space</span>
+                <span>New Folder</span>
               </h3>
-              <button
-                onClick={() => setShowCreateSpaceModal(false)}
-                className="text-white/50 hover:text-white"
-              >
-                <X className="w-5 h-5" />
+              <button onClick={() => setShowCreateSpaceModal(false)} className="text-white/50 hover:text-white">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateSpaceSubmit} className="flex flex-col flex-1 overflow-hidden">
-              <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
+              <div className="p-4 space-y-3">
                 <div>
-                  <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
-                    Space Title / Folder Name <span className="text-racing-red">*</span>
+                  <label className="text-[10px] font-mono uppercase text-white/50 mb-1 block">
+                    Folder Name <span className="text-racing-red">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={newSpaceName}
                     onChange={(e) => setNewSpaceName(e.target.value)}
-                    placeholder="e.g. Testing Telemetry Logs or Technical Regulations"
-                    className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
-                    Description
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={newSpaceDesc}
-                    onChange={(e) => setNewSpaceDesc(e.target.value)}
-                    placeholder="Brief description of what files are stored in this space..."
-                    className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none resize-none"
+                    placeholder="e.g. Telemetry Logs"
+                    className="w-full bg-[#121318] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
                   />
                 </div>
               </div>
 
-              <div className="shrink-0 p-5 sm:p-6 pt-4 border-t border-white/10 flex justify-end gap-3 bg-[#0b0c10]">
+              <div className="shrink-0 p-4 pt-2 border-t border-white/10 flex justify-end gap-2 bg-[#0b0c10]">
                 <button
                   type="button"
                   onClick={() => setShowCreateSpaceModal(false)}
-                  className="px-4 py-2 bg-white/10 text-white text-xs font-mono uppercase"
+                  className="px-3 py-1.5 bg-white/10 text-white text-xs font-mono uppercase"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-racing-red text-white text-xs font-mono font-bold uppercase hover:bg-white hover:text-black transition-all"
+                  className="px-4 py-1.5 bg-racing-red text-white text-xs font-mono font-bold uppercase hover:bg-white hover:text-black"
                 >
-                  Create Space
+                  Create
                 </button>
               </div>
             </form>
@@ -1224,25 +998,25 @@ export function CustomDbsTab({
       )}
 
       {/* =========================================================================
-          MODAL 3: EDIT FILE DETAILS
+          MODAL 3: EDIT FILE
       ========================================================================= */}
       {editingFile && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain animate-in fade-in">
-          <div className="bg-[#0b0c10] border border-white/20 w-full max-w-md max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
-            <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-white/10 flex items-center justify-between">
+          <div className="bg-[#0b0c10] border border-white/20 w-full max-w-sm max-h-[90vh] flex flex-col my-auto shadow-2xl relative overscroll-contain">
+            <div className="shrink-0 p-4 border-b border-white/10 flex items-center justify-between">
               <h3 className="text-base font-display font-black uppercase text-white flex items-center gap-2">
-                <Edit2 className="w-4 h-4 text-racing-red" />
-                <span>Edit File Details</span>
+                <Edit2 className="w-3.5 h-3.5 text-racing-red" />
+                <span>Edit File</span>
               </h3>
               <button onClick={() => setEditingFile(null)} className="text-white/50 hover:text-white">
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleEditFileSubmit} className="flex flex-col flex-1 overflow-hidden">
-              <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
+              <div className="p-4 space-y-3">
                 <div>
-                  <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
+                  <label className="text-[10px] font-mono uppercase text-white/50 mb-1 block">
                     File Name <span className="text-racing-red">*</span>
                   </label>
                   <input
@@ -1250,48 +1024,36 @@ export function CustomDbsTab({
                     required
                     value={editFileName}
                     onChange={(e) => setEditFileName(e.target.value)}
-                    className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                    className="w-full bg-[#121318] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
-                    Category / Tag
+                  <label className="text-[10px] font-mono uppercase text-white/50 mb-1 block">
+                    Notes
                   </label>
                   <input
                     type="text"
-                    value={editFileCategory}
-                    onChange={(e) => setEditFileCategory(e.target.value)}
-                    className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block">
-                    Description / Notes
-                  </label>
-                  <textarea
-                    rows={3}
                     value={editFileDesc}
                     onChange={(e) => setEditFileDesc(e.target.value)}
-                    className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none resize-none"
+                    className="w-full bg-[#121318] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
                   />
                 </div>
               </div>
 
-              <div className="shrink-0 p-5 sm:p-6 pt-4 border-t border-white/10 flex justify-end gap-3 bg-[#0b0c10]">
+              <div className="shrink-0 p-4 pt-2 border-t border-white/10 flex justify-end gap-2 bg-[#0b0c10]">
                 <button
                   type="button"
                   onClick={() => setEditingFile(null)}
-                  className="px-4 py-2 bg-white/10 text-white text-xs font-mono uppercase"
+                  className="px-3 py-1.5 bg-white/10 text-white text-xs font-mono uppercase"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-racing-red text-white text-xs font-mono font-bold uppercase hover:bg-white hover:text-black transition-all"
+                  className="px-4 py-1.5 bg-racing-red text-white text-xs font-mono font-bold uppercase hover:bg-white hover:text-black"
                 >
-                  Save Changes
+                  Save
                 </button>
               </div>
             </form>
