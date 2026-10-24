@@ -33,6 +33,8 @@ import {
   Award,
   Trophy,
   RefreshCw,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import {
   DEFAULT_SITE_SETTINGS,
@@ -45,11 +47,15 @@ import {
   DEFAULT_VEHICLES,
   DEFAULT_SPONSORS,
   DEFAULT_ACHIEVEMENTS,
+  DEFAULT_FACULTY_ADVISORS,
+  DEFAULT_TEAM_PAGE_SETTINGS,
   SiteSettings,
   FeaturedMachine,
   MediaItem,
   AlumniRecord,
   MemberRecord,
+  FacultyAdvisor,
+  TeamPageSettings,
   ClubExpense,
   RecruitmentApplication,
   CustomDatabaseRecord,
@@ -68,6 +74,8 @@ import { AdminSecurityModal } from "./components/AdminSecurityModal";
 import { VehiclesTab } from "./components/VehiclesTab";
 import { SponsorsTab } from "./components/SponsorsTab";
 import { AchievementsTab } from "./components/AchievementsTab";
+import { FacultyAdvisorsTab } from "./components/FacultyAdvisorsTab";
+import { TeamArrangementsTab } from "./components/TeamArrangementsTab";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -153,6 +161,25 @@ export default function AdminDashboard() {
   const [memberSearchQuery, setMemberSearchQuery] = useState("");
   const [selectedMemberForDatasheet, setSelectedMemberForDatasheet] = useState<MemberRecord | null>(null);
   const [showProgressionModal, setShowProgressionModal] = useState(false);
+  const [teamSubTab, setTeamSubTab] = useState<"squad" | "faculty" | "arrangements">("squad");
+  const [facultyList, setFacultyList] = useState<FacultyAdvisor[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("vr_faculty_advisors");
+        if (raw) return JSON.parse(raw);
+      } catch {}
+    }
+    return DEFAULT_FACULTY_ADVISORS;
+  });
+  const [teamSettings, setTeamSettings] = useState<TeamPageSettings>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("vr_team_settings");
+        if (raw) return JSON.parse(raw);
+      } catch {}
+    }
+    return DEFAULT_TEAM_PAGE_SETTINGS;
+  });
 
   // 6. Club Expenses State
   const [expenses, setExpenses] = useState<ClubExpense[]>(DEFAULT_EXPENSES);
@@ -282,12 +309,16 @@ export default function AdminDashboard() {
       const liveMedia = json.data.media;
       const liveAlumni = json.data.alumni;
       const liveCdbs = json.data.custom_databases || json.data.customDbs;
+      const liveFaculty = json.data.faculty || json.data.faculty_advisors;
+      const liveTeamSettings = json.data.team_settings;
 
       if (liveSettings) setSiteSettings(liveSettings);
       if (liveMachine) setMachine(liveMachine);
       if (liveVehicles && Array.isArray(liveVehicles)) setVehicles(liveVehicles);
       if (liveSponsors && Array.isArray(liveSponsors)) setSponsors(liveSponsors);
       if (liveAchievements && Array.isArray(liveAchievements)) setAchievements(liveAchievements);
+      if (liveFaculty && Array.isArray(liveFaculty)) setFacultyList(liveFaculty);
+      if (liveTeamSettings) setTeamSettings(liveTeamSettings);
       if (liveMembers && Array.isArray(liveMembers)) setMembers(liveMembers);
       if (liveExpenses && Array.isArray(liveExpenses)) setExpenses(liveExpenses);
       if (liveRecruits && Array.isArray(liveRecruits)) setRecruits(liveRecruits);
@@ -302,6 +333,8 @@ export default function AdminDashboard() {
           if (liveSponsors) localStorage.setItem("vr_sponsors", JSON.stringify(liveSponsors));
           if (liveAchievements) localStorage.setItem("vr_achievements", JSON.stringify(liveAchievements));
           if (liveMachine) localStorage.setItem("vr_machine_extended", JSON.stringify(liveMachine));
+          if (liveFaculty) localStorage.setItem("vr_faculty_advisors", JSON.stringify(liveFaculty));
+          if (liveTeamSettings) localStorage.setItem("vr_team_settings", JSON.stringify(liveTeamSettings));
         } catch {}
       }
 
@@ -1032,6 +1065,81 @@ export default function AdminDashboard() {
       showToast(`${updated.name}'s details & photo updated successfully!`);
     } catch (err: any) {
       showError(err.message || "Failed to update member.");
+    }
+  };
+
+  // Faculty Advisors Cloud Handler
+  const handleSaveFacultyAdvisors = async (updated: FacultyAdvisor[]) => {
+    try {
+      const res = await fetch("/api/admin/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save_faculty", payload: updated }),
+      });
+      if (!res.ok) throw new Error("Sync API failed to save faculty advisors.");
+      setFacultyList(updated);
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem("vr_faculty_advisors", JSON.stringify(updated)); } catch {}
+      }
+      broadcastSync();
+    } catch (err: any) {
+      console.error("Save faculty error:", err);
+      throw err;
+    }
+  };
+
+  // Team Page Arrangements Cloud Handler
+  const handleSaveTeamSettings = async (updated: TeamPageSettings) => {
+    try {
+      const res = await fetch("/api/admin/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save_team_settings", payload: updated }),
+      });
+      if (!res.ok) throw new Error("Sync API failed to save team settings.");
+      setTeamSettings(updated);
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem("vr_team_settings", JSON.stringify(updated)); } catch {}
+      }
+      broadcastSync();
+    } catch (err: any) {
+      console.error("Save team settings error:", err);
+      throw err;
+    }
+  };
+
+  // Move member priority order
+  const handleMoveMemberOrder = async (member: MemberRecord, direction: "up" | "down") => {
+    const currentIndex = members.findIndex((m) => m.id === member.id);
+    if (currentIndex === -1) return;
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= members.length) return;
+
+    const updated = [...members];
+    const [moved] = updated.splice(currentIndex, 1);
+    updated.splice(targetIndex, 0, moved);
+
+    const reindexed = updated.map((m, idx) => ({
+      ...m,
+      order_index: idx,
+    }));
+
+    setMembers(reindexed);
+    if (typeof window !== "undefined") {
+      try { localStorage.setItem("vr_members", JSON.stringify(reindexed)); } catch {}
+    }
+
+    try {
+      if (isValidUUID(member.id)) {
+        await supabase
+          .from("members")
+          .update({ order_index: targetIndex })
+          .eq("id", member.id);
+      }
+      broadcastSync();
+      showToast(`Reordered "${member.name}".`);
+    } catch (err: any) {
+      console.warn("Could not persist member order_index to Supabase column:", err);
     }
   };
 
@@ -2982,11 +3090,83 @@ export default function AdminDashboard() {
         )}
 
         {/* =========================================================================
-            TAB 5: ACTIVE TEAM SQUAD (ROSTER & DATASHEETS)
+            TAB 5: ACTIVE TEAM SQUAD (ROSTER, FACULTY ADVISORS & ARRANGEMENTS)
         ========================================================================= */}
         {activeTab === "members" && (
           <div className="space-y-6">
             
+            {/* Top Sub-Navigation Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto border-b border-white/10 pb-3">
+              <button
+                type="button"
+                onClick={() => setTeamSubTab("squad")}
+                className={`px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${
+                  teamSubTab === "squad"
+                    ? "bg-racing-red text-white shadow-md"
+                    : "bg-white/5 text-white/60 hover:text-white"
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>Active Squad Roster ({members.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTeamSubTab("faculty")}
+                className={`px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${
+                  teamSubTab === "faculty"
+                    ? "bg-racing-red text-white shadow-md"
+                    : "bg-white/5 text-white/60 hover:text-white"
+                }`}
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span>Faculty Advisors ({facultyList.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTeamSubTab("arrangements")}
+                className={`px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${
+                  teamSubTab === "arrangements"
+                    ? "bg-racing-red text-white shadow-md"
+                    : "bg-white/5 text-white/60 hover:text-white"
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Team Page Arrangements & Controls</span>
+              </button>
+            </div>
+
+            {/* Sub-View 1: Faculty Advisors Management */}
+            {teamSubTab === "faculty" && (
+              <FacultyAdvisorsTab
+                facultyList={facultyList}
+                onSaveFaculty={handleSaveFacultyAdvisors}
+                onUploadImage={(file) => uploadToStorage(file, "member-images", "faculty")}
+                showToast={showToast}
+                showError={showError}
+              />
+            )}
+
+            {/* Sub-View 2: Team Page Arrangements & Settings */}
+            {teamSubTab === "arrangements" && (
+              <TeamArrangementsTab
+                settings={teamSettings}
+                onSaveSettings={handleSaveTeamSettings}
+                showToast={showToast}
+                showError={showError}
+                memberCounts={{
+                  faculty: facultyList.length,
+                  finalYears: members.filter(m => (m.year_of_study || "").includes("4th")).length,
+                  preFinal: members.filter(m => (m.year_of_study || "").includes("3rd")).length,
+                  secondYears: members.filter(m => (m.year_of_study || "").includes("2nd")).length,
+                }}
+              />
+            )}
+
+            {/* Sub-View 3: Squad Roster Management */}
+            {teamSubTab === "squad" && (
+              <>
             {/* Top Squad Actions Banner */}
             <div className="bg-[#0b0c10] border border-white/10 p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
@@ -3261,6 +3441,22 @@ export default function AdminDashboard() {
 
                           <div className="flex items-center gap-1 shrink-0">
                             <button
+                              type="button"
+                              onClick={() => handleMoveMemberOrder(member, "up")}
+                              className="p-1 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white transition-colors"
+                              title="Move Up in Priority Order"
+                            >
+                              <ChevronUp className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveMemberOrder(member, "down")}
+                              className="p-1 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white transition-colors"
+                              title="Move Down in Priority Order"
+                            >
+                              <ChevronDown className="w-3 h-3" />
+                            </button>
+                            <button
                               onClick={() => setSelectedMemberForDatasheet(member)}
                               className="px-2 py-1 bg-white/5 hover:bg-white/20 text-white/80 hover:text-white text-[10px] font-mono uppercase flex items-center gap-1 transition-colors"
                               title="View & Edit Full Member Datasheet"
@@ -3282,6 +3478,8 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
+            </>
+            )}
           </div>
         )}
 

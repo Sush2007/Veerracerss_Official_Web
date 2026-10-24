@@ -39,6 +39,26 @@ export interface SiteSettings {
   }>;
 }
 
+export interface FacultyAdvisor {
+  id?: string;
+  name: string;
+  role: string;
+  department: string;
+  tenure: string;
+  image: string;
+  profileUrl?: string;
+  order_index?: number;
+}
+
+export interface TeamPageSettings {
+  show_faculty: boolean;
+  show_final_years: boolean;
+  show_pre_final_years: boolean;
+  show_second_years: boolean;
+  section_order?: string[];
+  sort_members_by?: "order_index" | "name" | "role" | "custom_order" | "name_asc" | "domain";
+}
+
 export interface MemberRecord {
   id: string;
   name: string;
@@ -56,6 +76,7 @@ export interface MemberRecord {
   joining_year?: string;
   subgroup?: string;
   is_council?: boolean;
+  order_index?: number;
   created_at?: string;
 }
 
@@ -1176,3 +1197,35 @@ export const DEFAULT_CUSTOM_DATABASES: CustomDatabaseRecord[] = [
     ]
   }
 ];
+
+export const DEFAULT_FACULTY_ADVISORS: FacultyAdvisor[] = [
+  {
+    id: "fa-1",
+    name: "Dr. Debasish Tripathy",
+    role: "Faculty Advisor",
+    department: "Mechanical Engineering",
+    tenure: "Present",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/faculty/debasish-tripathy.webp",
+    profileUrl: "https://www.vssut.ac.in/faculty-profile.php?furl=debasish-tripathy",
+    order_index: 1,
+  },
+  {
+    id: "fa-2",
+    name: "Dr. Amit Mallick",
+    role: "Faculty Advisor",
+    department: "Electrical Engineering",
+    tenure: "Present",
+    image: "https://fizxzmnvsbsjrmgthdqq.supabase.co/storage/v1/object/public/member-images/faculty/amit-mallick-v2.webp",
+    profileUrl: "https://www.vssut.ac.in/faculty-profile.php?furl=amit-mallick",
+    order_index: 2,
+  },
+];
+
+export const DEFAULT_TEAM_PAGE_SETTINGS: TeamPageSettings = {
+  show_faculty: true,
+  show_final_years: true,
+  show_pre_final_years: true,
+  show_second_years: true,
+  section_order: ["faculty", "final", "prefinal", "second"],
+  sort_members_by: "order_index",
+};

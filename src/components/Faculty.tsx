@@ -1,8 +1,43 @@
 "use client";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { FACULTY_ADVISORS } from "@/src/data/team_database";
+import { DEFAULT_FACULTY_ADVISORS, FacultyAdvisor } from "@/src/data/cms_defaults";
 
-export function Faculty() {
+export function Faculty({ initialAdvisors }: { initialAdvisors?: FacultyAdvisor[] }) {
+  const [advisors, setAdvisors] = useState<FacultyAdvisor[]>(() => {
+    if (initialAdvisors && initialAdvisors.length > 0) return initialAdvisors;
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("vr_faculty_advisors");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {}
+    }
+    return DEFAULT_FACULTY_ADVISORS;
+  });
+
+  useEffect(() => {
+    async function loadFaculty() {
+      try {
+        const res = await fetch("/api/admin/sync", { cache: "no-store" });
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.data?.faculty && Array.isArray(json.data.faculty) && json.data.faculty.length > 0) {
+            setAdvisors(json.data.faculty);
+            try {
+              localStorage.setItem("vr_faculty_advisors", JSON.stringify(json.data.faculty));
+            } catch {}
+          }
+        }
+      } catch (e) {
+        // Fallback to static advisors on network failure
+      }
+    }
+    loadFaculty();
+  }, []);
+
   return (
     <section className="py-16 sm:py-24 bg-[#0A0A0A] relative z-10 border-t border-white/5 overflow-hidden" id="faculty">
       {/* Subtle Background Elements */}
@@ -29,9 +64,9 @@ export function Faculty() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
-          {FACULTY_ADVISORS.map((faculty, index) => (
+          {advisors.map((faculty, index) => (
             <motion.div 
-              key={faculty.name}
+              key={faculty.name + index}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -43,6 +78,9 @@ export function Faculty() {
                   src={faculty.image} 
                   alt={faculty.name} 
                   className="w-full h-full object-cover grayscale contrast-110 group-hover:grayscale-0 transition-all duration-500" 
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop";
+                  }}
                 />
               </div>
               

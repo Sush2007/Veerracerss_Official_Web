@@ -20,6 +20,7 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
     phone: member.phone || "",
     pr_domain_skills: member.pr_domain_skills || "None (Technical Only)",
     joining_year: member.joining_year || "2023",
+    order_index: member.order_index ?? 0,
     linkedin: member.linkedin && member.linkedin !== "#" ? member.linkedin : "",
     instagram: member.instagram && member.instagram !== "#" ? member.instagram : "",
   });
@@ -398,6 +399,20 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
                   value={formData.joining_year}
                   onChange={(e) => setFormData({ ...formData, joining_year: e.target.value })}
                   placeholder="e.g. 2023"
+                  className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-mono uppercase text-white/50 mb-1 block flex items-center justify-between">
+                  <span>Display Priority Order</span>
+                  <span className="text-[10px] text-white/30 lowercase">(lower = appears first)</span>
+                </label>
+                <input
+                  type="number"
+                  value={formData.order_index ?? 0}
+                  onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) || 0 })}
+                  placeholder="0"
                   className="w-full bg-[#121318] border border-white/10 px-3 py-2 text-xs font-mono text-white focus:border-racing-red outline-none"
                 />
               </div>

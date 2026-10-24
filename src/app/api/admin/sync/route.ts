@@ -6,6 +6,8 @@ import {
   DEFAULT_VEHICLES,
   DEFAULT_SPONSORS,
   DEFAULT_ACHIEVEMENTS,
+  DEFAULT_FACULTY_ADVISORS,
+  DEFAULT_TEAM_PAGE_SETTINGS,
   VehicleRecord,
   extractSpotlightFromVehicles,
 } from "@/src/data/cms_defaults";
@@ -26,6 +28,8 @@ const DB_FLEET = "Fleet & Vehicles";
 const DB_SPONSORS = "Corporate Sponsors";
 const DB_ACHIEVEMENTS = "Hall of Fame & Achievements";
 const DB_SETTINGS_EXT = "System Settings Extended";
+const DB_FACULTY = "Academic Faculty Advisors";
+const DB_TEAM_SETTINGS = "Team Page Arrangement Settings";
 
 // Helper: Upsert custom_databases record
 async function upsertCustomDbRecord(supabase: any, dbName: string, description: string, records: any) {
@@ -90,6 +94,8 @@ export async function GET() {
     const fleetDb = customDbs.find((d: any) => d.db_name === DB_FLEET);
     const sponsorsDb = customDbs.find((d: any) => d.db_name === DB_SPONSORS);
     const achievementsDb = customDbs.find((d: any) => d.db_name === DB_ACHIEVEMENTS);
+    const facultyDb = customDbs.find((d: any) => d.db_name === DB_FACULTY);
+    const teamSettingsDb = customDbs.find((d: any) => d.db_name === DB_TEAM_SETTINGS);
 
     const extRecord = extDb && Array.isArray(extDb.records) && extDb.records.length > 0 ? extDb.records[0] : (extDb?.records || {});
     const sData = settingsRes.data || {};
@@ -145,8 +151,20 @@ export async function GET() {
         ? achievementsDb.records
         : DEFAULT_ACHIEVEMENTS;
 
+    // Unified Faculty Advisors
+    const faculty =
+      facultyDb && Array.isArray(facultyDb.records) && facultyDb.records.length > 0
+        ? facultyDb.records
+        : DEFAULT_FACULTY_ADVISORS;
+
+    // Unified Team Page Settings
+    const team_settings =
+      teamSettingsDb && Array.isArray(teamSettingsDb.records) && teamSettingsDb.records.length > 0
+        ? { ...DEFAULT_TEAM_PAGE_SETTINGS, ...teamSettingsDb.records[0] }
+        : (teamSettingsDb?.records ? { ...DEFAULT_TEAM_PAGE_SETTINGS, ...teamSettingsDb.records } : DEFAULT_TEAM_PAGE_SETTINGS);
+
     // Clean user custom dbs (filter out internal system namespaces)
-    const systemNames = [DB_FLEET, DB_SPONSORS, DB_ACHIEVEMENTS, DB_SETTINGS_EXT];
+    const systemNames = [DB_FLEET, DB_SPONSORS, DB_ACHIEVEMENTS, DB_SETTINGS_EXT, DB_FACULTY, DB_TEAM_SETTINGS];
     const userCustomDbs = customDbs.filter((d: any) => !systemNames.includes(d.db_name));
 
     return NextResponse.json({
@@ -160,6 +178,9 @@ export async function GET() {
         vehicles,
         sponsors,
         achievements,
+        faculty,
+        faculty_advisors: faculty,
+        team_settings,
         members: membersRes.data || [],
         expenses: expensesRes.data || [],
         recruits: recruitsRes.data || [],
@@ -308,6 +329,26 @@ export async function POST(req: Request) {
         DB_ACHIEVEMENTS,
         "Formula Student race achievements, podiums and awards",
         payload
+      );
+      return NextResponse.json({ success: true, timestamp: Date.now() });
+    }
+
+    if (action === "save_faculty") {
+      await upsertCustomDbRecord(
+        supabase,
+        DB_FACULTY,
+        "Academic and technical faculty mentors for Veer Racers Electric",
+        payload
+      );
+      return NextResponse.json({ success: true, timestamp: Date.now() });
+    }
+
+    if (action === "save_team_settings") {
+      await upsertCustomDbRecord(
+        supabase,
+        DB_TEAM_SETTINGS,
+        "Team page layout, ordering, and visibility settings",
+        [payload]
       );
       return NextResponse.json({ success: true, timestamp: Date.now() });
     }
