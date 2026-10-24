@@ -33,6 +33,7 @@ import {
   Award,
   Trophy,
   RefreshCw,
+  FolderSync,
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
@@ -76,6 +77,7 @@ import { SponsorsTab } from "./components/SponsorsTab";
 import { AchievementsTab } from "./components/AchievementsTab";
 import { FacultyAdvisorsTab } from "./components/FacultyAdvisorsTab";
 import { TeamArrangementsTab } from "./components/TeamArrangementsTab";
+import { AssetHealthModal } from "./components/AssetHealthModal";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -240,6 +242,8 @@ export default function AdminDashboard() {
   const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
   const [syncStatus, setSyncStatus] = useState<"synced" | "syncing" | "error">("synced");
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+  const [showAssetHealthModal, setShowAssetHealthModal] = useState<boolean>(false);
+  const [assetHealthSummary, setAssetHealthSummary] = useState<{ total: number; healthy: number; broken: number } | null>(null);
 
   const broadcastSync = () => {
     if (typeof window !== "undefined") {
@@ -340,6 +344,20 @@ export default function AdminDashboard() {
 
       setSyncStatus("synced");
       setLastSyncedAt(new Date());
+
+      // Non-blocking asset health audit
+      fetch("/api/admin/assets?audit=true")
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success && res.report) {
+            setAssetHealthSummary({
+              total: res.report.totalChecked,
+              healthy: res.report.healthy,
+              broken: res.report.brokenCount,
+            });
+          }
+        })
+        .catch(() => {});
     } catch (err: any) {
       console.warn("Unified cloud sync warning, falling back to direct table reads:", err);
       setSyncStatus("error");
@@ -454,6 +472,20 @@ export default function AdminDashboard() {
       broadcastSync();
       setSyncStatus("synced");
       setLastSyncedAt(new Date());
+
+      // Non-blocking asset health audit
+      fetch("/api/admin/assets?audit=true")
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success && res.report) {
+            setAssetHealthSummary({
+              total: res.report.totalChecked,
+              healthy: res.report.healthy,
+              broken: res.report.brokenCount,
+            });
+          }
+        })
+        .catch(() => {});
       showToast("Hero, About & Telemetry Settings updated and synced across all tabs!");
     } catch (err: any) {
       showError(err.message || "Failed to save settings.");
@@ -532,6 +564,20 @@ export default function AdminDashboard() {
       broadcastSync();
       setSyncStatus("synced");
       setLastSyncedAt(new Date());
+
+      // Non-blocking asset health audit
+      fetch("/api/admin/assets?audit=true")
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success && res.report) {
+            setAssetHealthSummary({
+              total: res.report.totalChecked,
+              healthy: res.report.healthy,
+              broken: res.report.brokenCount,
+            });
+          }
+        })
+        .catch(() => {});
       showToast("Car spotlight specs & 3D model updated and synced across all tabs!");
     } catch (err: any) {
       showError(err.message || "Failed to save car details.");
@@ -563,6 +609,20 @@ export default function AdminDashboard() {
       broadcastSync();
       setSyncStatus("synced");
       setLastSyncedAt(new Date());
+
+      // Non-blocking asset health audit
+      fetch("/api/admin/assets?audit=true")
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success && res.report) {
+            setAssetHealthSummary({
+              total: res.report.totalChecked,
+              healthy: res.report.healthy,
+              broken: res.report.brokenCount,
+            });
+          }
+        })
+        .catch(() => {});
       showToast("Fleet & spotlight car updated and synced across all sessions!");
     } catch (err: any) {
       showError(err.message || "Failed to sync vehicles to cloud.");
@@ -589,6 +649,20 @@ export default function AdminDashboard() {
       broadcastSync();
       setSyncStatus("synced");
       setLastSyncedAt(new Date());
+
+      // Non-blocking asset health audit
+      fetch("/api/admin/assets?audit=true")
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success && res.report) {
+            setAssetHealthSummary({
+              total: res.report.totalChecked,
+              healthy: res.report.healthy,
+              broken: res.report.brokenCount,
+            });
+          }
+        })
+        .catch(() => {});
       showToast("Corporate sponsors updated and synced across all sessions!");
     } catch (err: any) {
       showError(err.message || "Failed to sync sponsors to cloud.");
@@ -615,6 +689,20 @@ export default function AdminDashboard() {
       broadcastSync();
       setSyncStatus("synced");
       setLastSyncedAt(new Date());
+
+      // Non-blocking asset health audit
+      fetch("/api/admin/assets?audit=true")
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success && res.report) {
+            setAssetHealthSummary({
+              total: res.report.totalChecked,
+              healthy: res.report.healthy,
+              broken: res.report.brokenCount,
+            });
+          }
+        })
+        .catch(() => {});
       showToast("Achievements updated and synced across all sessions!");
     } catch (err: any) {
       showError(err.message || "Failed to sync achievements to cloud.");
@@ -1523,6 +1611,20 @@ export default function AdminDashboard() {
       broadcastSync();
       setSyncStatus("synced");
       setLastSyncedAt(new Date());
+
+      // Non-blocking asset health audit
+      fetch("/api/admin/assets?audit=true")
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success && res.report) {
+            setAssetHealthSummary({
+              total: res.report.totalChecked,
+              healthy: res.report.healthy,
+              broken: res.report.brokenCount,
+            });
+          }
+        })
+        .catch(() => {});
       showToast("Recruitment settings updated and synced across all tabs!");
     } catch (err: any) {
       showError(err.message || "Failed to update settings.");
@@ -1910,6 +2012,20 @@ export default function AdminDashboard() {
               <span className={`w-2 h-2 rounded-full ${syncStatus === "syncing" ? "bg-amber-400 animate-ping" : syncStatus === "error" ? "bg-red-500" : "bg-emerald-400 shadow-[0_0_8px_#10b981]"}`} />
               <span>{syncStatus === "syncing" ? "Syncing..." : "Cloud Live"}</span>
               <RefreshCw className={`w-3.5 h-3.5 ml-0.5 ${syncStatus === "syncing" ? "animate-spin" : ""}`} />
+            </button>
+
+            {/* File & Asset Sync Protection System */}
+            <button
+              onClick={() => setShowAssetHealthModal(true)}
+              className={`flex items-center gap-1.5 text-xs font-mono font-bold px-3.5 py-2 border transition-all uppercase tracking-wider ${
+                assetHealthSummary && assetHealthSummary.broken > 0
+                  ? "bg-amber-500/10 border-amber-500/40 text-amber-400 hover:bg-amber-500/20 animate-pulse"
+                  : "bg-cyan-500/10 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20"
+              }`}
+              title="File & Asset Sync Protection System: Cross-validates all database media links against disk assets"
+            >
+              <FolderSync className="w-3.5 h-3.5" />
+              <span>{assetHealthSummary && assetHealthSummary.broken > 0 ? `${assetHealthSummary.broken} Sync Warning` : "File Sync Active"}</span>
             </button>
 
             <button
@@ -3602,6 +3718,15 @@ export default function AdminDashboard() {
             isOpen={showSecurityModal}
             onClose={() => setShowSecurityModal(false)}
             adminEmail={currentUserEmail || siteSettings.contact_email || ""}
+            showToast={showToast}
+            showError={showError}
+          />
+        )}
+
+        {showAssetHealthModal && (
+          <AssetHealthModal
+            isOpen={showAssetHealthModal}
+            onClose={() => setShowAssetHealthModal(false)}
             showToast={showToast}
             showError={showError}
           />

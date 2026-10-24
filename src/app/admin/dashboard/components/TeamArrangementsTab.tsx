@@ -277,7 +277,7 @@ export function TeamArrangementsTab({
             </h4>
             <ul className="text-[11px] font-mono text-white/60 space-y-2 list-disc list-inside">
               <li>
-                <strong>Pre-Final & Final Years:</strong> Both cohorts are now divided department-wise into domain subsections (e.g. Powertrain, Chassis, Suspension, Brakes, Operations).
+                <strong>Pre-Final & Final Years:</strong> Both cohorts are divided department-wise into technical domain subsections (Chassis & Design, Powertrain & Drivetrain, Suspension & Steering, Brakes & Tyres).
               </li>
               <li>
                 <strong>Priority Order:</strong> When editing any member datasheet, specify a lower order index (e.g. 0, 1, 2) to place them first within their domain.

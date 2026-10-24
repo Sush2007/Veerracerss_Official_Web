@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Save, Sparkles, Upload, Image as ImageIcon } from "lucide-react";
+import { X, Save, Sparkles, Upload, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 import { MemberRecord } from "@/src/data/cms_defaults";
 import { createClient } from "@/src/lib/supabase/client";
 
@@ -27,9 +27,29 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
 
   // Photo Upload States
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string>(member.image_url || "/members/default-avatar.png");
+  const [photoPreview, setPhotoPreview] = useState<string>(member.image_url || "/members/default-avatar.svg");
   const [photoSource, setPhotoSource] = useState<"upload" | "url">("upload");
   const [directPhotoUrl, setDirectPhotoUrl] = useState<string>(member.image_url || "");
+  const [urlValidation, setUrlValidation] = useState<{ checked: boolean; exists: boolean; reason?: string; suggestedFix?: string } | null>(null);
+
+  const checkUrl = async (path: string) => {
+    if (!path || !path.trim().startsWith("/")) {
+      setUrlValidation(null);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/assets?checkPath=${encodeURIComponent(path.trim())}`);
+      const data = await res.json();
+      if (data.success && data.result) {
+        setUrlValidation({
+          checked: true,
+          exists: data.result.exists,
+          reason: data.result.reason,
+          suggestedFix: data.result.suggestedFix,
+        });
+      }
+    } catch {}
+  };
 
   const [saving, setSaving] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -90,7 +110,7 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
     setSaving(true);
     setUploadError(null);
     try {
-      let finalImageUrl = formData.image_url || "/members/default-avatar.png";
+      let finalImageUrl = formData.image_url || "/members/default-avatar.svg";
 
       if (photoSource === "upload" && photoFile) {
         try {
@@ -209,6 +229,9 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
                     src={photoPreview}
                     alt="Headshot preview"
                     className="w-full h-full object-cover object-top"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/members/default-avatar.svg";
+                    }}
                   />
                   {photoFile && (
                     <span className="absolute bottom-0 inset-x-0 bg-racing-red text-[8px] text-center font-mono font-bold text-white uppercase py-0.5">
@@ -265,10 +288,37 @@ export function MemberDatasheetModal({ member, onClose, onSave }: MemberDatashee
                         onChange={(e) => {
                           setDirectPhotoUrl(e.target.value);
                           if (e.target.value.trim()) setPhotoPreview(e.target.value.trim());
+                          checkUrl(e.target.value);
                         }}
-                        placeholder="e.g. /members/nrusingha.png or https://..."
+                        onBlur={(e) => checkUrl(e.target.value)}
+                        placeholder="e.g. /team/council/amritanshu-tripathy.webp or https://..."
                         className="w-full bg-[#0b0c10] border border-white/10 px-3 py-1.5 text-xs font-mono text-white focus:border-racing-red outline-none"
                       />
+                      {urlValidation && urlValidation.checked && (
+                        urlValidation.exists ? (
+                          <div className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 mt-1">
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>Photo verified on disk</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-1 mt-1 gap-1">
+                            <span>⚠️ {urlValidation.reason}</span>
+                            {urlValidation.suggestedFix && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDirectPhotoUrl(urlValidation.suggestedFix!);
+                                  setPhotoPreview(urlValidation.suggestedFix!);
+                                  checkUrl(urlValidation.suggestedFix!);
+                                }}
+                                className="underline hover:text-white text-cyan-300 font-bold"
+                              >
+                                Fix: {urlValidation.suggestedFix}
+                              </button>
+                            )}
+                          </div>
+                        )
+                      )}
                     </div>
                   )}
                 </div>

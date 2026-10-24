@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Zap, Battery, Shield, Wind, ArrowRight } from "lucide-react";
 import { createClient } from "@/src/lib/supabase/client";
 import { DEFAULT_FEATURED_MACHINE, FeaturedMachine, extractSpotlightFromVehicles } from "@/src/data/cms_defaults";
+import { SafeImage } from "@/src/components/ui/SafeImage";
 
 export function CarSpotlight() {
   const [machine, setMachine] = useState<FeaturedMachine>(DEFAULT_FEATURED_MACHINE);
@@ -221,8 +222,10 @@ export function CarSpotlight() {
           
           {/* Main Visual Frame */}
           <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] lg:aspect-[24/10] overflow-hidden bg-[#050505] group">
-            <img
-              src={activeTab === "render" ? machine.cad_image_url : machine.track_image_url}
+            <SafeImage
+              src={activeTab === "render" ? (machine.cad_image_url || "/cars/aether-spotlight.jpg") : (machine.track_image_url || "/cars/aether.jpg")}
+              fallbackSrc={activeTab === "render" ? "/cars/aether-spotlight.jpg" : "/cars/aether.jpg"}
+              category="car"
               alt={`${machine.car_name} Prototype`}
               className="w-full h-full object-cover object-center group-hover:scale-[1.015] transition-transform duration-700"
             />

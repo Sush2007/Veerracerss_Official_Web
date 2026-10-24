@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#121318"/>
+      <stop offset="100%" stop-color="#0a0a0c"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#bg)"/>
+  <circle cx="100" cy="100" r="96" fill="none" stroke="#262626" stroke-width="2"/>
+  <circle cx="100" cy="100" r="92" fill="none" stroke="#ef4444" stroke-width="1" stroke-dasharray="4,8" opacity="0.4"/>
+  <!-- Racing Helmet / Head Silhouette -->
+  <circle cx="100" cy="78" r="32" fill="#2a2b30"/>
+  <!-- Visor -->
+  <path d="M78 72 C85 68 115 68 122 72 C125 78 122 84 100 84 C78 84 75 78 78 72 Z" fill="url(#accent)" opacity="0.9"/>
+  <!-- Torso / Racing Suit -->
+  <path d="M48 165 C48 126 70 118 100 118 C130 118 152 126 152 165 Z" fill="#222328"/>
+  <path d="M96 118 L96 165" stroke="#ef4444" stroke-width="2" opacity="0.7"/>
+  <path d="M104 118 L104 165" stroke="#ef4444" stroke-width="2" opacity="0.7"/>
+</svg>

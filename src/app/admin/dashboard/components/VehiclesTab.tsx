@@ -73,6 +73,39 @@ export function VehiclesTab({
   const [aeroHeadline, setAeroHeadline] = useState("");
   const [aeroSpecs, setAeroSpecs] = useState("");
 
+  // Live Asset Integrity Validation
+  const [imageValidation, setImageValidation] = useState<{ checked: boolean; exists: boolean; reason?: string; suggestedFix?: string } | null>(null);
+  const [cadValidation, setCadValidation] = useState<{ checked: boolean; exists: boolean; reason?: string; suggestedFix?: string } | null>(null);
+
+  const checkAsset = async (path: string, type: "image" | "cadImage") => {
+    if (!path || !path.trim().startsWith("/")) {
+      if (type === "image") setImageValidation(null);
+      else setCadValidation(null);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/assets?checkPath=${encodeURIComponent(path.trim())}`);
+      const data = await res.json();
+      if (data.success && data.result) {
+        if (type === "image") {
+          setImageValidation({
+            checked: true,
+            exists: data.result.exists,
+            reason: data.result.reason,
+            suggestedFix: data.result.suggestedFix,
+          });
+        } else {
+          setCadValidation({
+            checked: true,
+            exists: data.result.exists,
+            reason: data.result.reason,
+            suggestedFix: data.result.suggestedFix,
+          });
+        }
+      }
+    } catch {}
+  };
+
   // Lock background scroll when modals are open
   useEffect(() => {
     if (modalOpen || deleteConfirmVehicle) {
@@ -101,7 +134,9 @@ export function VehiclesTab({
     setCompetition("Formula Bharat 2026 / FSEV");
     setDescription("");
     setImage("/cars/aether.jpg");
-    setCadImage("/cars/aether-cad.png");
+    setCadImage("/cars/aether-spotlight.jpg");
+    setImageValidation(null);
+    setCadValidation(null);
     setCadModelUrl("/car-raw.glb");
     setSpeed("120 km/h");
     setAccel("3.0s 0-100");
@@ -131,6 +166,8 @@ export function VehiclesTab({
     setDescription(vehicle.description || "");
     setImage(vehicle.image || "");
     setCadImage(vehicle.cad_image || "");
+    if (vehicle.image) checkAsset(vehicle.image, "image");
+    if (vehicle.cad_image) checkAsset(vehicle.cad_image, "cadImage");
     setCadModelUrl(vehicle.cad_model_url || "/car-raw.glb");
     setSpeed(vehicle.stats?.speed || "120 km/h");
     setAccel(vehicle.stats?.accel || "3.0s 0-100");
@@ -619,7 +656,11 @@ export function VehiclesTab({
                       <input
                         type="text"
                         value={image}
-                        onChange={(e) => setImage(e.target.value)}
+                        onChange={(e) => {
+                          setImage(e.target.value);
+                          checkAsset(e.target.value, "image");
+                        }}
+                        onBlur={(e) => checkAsset(e.target.value, "image")}
                         placeholder="/cars/aether.jpg or https://..."
                         required
                         className="flex-1 bg-[#111111] border border-white/10 px-3 py-2 text-xs text-white font-mono focus:border-racing-red focus:outline-none"
@@ -636,6 +677,30 @@ export function VehiclesTab({
                         />
                       </label>
                     </div>
+                    {imageValidation && imageValidation.checked && (
+                      imageValidation.exists ? (
+                        <div className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 mt-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>File verified on disk</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-1 mt-1 gap-1">
+                          <span>⚠️ {imageValidation.reason}</span>
+                          {imageValidation.suggestedFix && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setImage(imageValidation.suggestedFix!);
+                                checkAsset(imageValidation.suggestedFix!, "image");
+                              }}
+                              className="underline hover:text-white text-cyan-300 font-bold"
+                            >
+                              Fix: {imageValidation.suggestedFix}
+                            </button>
+                          )}
+                        </div>
+                      )
+                    )}
                   </div>
 
                   <div>
@@ -646,8 +711,12 @@ export function VehiclesTab({
                       <input
                         type="text"
                         value={cadImage}
-                        onChange={(e) => setCadImage(e.target.value)}
-                        placeholder="/cars/aether-cad.png or https://..."
+                        onChange={(e) => {
+                          setCadImage(e.target.value);
+                          checkAsset(e.target.value, "cadImage");
+                        }}
+                        onBlur={(e) => checkAsset(e.target.value, "cadImage")}
+                        placeholder="/cars/aether-spotlight.jpg or https://..."
                         className="flex-1 bg-[#111111] border border-white/10 px-3 py-2 text-xs text-white font-mono focus:border-racing-red focus:outline-none"
                       />
                       <label className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 text-xs font-mono font-bold uppercase cursor-pointer flex items-center gap-1">
@@ -662,6 +731,30 @@ export function VehiclesTab({
                         />
                       </label>
                     </div>
+                    {cadValidation && cadValidation.checked && (
+                      cadValidation.exists ? (
+                        <div className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 mt-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>File verified on disk</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-1 mt-1 gap-1">
+                          <span>⚠️ {cadValidation.reason}</span>
+                          {cadValidation.suggestedFix && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCadImage(cadValidation.suggestedFix!);
+                                checkAsset(cadValidation.suggestedFix!, "cadImage");
+                              }}
+                              className="underline hover:text-white text-cyan-300 font-bold"
+                            >
+                              Fix: {cadValidation.suggestedFix}
+                            </button>
+                          )}
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
 
