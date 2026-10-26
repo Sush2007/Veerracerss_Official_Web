@@ -73,18 +73,20 @@ function getMemberDepartment(m: { name?: string; department?: string; subgroup?:
   }
 
   // 2. Specific Council / Lead member mappings from official records (Exact matching to avoid false positives):
-  if (name.includes("suchit")) return "Brakes & Tyres";
-  if (name.includes("nrusingha")) return "Suspension & Steering";
+  if (name.includes("suchit sourav barik")) return "Brakes & Tyres";
+  if (name.includes("nrusingha dalai")) return "Suspension & Steering";
   if (name.includes("devi prasad")) return "Chassis & Design";
   if (name.includes("sourav muduly")) return "Powertrain & Drivetrain";
   if (name.includes("bineeta")) return "Powertrain & Drivetrain";
   if (name.includes("tikeshwar")) return "Powertrain & Drivetrain";
   if (name.includes("adyasha")) return "Chassis & Design";
   if (name.includes("debesh")) return "Chassis & Design";
-  if (name.includes("darshana") || name.includes("panigrahi") || name.includes("aryean")) return "Chassis & Design";
+  if (name.includes("darshana")) return "Chassis & Design";
+  if (name.includes("aryean")) return "Chassis & Design";
   if (name.includes("radhashyam")) return "Powertrain & Drivetrain";
   if (name.includes("mittal")) return "Suspension & Steering";
-  if (name.includes("subudhi") || name.includes("sethi") || name.includes("abhisek")) return "Brakes & Tyres";
+  if (name.includes("subudhi")) return "Brakes & Tyres";
+  if (name.includes("abhisek sethi") || name.includes("abhishek sethi")) return "Brakes & Tyres";
 
   // Check explicit department field if provided (filtering out legacy flat buckets)
   if (
@@ -98,7 +100,7 @@ function getMemberDepartment(m: { name?: string; department?: string; subgroup?:
   ) {
     if (dept.includes("chassis")) return "Chassis & Design";
     if (dept.includes("suspension") || dept.includes("steering")) return "Suspension & Steering";
-    if (dept.includes("brake") || dept.includes("tyre")) return "Brakes & Tyres";
+    if (dept.includes("brake") || dept.includes("tyre") || dept.includes("tire")) return "Brakes & Tyres";
     if (dept.includes("powertrain") || dept.includes("drivetrain")) return "Powertrain & Drivetrain";
     return m.department || "Chassis & Design";
   }
@@ -121,7 +123,7 @@ function getMemberDepartment(m: { name?: string; department?: string; subgroup?:
   if (role.includes("suspension") || role.includes("steering") || role.includes("manager")) {
     return "Suspension & Steering";
   }
-  if (role.includes("brake") || role.includes("tyre") || role.includes("event")) {
+  if (role.includes("brake") || role.includes("tyre") || role.includes("tire") || role.includes("event")) {
     return "Brakes & Tyres";
   }
 
