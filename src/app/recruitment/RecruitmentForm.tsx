@@ -130,14 +130,15 @@ export function RecruitmentForm({
   const branches = [
     "Mechanical Engineering",
     "Electrical Engineering",
-    "Electronics & TC Engineering",
     "Computer Science & Engineering",
-    "Information Technology",
-    "Electrical & Electronics Engineering (EEE)",
+    "Electrical & Telecommunication Engineering",
+    "Electrical & Electronics Engineering",
     "Production Engineering",
     "Metallurgical & Materials Engineering",
     "Chemical Engineering",
     "Civil Engineering",
+    "Mechanical and Smart Manufacturing Engineering",
+    "Biomedical Engineering"
   ];
 
   // Technical engineering domains
