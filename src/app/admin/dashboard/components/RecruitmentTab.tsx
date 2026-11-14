@@ -491,16 +491,6 @@ VSSUT Burla`;
             <span>{formActive ? "Form: ACTIVE" : "Form: PAUSED"}</span>
           </button>
 
-          {/* Set Questions Button */}
-          <button
-            onClick={() => setShowQuestionsModal(true)}
-            className="px-3.5 py-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-mono font-bold uppercase flex items-center gap-1.5 transition-colors"
-            title="Set the questions and technical prompts asked to applicants"
-          >
-            <MessageSquare className="w-4 h-4 text-racing-red" />
-            <span>Set Questions</span>
-          </button>
-
           {/* Edit Confirmation Email Button */}
           <button
             onClick={() => setShowEmailTemplateModal(true)}

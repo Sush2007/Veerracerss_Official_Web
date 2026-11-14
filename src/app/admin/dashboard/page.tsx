@@ -1638,6 +1638,7 @@ export default function AdminDashboard() {
     silent?: boolean
   ) => {
     try {
+      const targetCandidate = recruits.find((r) => r.id === id);
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       if (isUuid) {
         const { data: existing } = await supabase
@@ -1655,6 +1656,55 @@ export default function AdminDashboard() {
           if (error && error.code !== "22P02") {
             throw error;
           }
+        }
+      }
+
+      // Automatically sync accepted candidate into 1st Year active squad roster
+      if (newStatus === "Accepted" && targetCandidate) {
+        const memberPayload: any = {
+          name: targetCandidate.full_name,
+          role: "Junior Engineer (Inductee)",
+          department: targetCandidate.primary_domain || "Chassis & Design",
+          image_url: "/members/default-avatar.svg",
+          year_of_study: targetCandidate.year_of_study || "1st Year",
+          year: targetCandidate.year_of_study || "1st Year",
+          academic_branch: targetCandidate.branch || "Mechanical Engineering",
+          phone: targetCandidate.phone || "",
+          phone_number: targetCandidate.phone || "",
+          joining_year: new Date().getFullYear().toString(),
+        };
+
+        // Check if member already exists by name/phone in members table
+        const { data: existingMember } = await supabase
+          .from("members")
+          .select("id")
+          .ilike("name", targetCandidate.full_name.trim())
+          .limit(1)
+          .maybeSingle();
+
+        if (!existingMember) {
+          let { data: newMem, error: insertErr } = await supabase.from("members").insert([memberPayload]).select().maybeSingle();
+          if (insertErr && (insertErr.message?.includes("phone_number") || insertErr.code === "PGRST204")) {
+            delete memberPayload.phone_number;
+            const retryRes = await supabase.from("members").insert([memberPayload]).select().maybeSingle();
+            insertErr = retryRes.error;
+            newMem = retryRes.data;
+          }
+
+          const addedRecord: MemberRecord = newMem || {
+            id: `rec-mem-${id}`,
+            ...memberPayload,
+          };
+
+          setMembers((prev) => {
+            const updated = [addedRecord, ...prev];
+            if (typeof window !== "undefined") {
+              try {
+                localStorage.setItem("vr_members", JSON.stringify(updated));
+              } catch {}
+            }
+            return updated;
+          });
         }
       }
 
@@ -1676,7 +1726,11 @@ export default function AdminDashboard() {
         return next;
       });
       if (!silent) {
-        showToast(`Applicant marked as ${newStatus}.`);
+        showToast(
+          newStatus === "Accepted"
+            ? `Applicant accepted and added to 1st Year member records!`
+            : `Applicant marked as ${newStatus}.`
+        );
       }
     } catch (err: any) {
       showError(err.message || "Failed to update candidate status.");
@@ -3276,6 +3330,7 @@ export default function AdminDashboard() {
                   finalYears: members.filter(m => (m.year_of_study || "").includes("4th")).length,
                   preFinal: members.filter(m => (m.year_of_study || "").includes("3rd")).length,
                   secondYears: members.filter(m => (m.year_of_study || "").includes("2nd")).length,
+                  firstYears: members.filter(m => (m.year_of_study || "").includes("1st")).length,
                 }}
               />
             )}

@@ -28,6 +28,7 @@ interface TeamArrangementsTabProps {
     finalYears: number;
     preFinal: number;
     secondYears: number;
+    firstYears?: number;
   };
 }
 

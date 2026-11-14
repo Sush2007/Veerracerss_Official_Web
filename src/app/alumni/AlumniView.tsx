@@ -7,12 +7,28 @@ import { createClient } from "@/src/lib/supabase/client";
 import { DEFAULT_ALUMNI_RECORDS, AlumniRecord } from "@/src/data/cms_defaults";
 
 export function AlumniView() {
-  const [alumni, setAlumni] = useState<AlumniRecord[]>(DEFAULT_ALUMNI_RECORDS);
+  const [alumni, setAlumni] = useState<AlumniRecord[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBatch, setSelectedBatch] = useState("ALL");
 
   useEffect(() => {
     async function loadData() {
+      // 1. Try localStorage cache first
+      if (typeof window !== "undefined") {
+        try {
+          const cached = localStorage.getItem("vr_alumni_records");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed)) {
+              setAlumni(parsed);
+              setLoaded(true);
+            }
+          }
+        } catch {}
+      }
+
+      // 2. Fetch fresh alumni from Supabase
       try {
         const supabase = createClient();
         const { data, error } = await supabase
@@ -20,17 +36,23 @@ export function AlumniView() {
           .select("*")
           .order("order_index", { ascending: true });
 
-        if (data && data.length > 0 && !error) {
-          setAlumni(
-            data.map((item: any) => ({
-              ...item,
-              role_name: item.role_name || item.current_role || "",
-              current_role: item.role_name || item.current_role || "",
-            }))
-          );
+        if (!error && Array.isArray(data)) {
+          const mapped = data.map((item: any) => ({
+            ...item,
+            role_name: item.role_name || item.current_role || "",
+            current_role: item.role_name || item.current_role || "",
+          }));
+          setAlumni(mapped);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("vr_alumni_records", JSON.stringify(mapped));
+            } catch {}
+          }
         }
       } catch {
         // Fallback remains active
+      } finally {
+        setLoaded(true);
       }
     }
     loadData();
@@ -116,10 +138,16 @@ export function AlumniView() {
         </div>
 
         {/* Alumni Cards Grid */}
-        {filteredAlumni.length === 0 ? (
+        {!loaded ? (
           <div className="text-center py-20 bg-white/[0.02] border border-white/5 p-8">
             <p className="font-mono text-sm text-white/40 uppercase tracking-widest">
-              No alumni found matching your search.
+              Loading alumni directory...
+            </p>
+          </div>
+        ) : filteredAlumni.length === 0 ? (
+          <div className="text-center py-20 bg-white/[0.02] border border-white/5 p-8">
+            <p className="font-mono text-sm text-white/40 uppercase tracking-widest">
+              No alumni records registered yet.
             </p>
           </div>
         ) : (

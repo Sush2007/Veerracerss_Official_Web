@@ -3,10 +3,23 @@
 import { motion } from "motion/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Zap, Battery, Shield, Wind, ArrowRight } from "lucide-react";
 import { createClient } from "@/src/lib/supabase/client";
 import { DEFAULT_FEATURED_MACHINE, FeaturedMachine, extractSpotlightFromVehicles } from "@/src/data/cms_defaults";
 import { SafeImage } from "@/src/components/ui/SafeImage";
+
+const HeroCar3D = dynamic(() => import("./HeroCar3D"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full min-h-[300px] flex items-center justify-center bg-[#050505]">
+      <div className="flex items-center gap-2 text-white/50 font-mono text-xs tracking-widest uppercase">
+        <span className="w-2 h-2 rounded-full bg-racing-red animate-pulse"></span>
+        STREAMING 3D CAD MODEL...
+      </div>
+    </div>
+  ),
+});
 
 export function CarSpotlight() {
   const [machine, setMachine] = useState<FeaturedMachine>(DEFAULT_FEATURED_MACHINE);
@@ -184,7 +197,8 @@ export function CarSpotlight() {
 
           {/* View Toggles & Fleet Link */}
           <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center bg-[#111115] border border-white/10 p-1">
+            {/* Toggle buttons only on mobile/tablet screens (< md) */}
+            <div className="flex md:hidden items-center bg-[#111115] border border-white/10 p-1">
               <button
                 onClick={() => setActiveTab("render")}
                 className={`px-4 py-2 text-xs font-mono font-bold tracking-wider uppercase transition-all ${
@@ -221,19 +235,49 @@ export function CarSpotlight() {
         <div className="relative w-full rounded-none border border-white/10 bg-[#09090b] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] mb-8">
           
           {/* Main Visual Frame */}
-          <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] lg:aspect-[24/10] overflow-hidden bg-[#050505] group">
+          {/* Mobile View: Controlled by activeTab (CAD 3D Model or Track Image) */}
+          <div className="md:hidden">
+            {activeTab === "render" ? (
+              <div className="relative w-full aspect-[4/3] min-[480px]:aspect-[16/10] bg-[#050505] overflow-hidden">
+                <HeroCar3D modelUrl={machine.cad_model_url || "/car-raw.glb"} />
+                {/* Bottom Status Tag */}
+                <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2 bg-black/80 backdrop-blur-md border border-white/15 px-2.5 py-1 text-[10px] font-mono text-white/90 uppercase pointer-events-none">
+                  <span className="w-2 h-2 rounded-full bg-racing-red animate-pulse"></span>
+                  <span>{machine.car_name} • 3D CAD MODEL</span>
+                </div>
+              </div>
+            ) : (
+              <div className="relative w-full aspect-[16/9] overflow-hidden bg-[#050505] group">
+                <SafeImage
+                  src={machine.track_image_url || "/cars/aether.jpg"}
+                  fallbackSrc="/cars/aether.jpg"
+                  category="car"
+                  alt={`${machine.car_name} Track Photo`}
+                  className="w-full h-full object-cover object-center group-hover:scale-[1.015] transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent pointer-events-none"></div>
+                <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-black/80 backdrop-blur-md border border-white/15 px-2.5 py-1 text-[10px] font-mono text-white/90 uppercase">
+                  <span className="w-2 h-2 rounded-full bg-racing-red animate-pulse"></span>
+                  <span>{machine.car_name} • ON-TRACK</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop View (md+): Always shows On-track image without toggles */}
+          <div className="hidden md:block relative w-full aspect-[21/9] lg:aspect-[24/10] overflow-hidden bg-[#050505] group">
             <SafeImage
-              src={activeTab === "render" ? (machine.cad_image_url || "/cars/aether-spotlight.jpg") : (machine.track_image_url || "/cars/aether.jpg")}
-              fallbackSrc={activeTab === "render" ? "/cars/aether-spotlight.jpg" : "/cars/aether.jpg"}
+              src={machine.track_image_url || "/cars/aether.jpg"}
+              fallbackSrc="/cars/aether.jpg"
               category="car"
-              alt={`${machine.car_name} Prototype`}
+              alt={`${machine.car_name} On-Track Prototype`}
               className="w-full h-full object-cover object-center group-hover:scale-[1.015] transition-transform duration-700"
             />
             {/* Subtle Gradient Vignette */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent pointer-events-none"></div>
 
             {/* Bottom Status Tag */}
-            <div className="absolute bottom-4 left-4 sm:left-6 flex items-center gap-2 bg-black/80 backdrop-blur-md border border-white/15 px-3 py-1.5 text-[10px] sm:text-xs font-mono text-white/90 uppercase">
+            <div className="absolute bottom-4 left-6 flex items-center gap-2 bg-black/80 backdrop-blur-md border border-white/15 px-3 py-1.5 text-xs font-mono text-white/90 uppercase">
               <span className="w-2 h-2 rounded-full bg-racing-red animate-pulse"></span>
               <span>{machine.car_name} • RACING SPECIFICATION</span>
             </div>

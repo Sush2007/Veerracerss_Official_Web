@@ -8,10 +8,26 @@ import { createClient } from "@/src/lib/supabase/client";
 import { DEFAULT_ALUMNI_RECORDS, AlumniRecord } from "@/src/data/cms_defaults";
 
 export function AlumniNetwork() {
-  const [alumniList, setAlumniList] = useState<AlumniRecord[]>(DEFAULT_ALUMNI_RECORDS);
+  const [alumniList, setAlumniList] = useState<AlumniRecord[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     async function loadAlumni() {
+      // 1. Try localStorage cached alumni first
+      if (typeof window !== "undefined") {
+        try {
+          const cached = localStorage.getItem("vr_alumni_records");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed)) {
+              setAlumniList(parsed);
+              setLoaded(true);
+            }
+          }
+        } catch {}
+      }
+
+      // 2. Fetch fresh alumni from Supabase
       try {
         const supabase = createClient();
         const { data, error } = await supabase
@@ -20,21 +36,32 @@ export function AlumniNetwork() {
           .order("order_index", { ascending: true })
           .limit(4);
 
-        if (data && data.length > 0 && !error) {
-          setAlumniList(
-            data.map((item: any) => ({
-              ...item,
-              role_name: item.role_name || item.current_role || "",
-              current_role: item.role_name || item.current_role || "",
-            }))
-          );
+        if (!error && Array.isArray(data)) {
+          const mapped = data.map((item: any) => ({
+            ...item,
+            role_name: item.role_name || item.current_role || "",
+            current_role: item.role_name || item.current_role || "",
+          }));
+          setAlumniList(mapped);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("vr_alumni_records", JSON.stringify(mapped));
+            } catch {}
+          }
         }
       } catch {
         // Safe fallback active
+      } finally {
+        setLoaded(true);
       }
     }
     loadAlumni();
   }, []);
+
+  // If loading hasn't finished or there are no alumni in the database, don't show the section
+  if (!loaded || alumniList.length === 0) {
+    return null;
+  }
 
   return (
     <section id="alumni" className="py-20 sm:py-28 bg-[#070709] relative z-10 overflow-hidden border-b border-white/10">
